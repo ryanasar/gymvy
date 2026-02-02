@@ -1129,6 +1129,1731 @@ export const exercises = [
       "Use handrails for balance only, not support",
       "Start slower and increase speed as you warm up"
     ]
+  },
+
+  // ===== ADDITIONAL CHEST EXERCISES =====
+  {
+    id: 91,
+    name: "Dumbbell Bench Press",
+    category: "compound",
+    primaryMuscles: ["chest"],
+    secondaryMuscles: ["triceps", "front_delts"],
+    equipment: "dumbbells",
+    difficulty: "beginner"
+  },
+  {
+    id: 92,
+    name: "Decline Dumbbell Press",
+    category: "compound",
+    primaryMuscles: ["chest"],
+    secondaryMuscles: ["triceps", "front_delts"],
+    equipment: "dumbbells",
+    difficulty: "intermediate"
+  },
+  {
+    id: 93,
+    name: "Incline Cable Flyes",
+    category: "isolation",
+    primaryMuscles: ["chest"],
+    secondaryMuscles: ["front_delts"],
+    equipment: "cable",
+    difficulty: "beginner"
+  },
+  {
+    id: 94,
+    name: "Low Cable Flyes",
+    category: "isolation",
+    primaryMuscles: ["chest"],
+    secondaryMuscles: ["front_delts"],
+    equipment: "cable",
+    difficulty: "beginner"
+  },
+  {
+    id: 95,
+    name: "High Cable Flyes",
+    category: "isolation",
+    primaryMuscles: ["chest"],
+    secondaryMuscles: ["front_delts"],
+    equipment: "cable",
+    difficulty: "beginner"
+  },
+  {
+    id: 96,
+    name: "Single-Arm Cable Chest Press",
+    category: "compound",
+    primaryMuscles: ["chest"],
+    secondaryMuscles: ["triceps", "front_delts", "core"],
+    equipment: "cable",
+    difficulty: "intermediate"
+  },
+  {
+    id: 97,
+    name: "Incline Push-Ups",
+    category: "compound",
+    primaryMuscles: ["chest"],
+    secondaryMuscles: ["triceps", "front_delts"],
+    equipment: "bodyweight",
+    difficulty: "beginner"
+  },
+  {
+    id: 98,
+    name: "Decline Push-Ups",
+    category: "compound",
+    primaryMuscles: ["chest"],
+    secondaryMuscles: ["triceps", "front_delts"],
+    equipment: "bodyweight",
+    difficulty: "intermediate"
+  },
+  {
+    id: 99,
+    name: "Diamond Push-Ups",
+    category: "compound",
+    primaryMuscles: ["triceps", "chest"],
+    secondaryMuscles: ["front_delts"],
+    equipment: "bodyweight",
+    difficulty: "intermediate"
+  },
+  {
+    id: 100,
+    name: "Wide Push-Ups",
+    category: "compound",
+    primaryMuscles: ["chest"],
+    secondaryMuscles: ["triceps", "front_delts"],
+    equipment: "bodyweight",
+    difficulty: "beginner"
+  },
+  {
+    id: 101,
+    name: "Svend Press",
+    category: "isolation",
+    primaryMuscles: ["chest"],
+    secondaryMuscles: ["front_delts"],
+    equipment: "dumbbells",
+    difficulty: "beginner"
+  },
+  {
+    id: 102,
+    name: "Floor Press",
+    category: "compound",
+    primaryMuscles: ["chest", "triceps"],
+    secondaryMuscles: ["front_delts"],
+    equipment: "barbell",
+    difficulty: "intermediate"
+  },
+  {
+    id: 103,
+    name: "Dumbbell Floor Press",
+    category: "compound",
+    primaryMuscles: ["chest", "triceps"],
+    secondaryMuscles: ["front_delts"],
+    equipment: "dumbbells",
+    difficulty: "beginner"
+  },
+  {
+    id: 104,
+    name: "Incline Dumbbell Flyes",
+    category: "isolation",
+    primaryMuscles: ["chest"],
+    secondaryMuscles: ["front_delts"],
+    equipment: "dumbbells",
+    difficulty: "beginner"
+  },
+  {
+    id: 105,
+    name: "Decline Dumbbell Flyes",
+    category: "isolation",
+    primaryMuscles: ["chest"],
+    secondaryMuscles: ["front_delts"],
+    equipment: "dumbbells",
+    difficulty: "intermediate"
+  },
+
+  // ===== ADDITIONAL BACK EXERCISES =====
+  {
+    id: 106,
+    name: "Single-Arm Lat Pulldown",
+    category: "compound",
+    primaryMuscles: ["lats"],
+    secondaryMuscles: ["biceps", "rear_delts"],
+    equipment: "cable",
+    difficulty: "beginner"
+  },
+  {
+    id: 107,
+    name: "Close-Grip Lat Pulldown",
+    category: "compound",
+    primaryMuscles: ["lats"],
+    secondaryMuscles: ["biceps", "middle_back"],
+    equipment: "cable",
+    difficulty: "beginner"
+  },
+  {
+    id: 108,
+    name: "Wide-Grip Lat Pulldown",
+    category: "compound",
+    primaryMuscles: ["lats"],
+    secondaryMuscles: ["biceps", "rear_delts"],
+    equipment: "cable",
+    difficulty: "beginner"
+  },
+  {
+    id: 109,
+    name: "Reverse-Grip Lat Pulldown",
+    category: "compound",
+    primaryMuscles: ["lats"],
+    secondaryMuscles: ["biceps"],
+    equipment: "cable",
+    difficulty: "beginner"
+  },
+  {
+    id: 110,
+    name: "Chin-Ups",
+    category: "compound",
+    primaryMuscles: ["lats", "biceps"],
+    secondaryMuscles: ["middle_back"],
+    equipment: "pull_up_bar",
+    difficulty: "intermediate"
+  },
+  {
+    id: 111,
+    name: "Neutral-Grip Pull-Ups",
+    category: "compound",
+    primaryMuscles: ["lats"],
+    secondaryMuscles: ["biceps", "middle_back"],
+    equipment: "pull_up_bar",
+    difficulty: "intermediate"
+  },
+  {
+    id: 112,
+    name: "Single-Arm Cable Row",
+    category: "compound",
+    primaryMuscles: ["lats", "middle_back"],
+    secondaryMuscles: ["biceps", "rear_delts"],
+    equipment: "cable",
+    difficulty: "beginner"
+  },
+  {
+    id: 113,
+    name: "Barbell Rows",
+    category: "compound",
+    primaryMuscles: ["middle_back", "lats"],
+    secondaryMuscles: ["biceps", "rear_delts"],
+    equipment: "barbell",
+    difficulty: "intermediate"
+  },
+  {
+    id: 114,
+    name: "Pendlay Rows",
+    category: "compound",
+    primaryMuscles: ["middle_back", "lats"],
+    secondaryMuscles: ["biceps", "rear_delts"],
+    equipment: "barbell",
+    difficulty: "intermediate"
+  },
+  {
+    id: 115,
+    name: "Yates Rows",
+    category: "compound",
+    primaryMuscles: ["middle_back"],
+    secondaryMuscles: ["lats", "biceps"],
+    equipment: "barbell",
+    difficulty: "intermediate"
+  },
+  {
+    id: 116,
+    name: "Seal Rows",
+    category: "compound",
+    primaryMuscles: ["middle_back"],
+    secondaryMuscles: ["lats", "biceps", "rear_delts"],
+    equipment: "dumbbells",
+    difficulty: "intermediate"
+  },
+  {
+    id: 117,
+    name: "Inverted Rows",
+    category: "compound",
+    primaryMuscles: ["middle_back"],
+    secondaryMuscles: ["lats", "biceps", "rear_delts"],
+    equipment: "bodyweight",
+    difficulty: "beginner"
+  },
+  {
+    id: 118,
+    name: "Machine Rows",
+    category: "compound",
+    primaryMuscles: ["middle_back"],
+    secondaryMuscles: ["lats", "biceps"],
+    equipment: "machine",
+    difficulty: "beginner"
+  },
+  {
+    id: 119,
+    name: "Single-Arm Machine Row",
+    category: "compound",
+    primaryMuscles: ["middle_back", "lats"],
+    secondaryMuscles: ["biceps", "rear_delts"],
+    equipment: "machine",
+    difficulty: "beginner"
+  },
+  {
+    id: 120,
+    name: "Dumbbell Pullovers",
+    category: "compound",
+    primaryMuscles: ["lats", "chest"],
+    secondaryMuscles: ["triceps"],
+    equipment: "dumbbells",
+    difficulty: "intermediate"
+  },
+  {
+    id: 121,
+    name: "Hyperextensions",
+    category: "isolation",
+    primaryMuscles: ["lower_back"],
+    secondaryMuscles: ["glutes", "hamstrings"],
+    equipment: "bodyweight",
+    difficulty: "beginner"
+  },
+  {
+    id: 122,
+    name: "Weighted Hyperextensions",
+    category: "isolation",
+    primaryMuscles: ["lower_back"],
+    secondaryMuscles: ["glutes", "hamstrings"],
+    equipment: "dumbbells",
+    difficulty: "intermediate"
+  },
+  {
+    id: 123,
+    name: "Reverse Hyperextensions",
+    category: "isolation",
+    primaryMuscles: ["glutes", "lower_back"],
+    secondaryMuscles: ["hamstrings"],
+    equipment: "machine",
+    difficulty: "intermediate"
+  },
+  {
+    id: 124,
+    name: "Superman Hold",
+    category: "isolation",
+    primaryMuscles: ["lower_back"],
+    secondaryMuscles: ["glutes"],
+    equipment: "bodyweight",
+    difficulty: "beginner"
+  },
+
+  // ===== ADDITIONAL SHOULDER EXERCISES =====
+  {
+    id: 125,
+    name: "Seated Dumbbell Press",
+    category: "compound",
+    primaryMuscles: ["front_delts", "side_delts"],
+    secondaryMuscles: ["triceps"],
+    equipment: "dumbbells",
+    difficulty: "intermediate"
+  },
+  {
+    id: 126,
+    name: "Single-Arm Dumbbell Press",
+    category: "compound",
+    primaryMuscles: ["front_delts", "side_delts"],
+    secondaryMuscles: ["triceps", "core"],
+    equipment: "dumbbells",
+    difficulty: "intermediate"
+  },
+  {
+    id: 127,
+    name: "Push Press",
+    category: "compound",
+    primaryMuscles: ["front_delts", "side_delts"],
+    secondaryMuscles: ["triceps", "quadriceps", "core"],
+    equipment: "barbell",
+    difficulty: "intermediate"
+  },
+  {
+    id: 128,
+    name: "Behind the Neck Press",
+    category: "compound",
+    primaryMuscles: ["front_delts", "side_delts"],
+    secondaryMuscles: ["triceps", "traps"],
+    equipment: "barbell",
+    difficulty: "advanced"
+  },
+  {
+    id: 129,
+    name: "Single-Arm Cable Lateral Raise",
+    category: "isolation",
+    primaryMuscles: ["side_delts"],
+    secondaryMuscles: [],
+    equipment: "cable",
+    difficulty: "beginner"
+  },
+  {
+    id: 130,
+    name: "Leaning Cable Lateral Raise",
+    category: "isolation",
+    primaryMuscles: ["side_delts"],
+    secondaryMuscles: [],
+    equipment: "cable",
+    difficulty: "intermediate"
+  },
+  {
+    id: 131,
+    name: "Machine Lateral Raise",
+    category: "isolation",
+    primaryMuscles: ["side_delts"],
+    secondaryMuscles: [],
+    equipment: "machine",
+    difficulty: "beginner"
+  },
+  {
+    id: 132,
+    name: "Dumbbell Front Raises",
+    category: "isolation",
+    primaryMuscles: ["front_delts"],
+    secondaryMuscles: [],
+    equipment: "dumbbells",
+    difficulty: "beginner"
+  },
+  {
+    id: 133,
+    name: "Cable Front Raises",
+    category: "isolation",
+    primaryMuscles: ["front_delts"],
+    secondaryMuscles: [],
+    equipment: "cable",
+    difficulty: "beginner"
+  },
+  {
+    id: 134,
+    name: "Plate Front Raises",
+    category: "isolation",
+    primaryMuscles: ["front_delts"],
+    secondaryMuscles: [],
+    equipment: "dumbbells",
+    difficulty: "beginner"
+  },
+  {
+    id: 135,
+    name: "Cable Rear Delt Flyes",
+    category: "isolation",
+    primaryMuscles: ["rear_delts"],
+    secondaryMuscles: ["middle_back"],
+    equipment: "cable",
+    difficulty: "beginner"
+  },
+  {
+    id: 136,
+    name: "Bent-Over Rear Delt Raises",
+    category: "isolation",
+    primaryMuscles: ["rear_delts"],
+    secondaryMuscles: ["middle_back"],
+    equipment: "dumbbells",
+    difficulty: "beginner"
+  },
+  {
+    id: 137,
+    name: "Incline Rear Delt Raises",
+    category: "isolation",
+    primaryMuscles: ["rear_delts"],
+    secondaryMuscles: ["middle_back"],
+    equipment: "dumbbells",
+    difficulty: "beginner"
+  },
+  {
+    id: 138,
+    name: "Dumbbell Upright Rows",
+    category: "compound",
+    primaryMuscles: ["traps", "side_delts"],
+    secondaryMuscles: ["biceps"],
+    equipment: "dumbbells",
+    difficulty: "beginner"
+  },
+  {
+    id: 139,
+    name: "Barbell Upright Rows",
+    category: "compound",
+    primaryMuscles: ["traps", "side_delts"],
+    secondaryMuscles: ["biceps"],
+    equipment: "barbell",
+    difficulty: "beginner"
+  },
+  {
+    id: 140,
+    name: "Lu Raises",
+    category: "isolation",
+    primaryMuscles: ["front_delts", "side_delts"],
+    secondaryMuscles: [],
+    equipment: "dumbbells",
+    difficulty: "intermediate"
+  },
+  {
+    id: 141,
+    name: "Barbell Shrugs",
+    category: "isolation",
+    primaryMuscles: ["traps"],
+    secondaryMuscles: [],
+    equipment: "barbell",
+    difficulty: "beginner"
+  },
+  {
+    id: 142,
+    name: "Cable Shrugs",
+    category: "isolation",
+    primaryMuscles: ["traps"],
+    secondaryMuscles: [],
+    equipment: "cable",
+    difficulty: "beginner"
+  },
+  {
+    id: 143,
+    name: "Machine Shrugs",
+    category: "isolation",
+    primaryMuscles: ["traps"],
+    secondaryMuscles: [],
+    equipment: "machine",
+    difficulty: "beginner"
+  },
+
+  // ===== ADDITIONAL BICEP EXERCISES =====
+  {
+    id: 144,
+    name: "Concentration Curls",
+    category: "isolation",
+    primaryMuscles: ["biceps"],
+    secondaryMuscles: [],
+    equipment: "dumbbells",
+    difficulty: "beginner"
+  },
+  {
+    id: 145,
+    name: "Spider Curls",
+    category: "isolation",
+    primaryMuscles: ["biceps"],
+    secondaryMuscles: [],
+    equipment: "dumbbells",
+    difficulty: "intermediate"
+  },
+  {
+    id: 146,
+    name: "Cable Curls",
+    category: "isolation",
+    primaryMuscles: ["biceps"],
+    secondaryMuscles: [],
+    equipment: "cable",
+    difficulty: "beginner"
+  },
+  {
+    id: 147,
+    name: "Single-Arm Cable Curl",
+    category: "isolation",
+    primaryMuscles: ["biceps"],
+    secondaryMuscles: [],
+    equipment: "cable",
+    difficulty: "beginner"
+  },
+  {
+    id: 148,
+    name: "High Cable Curls",
+    category: "isolation",
+    primaryMuscles: ["biceps"],
+    secondaryMuscles: [],
+    equipment: "cable",
+    difficulty: "intermediate"
+  },
+  {
+    id: 149,
+    name: "Drag Curls",
+    category: "isolation",
+    primaryMuscles: ["biceps"],
+    secondaryMuscles: [],
+    equipment: "barbell",
+    difficulty: "intermediate"
+  },
+  {
+    id: 150,
+    name: "21s (Bicep Curls)",
+    category: "isolation",
+    primaryMuscles: ["biceps"],
+    secondaryMuscles: [],
+    equipment: "barbell",
+    difficulty: "intermediate"
+  },
+  {
+    id: 151,
+    name: "Cross-Body Hammer Curls",
+    category: "isolation",
+    primaryMuscles: ["biceps"],
+    secondaryMuscles: ["forearms"],
+    equipment: "dumbbells",
+    difficulty: "beginner"
+  },
+  {
+    id: 152,
+    name: "Cable Hammer Curls",
+    category: "isolation",
+    primaryMuscles: ["biceps"],
+    secondaryMuscles: ["forearms"],
+    equipment: "cable",
+    difficulty: "beginner"
+  },
+  {
+    id: 153,
+    name: "Reverse Curls",
+    category: "isolation",
+    primaryMuscles: ["forearms"],
+    secondaryMuscles: ["biceps"],
+    equipment: "barbell",
+    difficulty: "beginner"
+  },
+  {
+    id: 154,
+    name: "Dumbbell Reverse Curls",
+    category: "isolation",
+    primaryMuscles: ["forearms"],
+    secondaryMuscles: ["biceps"],
+    equipment: "dumbbells",
+    difficulty: "beginner"
+  },
+  {
+    id: 155,
+    name: "Machine Bicep Curls",
+    category: "isolation",
+    primaryMuscles: ["biceps"],
+    secondaryMuscles: [],
+    equipment: "machine",
+    difficulty: "beginner"
+  },
+  {
+    id: 156,
+    name: "Zottman Curls",
+    category: "isolation",
+    primaryMuscles: ["biceps", "forearms"],
+    secondaryMuscles: [],
+    equipment: "dumbbells",
+    difficulty: "intermediate"
+  },
+  {
+    id: 157,
+    name: "Bayesian Cable Curls",
+    category: "isolation",
+    primaryMuscles: ["biceps"],
+    secondaryMuscles: [],
+    equipment: "cable",
+    difficulty: "intermediate"
+  },
+
+  // ===== ADDITIONAL TRICEP EXERCISES =====
+  {
+    id: 158,
+    name: "Overhead Dumbbell Tricep Extension",
+    category: "isolation",
+    primaryMuscles: ["triceps"],
+    secondaryMuscles: [],
+    equipment: "dumbbells",
+    difficulty: "beginner"
+  },
+  {
+    id: 159,
+    name: "Single-Arm Overhead Tricep Extension",
+    category: "isolation",
+    primaryMuscles: ["triceps"],
+    secondaryMuscles: [],
+    equipment: "dumbbells",
+    difficulty: "beginner"
+  },
+  {
+    id: 160,
+    name: "Tricep Kickbacks",
+    category: "isolation",
+    primaryMuscles: ["triceps"],
+    secondaryMuscles: [],
+    equipment: "dumbbells",
+    difficulty: "beginner"
+  },
+  {
+    id: 161,
+    name: "Cable Tricep Kickbacks",
+    category: "isolation",
+    primaryMuscles: ["triceps"],
+    secondaryMuscles: [],
+    equipment: "cable",
+    difficulty: "beginner"
+  },
+  {
+    id: 162,
+    name: "Single-Arm Tricep Pushdowns",
+    category: "isolation",
+    primaryMuscles: ["triceps"],
+    secondaryMuscles: [],
+    equipment: "cable",
+    difficulty: "beginner"
+  },
+  {
+    id: 163,
+    name: "Rope Tricep Pushdowns",
+    category: "isolation",
+    primaryMuscles: ["triceps"],
+    secondaryMuscles: [],
+    equipment: "cable",
+    difficulty: "beginner"
+  },
+  {
+    id: 164,
+    name: "V-Bar Tricep Pushdowns",
+    category: "isolation",
+    primaryMuscles: ["triceps"],
+    secondaryMuscles: [],
+    equipment: "cable",
+    difficulty: "beginner"
+  },
+  {
+    id: 165,
+    name: "Straight Bar Tricep Pushdowns",
+    category: "isolation",
+    primaryMuscles: ["triceps"],
+    secondaryMuscles: [],
+    equipment: "cable",
+    difficulty: "beginner"
+  },
+  {
+    id: 166,
+    name: "Overhead Cable Tricep Extension",
+    category: "isolation",
+    primaryMuscles: ["triceps"],
+    secondaryMuscles: [],
+    equipment: "cable",
+    difficulty: "beginner"
+  },
+  {
+    id: 167,
+    name: "EZ-Bar Skull Crushers",
+    category: "isolation",
+    primaryMuscles: ["triceps"],
+    secondaryMuscles: [],
+    equipment: "barbell",
+    difficulty: "intermediate"
+  },
+  {
+    id: 168,
+    name: "Dumbbell Skull Crushers",
+    category: "isolation",
+    primaryMuscles: ["triceps"],
+    secondaryMuscles: [],
+    equipment: "dumbbells",
+    difficulty: "intermediate"
+  },
+  {
+    id: 169,
+    name: "Bench Dips",
+    category: "compound",
+    primaryMuscles: ["triceps"],
+    secondaryMuscles: ["chest", "front_delts"],
+    equipment: "bodyweight",
+    difficulty: "beginner"
+  },
+  {
+    id: 170,
+    name: "JM Press",
+    category: "compound",
+    primaryMuscles: ["triceps"],
+    secondaryMuscles: ["chest"],
+    equipment: "barbell",
+    difficulty: "advanced"
+  },
+  {
+    id: 171,
+    name: "Machine Tricep Dips",
+    category: "compound",
+    primaryMuscles: ["triceps"],
+    secondaryMuscles: ["chest"],
+    equipment: "machine",
+    difficulty: "beginner"
+  },
+  {
+    id: 172,
+    name: "Tate Press",
+    category: "isolation",
+    primaryMuscles: ["triceps"],
+    secondaryMuscles: [],
+    equipment: "dumbbells",
+    difficulty: "intermediate"
+  },
+
+  // ===== ADDITIONAL LEG EXERCISES =====
+  {
+    id: 173,
+    name: "Front Squats",
+    category: "compound",
+    primaryMuscles: ["quadriceps"],
+    secondaryMuscles: ["glutes", "core"],
+    equipment: "barbell",
+    difficulty: "intermediate"
+  },
+  {
+    id: 174,
+    name: "Pause Squats",
+    category: "compound",
+    primaryMuscles: ["quadriceps", "glutes"],
+    secondaryMuscles: ["hamstrings", "core"],
+    equipment: "barbell",
+    difficulty: "intermediate"
+  },
+  {
+    id: 175,
+    name: "Box Squats",
+    category: "compound",
+    primaryMuscles: ["quadriceps", "glutes"],
+    secondaryMuscles: ["hamstrings"],
+    equipment: "barbell",
+    difficulty: "intermediate"
+  },
+  {
+    id: 176,
+    name: "Sumo Squats",
+    category: "compound",
+    primaryMuscles: ["quadriceps", "inner_thighs"],
+    secondaryMuscles: ["glutes"],
+    equipment: "dumbbells",
+    difficulty: "beginner"
+  },
+  {
+    id: 177,
+    name: "Dumbbell Squats",
+    category: "compound",
+    primaryMuscles: ["quadriceps", "glutes"],
+    secondaryMuscles: ["hamstrings"],
+    equipment: "dumbbells",
+    difficulty: "beginner"
+  },
+  {
+    id: 178,
+    name: "Zercher Squats",
+    category: "compound",
+    primaryMuscles: ["quadriceps", "glutes"],
+    secondaryMuscles: ["core", "biceps"],
+    equipment: "barbell",
+    difficulty: "advanced"
+  },
+  {
+    id: 179,
+    name: "Pendulum Squats",
+    category: "compound",
+    primaryMuscles: ["quadriceps"],
+    secondaryMuscles: ["glutes"],
+    equipment: "machine",
+    difficulty: "intermediate"
+  },
+  {
+    id: 180,
+    name: "Belt Squats",
+    category: "compound",
+    primaryMuscles: ["quadriceps", "glutes"],
+    secondaryMuscles: ["hamstrings"],
+    equipment: "machine",
+    difficulty: "intermediate"
+  },
+  {
+    id: 181,
+    name: "Single-Leg Leg Press",
+    category: "compound",
+    primaryMuscles: ["quadriceps", "glutes"],
+    secondaryMuscles: ["hamstrings"],
+    equipment: "machine",
+    difficulty: "intermediate"
+  },
+  {
+    id: 182,
+    name: "Dumbbell Lunges",
+    category: "compound",
+    primaryMuscles: ["quadriceps", "glutes"],
+    secondaryMuscles: ["hamstrings"],
+    equipment: "dumbbells",
+    difficulty: "beginner"
+  },
+  {
+    id: 183,
+    name: "Barbell Lunges",
+    category: "compound",
+    primaryMuscles: ["quadriceps", "glutes"],
+    secondaryMuscles: ["hamstrings"],
+    equipment: "barbell",
+    difficulty: "intermediate"
+  },
+  {
+    id: 184,
+    name: "Lateral Lunges",
+    category: "compound",
+    primaryMuscles: ["quadriceps", "inner_thighs"],
+    secondaryMuscles: ["glutes"],
+    equipment: "bodyweight",
+    difficulty: "beginner"
+  },
+  {
+    id: 185,
+    name: "Curtsy Lunges",
+    category: "compound",
+    primaryMuscles: ["glutes", "quadriceps"],
+    secondaryMuscles: ["inner_thighs"],
+    equipment: "bodyweight",
+    difficulty: "intermediate"
+  },
+  {
+    id: 186,
+    name: "Sumo Deadlifts",
+    category: "compound",
+    primaryMuscles: ["glutes", "inner_thighs"],
+    secondaryMuscles: ["hamstrings", "lower_back", "quadriceps"],
+    equipment: "barbell",
+    difficulty: "intermediate"
+  },
+  {
+    id: 187,
+    name: "Dumbbell Romanian Deadlifts",
+    category: "compound",
+    primaryMuscles: ["hamstrings", "glutes"],
+    secondaryMuscles: ["lower_back"],
+    equipment: "dumbbells",
+    difficulty: "beginner"
+  },
+  {
+    id: 188,
+    name: "Stiff-Leg Deadlifts",
+    category: "compound",
+    primaryMuscles: ["hamstrings"],
+    secondaryMuscles: ["glutes", "lower_back"],
+    equipment: "barbell",
+    difficulty: "intermediate"
+  },
+  {
+    id: 189,
+    name: "Deficit Deadlifts",
+    category: "compound",
+    primaryMuscles: ["hamstrings", "glutes", "lower_back"],
+    secondaryMuscles: ["quadriceps", "traps"],
+    equipment: "barbell",
+    difficulty: "advanced"
+  },
+  {
+    id: 190,
+    name: "Seated Leg Curls",
+    category: "isolation",
+    primaryMuscles: ["hamstrings"],
+    secondaryMuscles: [],
+    equipment: "machine",
+    difficulty: "beginner"
+  },
+  {
+    id: 191,
+    name: "Standing Leg Curls",
+    category: "isolation",
+    primaryMuscles: ["hamstrings"],
+    secondaryMuscles: [],
+    equipment: "machine",
+    difficulty: "beginner"
+  },
+  {
+    id: 192,
+    name: "Cable Leg Curls",
+    category: "isolation",
+    primaryMuscles: ["hamstrings"],
+    secondaryMuscles: [],
+    equipment: "cable",
+    difficulty: "beginner"
+  },
+  {
+    id: 193,
+    name: "Single-Leg Hip Thrusts",
+    category: "compound",
+    primaryMuscles: ["glutes"],
+    secondaryMuscles: ["hamstrings", "core"],
+    equipment: "bodyweight",
+    difficulty: "intermediate"
+  },
+  {
+    id: 194,
+    name: "Dumbbell Hip Thrusts",
+    category: "compound",
+    primaryMuscles: ["glutes"],
+    secondaryMuscles: ["hamstrings"],
+    equipment: "dumbbells",
+    difficulty: "beginner"
+  },
+  {
+    id: 195,
+    name: "Machine Hip Thrusts",
+    category: "compound",
+    primaryMuscles: ["glutes"],
+    secondaryMuscles: ["hamstrings"],
+    equipment: "machine",
+    difficulty: "beginner"
+  },
+  {
+    id: 196,
+    name: "Glute Bridges",
+    category: "isolation",
+    primaryMuscles: ["glutes"],
+    secondaryMuscles: ["hamstrings"],
+    equipment: "bodyweight",
+    difficulty: "beginner"
+  },
+  {
+    id: 197,
+    name: "Single-Leg Glute Bridges",
+    category: "isolation",
+    primaryMuscles: ["glutes"],
+    secondaryMuscles: ["hamstrings", "core"],
+    equipment: "bodyweight",
+    difficulty: "intermediate"
+  },
+  {
+    id: 198,
+    name: "Frog Pumps",
+    category: "isolation",
+    primaryMuscles: ["glutes"],
+    secondaryMuscles: [],
+    equipment: "bodyweight",
+    difficulty: "beginner"
+  },
+  {
+    id: 199,
+    name: "Cable Pull-Throughs",
+    category: "compound",
+    primaryMuscles: ["glutes"],
+    secondaryMuscles: ["hamstrings"],
+    equipment: "cable",
+    difficulty: "beginner"
+  },
+  {
+    id: 200,
+    name: "Donkey Calf Raises",
+    category: "isolation",
+    primaryMuscles: ["calves"],
+    secondaryMuscles: [],
+    equipment: "machine",
+    difficulty: "intermediate"
+  },
+  {
+    id: 201,
+    name: "Leg Press Calf Raises",
+    category: "isolation",
+    primaryMuscles: ["calves"],
+    secondaryMuscles: [],
+    equipment: "machine",
+    difficulty: "beginner"
+  },
+  {
+    id: 202,
+    name: "Smith Machine Calf Raises",
+    category: "isolation",
+    primaryMuscles: ["calves"],
+    secondaryMuscles: [],
+    equipment: "machine",
+    difficulty: "beginner"
+  },
+  {
+    id: 203,
+    name: "Dumbbell Calf Raises",
+    category: "isolation",
+    primaryMuscles: ["calves"],
+    secondaryMuscles: [],
+    equipment: "dumbbells",
+    difficulty: "beginner"
+  },
+  {
+    id: 204,
+    name: "Bodyweight Split Squats",
+    category: "compound",
+    primaryMuscles: ["quadriceps", "glutes"],
+    secondaryMuscles: ["hamstrings"],
+    equipment: "bodyweight",
+    difficulty: "beginner"
+  },
+  {
+    id: 205,
+    name: "Barbell Step-Ups",
+    category: "compound",
+    primaryMuscles: ["glutes", "quadriceps"],
+    secondaryMuscles: ["hamstrings"],
+    equipment: "barbell",
+    difficulty: "intermediate"
+  },
+
+  // ===== ADDITIONAL CORE EXERCISES =====
+  {
+    id: 206,
+    name: "Crunches",
+    category: "isolation",
+    primaryMuscles: ["abs"],
+    secondaryMuscles: [],
+    equipment: "bodyweight",
+    difficulty: "beginner"
+  },
+  {
+    id: 207,
+    name: "Bicycle Crunches",
+    category: "isolation",
+    primaryMuscles: ["abs", "obliques"],
+    secondaryMuscles: [],
+    equipment: "bodyweight",
+    difficulty: "beginner"
+  },
+  {
+    id: 208,
+    name: "Reverse Crunches",
+    category: "isolation",
+    primaryMuscles: ["abs"],
+    secondaryMuscles: ["hip_flexors"],
+    equipment: "bodyweight",
+    difficulty: "beginner"
+  },
+  {
+    id: 209,
+    name: "Sit-Ups",
+    category: "isolation",
+    primaryMuscles: ["abs"],
+    secondaryMuscles: ["hip_flexors"],
+    equipment: "bodyweight",
+    difficulty: "beginner"
+  },
+  {
+    id: 210,
+    name: "V-Ups",
+    category: "isolation",
+    primaryMuscles: ["abs"],
+    secondaryMuscles: ["hip_flexors"],
+    equipment: "bodyweight",
+    difficulty: "intermediate"
+  },
+  {
+    id: 211,
+    name: "Toe Touches",
+    category: "isolation",
+    primaryMuscles: ["abs"],
+    secondaryMuscles: [],
+    equipment: "bodyweight",
+    difficulty: "beginner"
+  },
+  {
+    id: 212,
+    name: "Mountain Climbers",
+    category: "compound",
+    primaryMuscles: ["core", "abs"],
+    secondaryMuscles: ["hip_flexors", "quadriceps"],
+    equipment: "bodyweight",
+    difficulty: "beginner"
+  },
+  {
+    id: 213,
+    name: "Dead Bug",
+    category: "isolation",
+    primaryMuscles: ["core", "abs"],
+    secondaryMuscles: [],
+    equipment: "bodyweight",
+    difficulty: "beginner"
+  },
+  {
+    id: 214,
+    name: "Bird Dog",
+    category: "isolation",
+    primaryMuscles: ["core", "lower_back"],
+    secondaryMuscles: ["glutes"],
+    equipment: "bodyweight",
+    difficulty: "beginner"
+  },
+  {
+    id: 215,
+    name: "Side Plank",
+    category: "isolation",
+    primaryMuscles: ["obliques", "core"],
+    secondaryMuscles: [],
+    equipment: "bodyweight",
+    difficulty: "beginner"
+  },
+  {
+    id: 216,
+    name: "Side Plank Dips",
+    category: "isolation",
+    primaryMuscles: ["obliques"],
+    secondaryMuscles: ["core"],
+    equipment: "bodyweight",
+    difficulty: "intermediate"
+  },
+  {
+    id: 217,
+    name: "Copenhagen Plank",
+    category: "isolation",
+    primaryMuscles: ["inner_thighs", "obliques"],
+    secondaryMuscles: ["core"],
+    equipment: "bodyweight",
+    difficulty: "intermediate"
+  },
+  {
+    id: 218,
+    name: "Hollow Body Hold",
+    category: "isolation",
+    primaryMuscles: ["core", "abs"],
+    secondaryMuscles: [],
+    equipment: "bodyweight",
+    difficulty: "intermediate"
+  },
+  {
+    id: 219,
+    name: "L-Sit Hold",
+    category: "isolation",
+    primaryMuscles: ["abs", "hip_flexors"],
+    secondaryMuscles: ["triceps"],
+    equipment: "bodyweight",
+    difficulty: "advanced"
+  },
+  {
+    id: 220,
+    name: "Leg Raises",
+    category: "isolation",
+    primaryMuscles: ["abs"],
+    secondaryMuscles: ["hip_flexors"],
+    equipment: "bodyweight",
+    difficulty: "beginner"
+  },
+  {
+    id: 221,
+    name: "Knee Raises",
+    category: "isolation",
+    primaryMuscles: ["abs"],
+    secondaryMuscles: ["hip_flexors"],
+    equipment: "bodyweight",
+    difficulty: "beginner"
+  },
+  {
+    id: 222,
+    name: "Hanging Knee Raises",
+    category: "isolation",
+    primaryMuscles: ["abs"],
+    secondaryMuscles: ["hip_flexors"],
+    equipment: "pull_up_bar",
+    difficulty: "intermediate"
+  },
+  {
+    id: 223,
+    name: "Captain's Chair Leg Raises",
+    category: "isolation",
+    primaryMuscles: ["abs"],
+    secondaryMuscles: ["hip_flexors"],
+    equipment: "machine",
+    difficulty: "intermediate"
+  },
+  {
+    id: 224,
+    name: "Toes to Bar",
+    category: "isolation",
+    primaryMuscles: ["abs"],
+    secondaryMuscles: ["hip_flexors", "lats"],
+    equipment: "pull_up_bar",
+    difficulty: "advanced"
+  },
+  {
+    id: 225,
+    name: "Windshield Wipers",
+    category: "isolation",
+    primaryMuscles: ["obliques", "abs"],
+    secondaryMuscles: ["core"],
+    equipment: "pull_up_bar",
+    difficulty: "advanced"
+  },
+  {
+    id: 226,
+    name: "Cable Oblique Crunches",
+    category: "isolation",
+    primaryMuscles: ["obliques"],
+    secondaryMuscles: [],
+    equipment: "cable",
+    difficulty: "beginner"
+  },
+  {
+    id: 227,
+    name: "Machine Ab Crunches",
+    category: "isolation",
+    primaryMuscles: ["abs"],
+    secondaryMuscles: [],
+    equipment: "machine",
+    difficulty: "beginner"
+  },
+  {
+    id: 228,
+    name: "Weighted Sit-Ups",
+    category: "isolation",
+    primaryMuscles: ["abs"],
+    secondaryMuscles: ["hip_flexors"],
+    equipment: "dumbbells",
+    difficulty: "intermediate"
+  },
+  {
+    id: 229,
+    name: "Medicine Ball Slams",
+    category: "compound",
+    primaryMuscles: ["core", "abs"],
+    secondaryMuscles: ["lats", "shoulders"],
+    equipment: "dumbbells",
+    difficulty: "beginner"
+  },
+  {
+    id: 230,
+    name: "Suitcase Carries",
+    category: "compound",
+    primaryMuscles: ["core", "obliques"],
+    secondaryMuscles: ["forearms", "traps"],
+    equipment: "dumbbells",
+    difficulty: "intermediate"
+  },
+
+  // ===== ADDITIONAL FOREARM EXERCISES =====
+  {
+    id: 231,
+    name: "Dumbbell Wrist Curls",
+    category: "isolation",
+    primaryMuscles: ["forearms"],
+    secondaryMuscles: [],
+    equipment: "dumbbells",
+    difficulty: "beginner"
+  },
+  {
+    id: 232,
+    name: "Dumbbell Reverse Wrist Curls",
+    category: "isolation",
+    primaryMuscles: ["forearms"],
+    secondaryMuscles: [],
+    equipment: "dumbbells",
+    difficulty: "beginner"
+  },
+  {
+    id: 233,
+    name: "Behind-the-Back Wrist Curls",
+    category: "isolation",
+    primaryMuscles: ["forearms"],
+    secondaryMuscles: [],
+    equipment: "barbell",
+    difficulty: "beginner"
+  },
+  {
+    id: 234,
+    name: "Plate Pinches",
+    category: "isolation",
+    primaryMuscles: ["forearms"],
+    secondaryMuscles: [],
+    equipment: "dumbbells",
+    difficulty: "intermediate"
+  },
+  {
+    id: 235,
+    name: "Dead Hangs",
+    category: "isolation",
+    primaryMuscles: ["forearms"],
+    secondaryMuscles: ["lats"],
+    equipment: "pull_up_bar",
+    difficulty: "beginner"
+  },
+  {
+    id: 236,
+    name: "Towel Pull-Ups",
+    category: "compound",
+    primaryMuscles: ["lats", "forearms"],
+    secondaryMuscles: ["biceps"],
+    equipment: "pull_up_bar",
+    difficulty: "advanced"
+  },
+
+  // ===== SMITH MACHINE EXERCISES =====
+  {
+    id: 237,
+    name: "Smith Machine Bench Press",
+    category: "compound",
+    primaryMuscles: ["chest"],
+    secondaryMuscles: ["triceps", "front_delts"],
+    equipment: "machine",
+    difficulty: "beginner"
+  },
+  {
+    id: 238,
+    name: "Smith Machine Incline Press",
+    category: "compound",
+    primaryMuscles: ["chest"],
+    secondaryMuscles: ["triceps", "front_delts"],
+    equipment: "machine",
+    difficulty: "beginner"
+  },
+  {
+    id: 239,
+    name: "Smith Machine Overhead Press",
+    category: "compound",
+    primaryMuscles: ["front_delts", "side_delts"],
+    secondaryMuscles: ["triceps"],
+    equipment: "machine",
+    difficulty: "beginner"
+  },
+  {
+    id: 240,
+    name: "Smith Machine Rows",
+    category: "compound",
+    primaryMuscles: ["middle_back"],
+    secondaryMuscles: ["lats", "biceps"],
+    equipment: "machine",
+    difficulty: "beginner"
+  },
+  {
+    id: 241,
+    name: "Smith Machine Lunges",
+    category: "compound",
+    primaryMuscles: ["quadriceps", "glutes"],
+    secondaryMuscles: ["hamstrings"],
+    equipment: "machine",
+    difficulty: "beginner"
+  },
+  {
+    id: 242,
+    name: "Smith Machine Hip Thrusts",
+    category: "compound",
+    primaryMuscles: ["glutes"],
+    secondaryMuscles: ["hamstrings"],
+    equipment: "machine",
+    difficulty: "beginner"
+  },
+  {
+    id: 243,
+    name: "Smith Machine Romanian Deadlifts",
+    category: "compound",
+    primaryMuscles: ["hamstrings", "glutes"],
+    secondaryMuscles: ["lower_back"],
+    equipment: "machine",
+    difficulty: "beginner"
+  },
+  {
+    id: 244,
+    name: "Smith Machine Close-Grip Bench Press",
+    category: "compound",
+    primaryMuscles: ["triceps"],
+    secondaryMuscles: ["chest"],
+    equipment: "machine",
+    difficulty: "beginner"
+  },
+
+  // ===== ADDITIONAL MACHINE EXERCISES =====
+  {
+    id: 245,
+    name: "Pec Deck Machine",
+    category: "isolation",
+    primaryMuscles: ["chest"],
+    secondaryMuscles: [],
+    equipment: "machine",
+    difficulty: "beginner"
+  },
+  {
+    id: 246,
+    name: "Chest Press Machine",
+    category: "compound",
+    primaryMuscles: ["chest"],
+    secondaryMuscles: ["triceps", "front_delts"],
+    equipment: "machine",
+    difficulty: "beginner"
+  },
+  {
+    id: 247,
+    name: "Incline Chest Press Machine",
+    category: "compound",
+    primaryMuscles: ["chest"],
+    secondaryMuscles: ["triceps", "front_delts"],
+    equipment: "machine",
+    difficulty: "beginner"
+  },
+  {
+    id: 248,
+    name: "Low Row Machine",
+    category: "compound",
+    primaryMuscles: ["lats", "middle_back"],
+    secondaryMuscles: ["biceps"],
+    equipment: "machine",
+    difficulty: "beginner"
+  },
+  {
+    id: 249,
+    name: "High Row Machine",
+    category: "compound",
+    primaryMuscles: ["lats"],
+    secondaryMuscles: ["biceps", "rear_delts"],
+    equipment: "machine",
+    difficulty: "beginner"
+  },
+  {
+    id: 250,
+    name: "Seated Row Machine",
+    category: "compound",
+    primaryMuscles: ["middle_back"],
+    secondaryMuscles: ["lats", "biceps"],
+    equipment: "machine",
+    difficulty: "beginner"
+  },
+  {
+    id: 251,
+    name: "Glute Drive Machine",
+    category: "compound",
+    primaryMuscles: ["glutes"],
+    secondaryMuscles: ["hamstrings"],
+    equipment: "machine",
+    difficulty: "beginner"
+  },
+  {
+    id: 252,
+    name: "Pendulum Hip Extension",
+    category: "isolation",
+    primaryMuscles: ["glutes"],
+    secondaryMuscles: ["hamstrings"],
+    equipment: "machine",
+    difficulty: "beginner"
+  },
+  {
+    id: 253,
+    name: "Glute Kickback Machine",
+    category: "isolation",
+    primaryMuscles: ["glutes"],
+    secondaryMuscles: [],
+    equipment: "machine",
+    difficulty: "beginner"
+  },
+
+  // ===== ADDITIONAL CABLE EXERCISES =====
+  {
+    id: 254,
+    name: "Cable Crossover",
+    category: "isolation",
+    primaryMuscles: ["chest"],
+    secondaryMuscles: ["front_delts"],
+    equipment: "cable",
+    difficulty: "beginner"
+  },
+  {
+    id: 255,
+    name: "Single-Arm Cable Fly",
+    category: "isolation",
+    primaryMuscles: ["chest"],
+    secondaryMuscles: [],
+    equipment: "cable",
+    difficulty: "beginner"
+  },
+  {
+    id: 256,
+    name: "Cable Y-Raises",
+    category: "isolation",
+    primaryMuscles: ["rear_delts", "middle_back"],
+    secondaryMuscles: [],
+    equipment: "cable",
+    difficulty: "beginner"
+  },
+  {
+    id: 257,
+    name: "Cable External Rotation",
+    category: "isolation",
+    primaryMuscles: ["rear_delts"],
+    secondaryMuscles: [],
+    equipment: "cable",
+    difficulty: "beginner"
+  },
+  {
+    id: 258,
+    name: "Cable Internal Rotation",
+    category: "isolation",
+    primaryMuscles: ["front_delts"],
+    secondaryMuscles: [],
+    equipment: "cable",
+    difficulty: "beginner"
+  },
+  {
+    id: 259,
+    name: "Cable Reverse Flyes",
+    category: "isolation",
+    primaryMuscles: ["rear_delts"],
+    secondaryMuscles: ["middle_back"],
+    equipment: "cable",
+    difficulty: "beginner"
+  },
+
+  // ===== ADDITIONAL CARDIO EXERCISES =====
+  {
+    id: 1003,
+    name: "Elliptical",
+    exerciseType: "cardio",
+    cardioFields: ["duration", "resistance"],
+    category: "cardio",
+    primaryMuscles: ["cardio"],
+    secondaryMuscles: ["quadriceps", "glutes", "hamstrings"],
+    difficulty: "beginner"
+  },
+  {
+    id: 1004,
+    name: "Stationary Bike",
+    exerciseType: "cardio",
+    cardioFields: ["duration", "resistance"],
+    category: "cardio",
+    primaryMuscles: ["cardio"],
+    secondaryMuscles: ["quadriceps", "calves", "hamstrings"],
+    difficulty: "beginner"
+  },
+  {
+    id: 1005,
+    name: "Rowing Machine",
+    exerciseType: "cardio",
+    cardioFields: ["duration", "resistance"],
+    category: "cardio",
+    primaryMuscles: ["cardio"],
+    secondaryMuscles: ["lats", "middle_back", "biceps", "quadriceps"],
+    difficulty: "intermediate"
+  },
+  {
+    id: 1006,
+    name: "Assault Bike",
+    exerciseType: "cardio",
+    cardioFields: ["duration", "resistance"],
+    category: "cardio",
+    primaryMuscles: ["cardio"],
+    secondaryMuscles: ["quadriceps", "shoulders", "core"],
+    difficulty: "intermediate"
+  },
+  {
+    id: 1007,
+    name: "Ski Erg",
+    exerciseType: "cardio",
+    cardioFields: ["duration", "resistance"],
+    category: "cardio",
+    primaryMuscles: ["cardio"],
+    secondaryMuscles: ["lats", "triceps", "core"],
+    difficulty: "intermediate"
+  },
+  {
+    id: 1008,
+    name: "Jump Rope",
+    exerciseType: "cardio",
+    cardioFields: ["duration"],
+    category: "cardio",
+    primaryMuscles: ["cardio"],
+    secondaryMuscles: ["calves", "forearms"],
+    difficulty: "beginner"
+  },
+  {
+    id: 1009,
+    name: "Running (Outdoor)",
+    exerciseType: "cardio",
+    cardioFields: ["duration", "distance"],
+    category: "cardio",
+    primaryMuscles: ["cardio"],
+    secondaryMuscles: ["quadriceps", "calves", "hamstrings", "glutes"],
+    difficulty: "beginner"
+  },
+  {
+    id: 1010,
+    name: "Sprints",
+    exerciseType: "cardio",
+    cardioFields: ["duration", "distance"],
+    category: "cardio",
+    primaryMuscles: ["cardio"],
+    secondaryMuscles: ["quadriceps", "hamstrings", "glutes", "calves"],
+    difficulty: "intermediate"
+  },
+  {
+    id: 1011,
+    name: "Box Jumps",
+    exerciseType: "cardio",
+    cardioFields: ["duration"],
+    category: "cardio",
+    primaryMuscles: ["cardio"],
+    secondaryMuscles: ["quadriceps", "glutes", "calves"],
+    difficulty: "intermediate"
+  },
+  {
+    id: 1012,
+    name: "Burpees",
+    exerciseType: "cardio",
+    cardioFields: ["duration"],
+    category: "cardio",
+    primaryMuscles: ["cardio"],
+    secondaryMuscles: ["chest", "quadriceps", "core"],
+    difficulty: "intermediate"
+  },
+  {
+    id: 1013,
+    name: "Cycling (Outdoor)",
+    exerciseType: "cardio",
+    cardioFields: ["duration", "distance"],
+    category: "cardio",
+    primaryMuscles: ["cardio"],
+    secondaryMuscles: ["quadriceps", "hamstrings", "calves", "glutes"],
+    difficulty: "beginner"
+  },
+  {
+    id: 1014,
+    name: "Swimming",
+    exerciseType: "cardio",
+    cardioFields: ["duration", "distance"],
+    category: "cardio",
+    primaryMuscles: ["cardio"],
+    secondaryMuscles: ["lats", "shoulders", "core"],
+    difficulty: "intermediate"
+  },
+  {
+    id: 1015,
+    name: "Hiking",
+    exerciseType: "cardio",
+    cardioFields: ["duration", "incline"],
+    category: "cardio",
+    primaryMuscles: ["cardio"],
+    secondaryMuscles: ["quadriceps", "glutes", "calves"],
+    difficulty: "beginner"
+  },
+  {
+    id: 1016,
+    name: "Incline Walking",
+    exerciseType: "cardio",
+    cardioFields: ["duration", "incline", "speed"],
+    category: "cardio",
+    primaryMuscles: ["cardio"],
+    secondaryMuscles: ["glutes", "hamstrings", "calves"],
+    difficulty: "beginner"
+  },
+  {
+    id: 1017,
+    name: "Spin Class",
+    exerciseType: "cardio",
+    cardioFields: ["duration"],
+    category: "cardio",
+    primaryMuscles: ["cardio"],
+    secondaryMuscles: ["quadriceps", "hamstrings", "glutes"],
+    difficulty: "intermediate"
+  },
+  {
+    id: 1018,
+    name: "HIIT",
+    exerciseType: "cardio",
+    cardioFields: ["duration"],
+    category: "cardio",
+    primaryMuscles: ["cardio"],
+    secondaryMuscles: ["core", "quadriceps"],
+    difficulty: "advanced"
+  },
+  {
+    id: 1019,
+    name: "Jumping Jacks",
+    exerciseType: "cardio",
+    cardioFields: ["duration"],
+    category: "cardio",
+    primaryMuscles: ["cardio"],
+    secondaryMuscles: ["calves", "shoulders"],
+    difficulty: "beginner"
+  },
+  {
+    id: 1020,
+    name: "High Knees",
+    exerciseType: "cardio",
+    cardioFields: ["duration"],
+    category: "cardio",
+    primaryMuscles: ["cardio"],
+    secondaryMuscles: ["hip_flexors", "quadriceps", "core"],
+    difficulty: "beginner"
   }
 ];
 
