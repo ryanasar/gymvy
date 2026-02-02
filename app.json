@@ -2,7 +2,7 @@
   "expo": {
     "name": "Gymvy",
     "slug": "gymapp",
-    "version": "1.5.0",
+    "version": "1.5.1",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "gymapp",
@@ -11,7 +11,7 @@
     "jsEngine": "jsc",
     "ios": {
       "bundleIdentifier": "com.ryanasar.gymapp",
-      "supportsTablet": true,
+      "supportsTablet": false,
       "infoPlist": {
         "NSCameraUsageDescription": "This app requires access to your camera to take photos for your workout posts.",
         "NSPhotoLibraryUsageDescription": "This app requires access to your photo library to select photos for your workout posts.",

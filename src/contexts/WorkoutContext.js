@@ -401,6 +401,7 @@ export const WorkoutProvider = ({ children }) => {
   }, [isInitialized, user?.id]);
 
   // Fetch splits from backend if none found locally after init
+  // IMPORTANT: This should restore the split WITHOUT resetting progress
   useEffect(() => {
     if (!isInitialized || activeSplit || !user?.id) return;
 
@@ -428,7 +429,17 @@ export const WorkoutProvider = ({ children }) => {
               exercises: day.exercises || [],
             })),
           };
-          changeActiveSplit(formatted);
+
+          // Restore split WITHOUT resetting progress (day/week)
+          // Progress reset should only happen when explicitly changing to a DIFFERENT split
+          setActiveSplit(formatted);
+          await storage.saveSplit(user.id, formatted);
+
+          // Restore saved progress if available (don't reset to 0)
+          const savedWeek = await AsyncStorage.getItem('currentWeek');
+          const savedDayIndex = await AsyncStorage.getItem('currentDayIndex');
+          if (savedWeek) setCurrentWeek(parseInt(savedWeek));
+          if (savedDayIndex) setCurrentDayIndex(parseInt(savedDayIndex));
         }
       } catch (error) {
         console.error('[WorkoutContext] Failed to fetch splits from backend:', error);

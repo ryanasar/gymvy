@@ -129,8 +129,8 @@ const NotificationsScreen = () => {
     setIsRefreshing(false);
   };
 
-  const getNotificationText = (type) => {
-    switch (type) {
+  const getNotificationText = (notification) => {
+    switch (notification.type) {
       case 'like':
         return 'liked your post';
       case 'comment':
@@ -152,6 +152,12 @@ const NotificationsScreen = () => {
       default:
         return 'interacted with you';
     }
+  };
+
+  // Get nudge message from notification metadata
+  const getNudgeMessage = (notification) => {
+    if (notification.type !== 'nudge') return null;
+    return notification.metadata?.nudge_message || null;
   };
 
   const getNotificationIcon = (type) => {
@@ -280,8 +286,14 @@ const NotificationsScreen = () => {
               >
                 {actorName}
               </Text>
-              {' '}{getNotificationText(item.type)}
+              {' '}{getNotificationText(item)}
             </Text>
+            {/* Show nudge message if present */}
+            {getNudgeMessage(item) && (
+              <Text style={[styles.nudgeMessage, { color: colors.secondaryText }]}>
+                "{getNudgeMessage(item)}"
+              </Text>
+            )}
             <Text style={[styles.timestamp, { color: colors.secondaryText }]}>{formatDate(item.created_at)}</Text>
 
             {/* Follow request action buttons */}
@@ -452,6 +464,11 @@ const styles = StyleSheet.create({
   },
   timestamp: {
     fontSize: 13,
+    marginTop: 4,
+  },
+  nudgeMessage: {
+    fontSize: 14,
+    fontStyle: 'italic',
     marginTop: 4,
   },
   followRequestActions: {
