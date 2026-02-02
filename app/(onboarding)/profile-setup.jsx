@@ -12,9 +12,9 @@ import {
   ScrollView,
 } from 'react-native';
 import { useRouter } from 'expo-router';
-import { useAuth } from '../auth/auth';
-import { useThemeColors } from '../hooks/useThemeColors';
-import { checkUsernameAvailability, updateUserProfile } from '../api/usersApi';
+import { useAuth } from '@/lib/auth';
+import { useThemeColors } from '@/hooks/useThemeColors';
+import { checkUsernameAvailability, updateUserProfile } from '@/services/api/users';
 import { Ionicons } from '@expo/vector-icons';
 import Animated, {
   useSharedValue,

@@ -1,0 +1,184 @@
+import React, { useState } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, Alert } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { useThemeColors } from '@/hooks/useThemeColors';
+import { Colors } from '@/constants/colors';
+import OptionsMenu from '@/components/ui/OptionsMenu';
+import ExerciseList from '@/components/ui/ExerciseList';
+
+const IndividualWorkoutCompletedCard = ({ workoutData, onPostWorkout, onUncomplete }) => {
+  const colors = useThemeColors();
+  const [showOptionsMenu, setShowOptionsMenu] = useState(false);
+
+  const exercises = workoutData?.exercises || [];
+  const workoutName = workoutData?.workoutName || 'Workout';
+  const sourceLabel = workoutData?.source === 'freestyle' ? 'Freestyle Workout' : 'Saved Workout';
+
+  const menuItems = [
+    {
+      label: 'Un-complete Workout',
+      icon: 'arrow-undo-outline',
+      color: '#EF4444',
+      onPress: () => {
+        setShowOptionsMenu(false);
+        Alert.alert(
+          'Un-complete Workout?',
+          'This will erase your workout progress and you will need to complete it again.',
+          [
+            { text: 'Cancel', style: 'cancel' },
+            {
+              text: 'Un-complete',
+              style: 'destructive',
+              onPress: onUncomplete,
+            },
+          ]
+        );
+      },
+    },
+  ];
+
+  return (
+    <View style={[
+      styles.workoutCard,
+      { backgroundColor: colors.cardBackground, shadowColor: colors.shadow, borderColor: colors.borderLight },
+      styles.workoutCardCompleted
+    ]}>
+      {/* Header */}
+      <View style={styles.workoutHeader}>
+        <View style={styles.workoutInfo}>
+          <View style={styles.workoutTitleRow}>
+            <Text style={[styles.workoutTitle, { color: colors.text }]}>{workoutName}</Text>
+            <View style={styles.headerActions}>
+              <Text style={[styles.exerciseCount, { color: colors.secondaryText }]}>
+                {exercises.length} exercise{exercises.length !== 1 ? 's' : ''}
+              </Text>
+              <TouchableOpacity
+                style={styles.optionsButton}
+                onPress={() => setShowOptionsMenu(!showOptionsMenu)}
+                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+              >
+                <Ionicons name="ellipsis-horizontal" size={20} color={colors.secondaryText} />
+              </TouchableOpacity>
+            </View>
+          </View>
+          <Text style={[styles.sourceLabel, { color: colors.primary }]}>
+            {sourceLabel}
+          </Text>
+        </View>
+      </View>
+
+      <OptionsMenu
+        visible={showOptionsMenu}
+        onClose={() => setShowOptionsMenu(false)}
+        items={menuItems}
+      />
+
+      <ExerciseList exercises={exercises} />
+
+      {/* Action Buttons */}
+      <View style={styles.actionButtons}>
+        {/* Post Workout Button */}
+        <TouchableOpacity
+          style={styles.postWorkoutButton}
+          onPress={onPostWorkout}
+          activeOpacity={0.7}
+        >
+          <View style={styles.postWorkoutContent}>
+            <Ionicons name="cloud-upload-outline" size={20} color="#FFFFFF" />
+            <Text style={styles.postWorkoutText}>Post Workout</Text>
+          </View>
+        </TouchableOpacity>
+      </View>
+    </View>
+  );
+};
+
+export default IndividualWorkoutCompletedCard;
+
+const styles = StyleSheet.create({
+  workoutCard: {
+    backgroundColor: Colors.light.cardBackground,
+    borderRadius: 16,
+    padding: 20,
+    marginBottom: 16,
+    shadowColor: Colors.light.shadow,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 12,
+    elevation: 5,
+    borderWidth: 1,
+    borderColor: Colors.light.border,
+    width: '100%',
+  },
+  workoutCardCompleted: {
+    borderColor: '#4CAF50',
+    backgroundColor: '#4CAF50' + '08',
+    shadowColor: '#4CAF50',
+    shadowOpacity: 0.15,
+  },
+  workoutHeader: {
+    marginBottom: 16,
+  },
+  workoutInfo: {
+    flex: 1,
+  },
+  workoutTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 12,
+    marginBottom: 6,
+  },
+  workoutTitle: {
+    fontSize: 22,
+    fontWeight: '700',
+    color: Colors.light.text,
+    flex: 1,
+  },
+  headerActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  exerciseCount: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: Colors.light.secondaryText,
+  },
+  optionsButton: {
+    padding: 4,
+    borderRadius: 8,
+  },
+  sourceLabel: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: Colors.light.primary,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  actionButtons: {
+    marginTop: 20,
+    gap: 10,
+  },
+  postWorkoutButton: {
+    backgroundColor: '#4CAF50',
+    paddingVertical: 16,
+    borderRadius: 12,
+    shadowColor: '#4CAF50',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  postWorkoutContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+  },
+  postWorkoutText: {
+    color: '#FFFFFF',
+    fontSize: 18,
+    fontWeight: '700',
+  },
+});

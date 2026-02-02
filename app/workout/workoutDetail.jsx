@@ -2,12 +2,30 @@ import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useState, useEffect } from 'react';
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View, Alert, ActivityIndicator } from 'react-native';
-import { useThemeColors } from '../hooks/useThemeColors';
-import { exercises } from '../data/exercises/exerciseDatabase';
-import { muscleGroups } from '../data/exercises/muscleGroups';
-import { createSavedWorkout, getSavedWorkouts, deleteSavedWorkout } from '../api/savedWorkoutsApi';
-import { getSplitById } from '../api/splitsApi';
-import { useAuth } from '../auth/auth';
+import { useThemeColors } from '@/hooks/useThemeColors';
+import { exercises as exerciseDatabaseSource } from '@/data/exercises/exerciseDatabase';
+import { muscleGroups } from '@/data/exercises/muscleGroups';
+import { createSavedWorkout, getSavedWorkouts, deleteSavedWorkout } from '@/services/api/savedWorkouts';
+import { getSplitById } from '@/services/api/splits';
+import { useAuth } from '@/lib/auth';
+
+/**
+ * Check if an exercise is a cardio exercise
+ * Looks up the exercise type from the database if not directly on the exercise object
+ */
+const isCardioExercise = (exercise) => {
+  if (exercise?.exerciseType === 'cardio') return true;
+  if (exercise?.template?.exerciseType === 'cardio') return true;
+  if (exercise?.exerciseTemplate?.exerciseType === 'cardio') return true;
+
+  // Look up in the database by id or name
+  const dbExercise = exerciseDatabaseSource.find(e =>
+    e.id === exercise?.id ||
+    e.id?.toString() === exercise?.id?.toString() ||
+    e.name === exercise?.name
+  );
+  return dbExercise?.exerciseType === 'cardio';
+};
 
 const WorkoutDetailScreen = () => {
   const router = useRouter();
@@ -18,9 +36,19 @@ const WorkoutDetailScreen = () => {
   const [savedWorkoutId, setSavedWorkoutId] = useState(null);
   const [loadingSplit, setLoadingSplit] = useState(false);
 
-  // Parse workout data from params
-  const workoutData = params.workoutData ? JSON.parse(params.workoutData) : null;
-  const splitData = params.splitData ? JSON.parse(params.splitData) : null;
+  // Safely parse workout data from params with try-catch to prevent crashes
+  let workoutData = null;
+  let splitData = null;
+  try {
+    workoutData = params.workoutData ? JSON.parse(params.workoutData) : null;
+  } catch (e) {
+    console.error('[WorkoutDetail] Failed to parse workoutData:', e);
+  }
+  try {
+    splitData = params.splitData ? JSON.parse(params.splitData) : null;
+  } catch (e) {
+    console.error('[WorkoutDetail] Failed to parse splitData:', e);
+  }
 
   // Check if this split is viewable (public and has an ID)
   const canViewFullSplit = splitData?.id && splitData?.isPublic;
@@ -30,10 +58,10 @@ const WorkoutDetailScreen = () => {
     let isMounted = true;
 
     const checkIfSaved = async () => {
-      if (!workoutData) return;
+      if (!workoutData || !user?.id) return;
 
       try {
-        const allSavedWorkouts = await getSavedWorkouts();
+        const allSavedWorkouts = await getSavedWorkouts(user.id);
 
         // If this IS a saved workout (has an id), check if it still exists
         if (workoutData.id && !splitData) {
@@ -67,7 +95,7 @@ const WorkoutDetailScreen = () => {
     return () => {
       isMounted = false;
     };
-  }, []); // Only run once on mount
+  }, [user?.id]); // Only run once on mount or when user changes
 
   // Toggle save/unsave workout
   const handleToggleSaveWorkout = async () => {
@@ -80,7 +108,7 @@ const WorkoutDetailScreen = () => {
     try {
       if (savedWorkoutId) {
         // Unsave - delete the saved workout
-        await deleteSavedWorkout(savedWorkoutId);
+        await deleteSavedWorkout(user?.id, savedWorkoutId);
         setSavedWorkoutId(null);
       } else {
         // Save the workout
@@ -105,7 +133,7 @@ const WorkoutDetailScreen = () => {
           };
         });
 
-        const savedWorkout = await createSavedWorkout({
+        const savedWorkout = await createSavedWorkout(user?.id, {
           name: workoutData.dayName || workoutData.name || 'Saved Workout',
           description: splitData?.name ? `From ${splitData.name}` : '',
           emoji: splitData?.emoji || '💪',
@@ -195,7 +223,7 @@ const WorkoutDetailScreen = () => {
 
     const muscleSet = new Set();
     workoutData.exercises.forEach(exercise => {
-      const exerciseData = exercises.find(ex =>
+      const exerciseData = exerciseDatabaseSource.find(ex =>
         ex.name.toLowerCase() === exercise.name.toLowerCase()
       );
       if (exerciseData?.primaryMuscles) {
@@ -358,9 +386,32 @@ const WorkoutDetailScreen = () => {
                   </View>
                   <Text style={[styles.exerciseName, { color: colors.text }]}>{exercise.name}</Text>
                 </View>
-                {exercise.sets && (
+                {(exercise.sets || isCardioExercise(exercise)) && (
                   <View style={styles.exerciseDetails}>
-                    {Array.isArray(exercise.sets) ? (
+                    {isCardioExercise(exercise) ? (
+                      /* Cardio exercise display */
+                      <View style={styles.templateExerciseInfo}>
+                        {Array.isArray(exercise.sets) ? (
+                          /* Completed cardio with set data */
+                          exercise.sets.map((set, setIndex) => (
+                            <View key={setIndex} style={[styles.setRow, { backgroundColor: colors.borderLight + '30' }]}>
+                              <Text style={[styles.setLabel, { color: colors.text }]}>Set {set.setNumber || setIndex + 1}</Text>
+                              <Text style={[styles.setDetails, { color: colors.secondaryText }]}>
+                                {set.duration ? `${set.duration} min` : ''}
+                                {set.incline ? ` · ${set.incline}% incline` : ''}
+                                {set.speed ? ` · speed ${set.speed}` : ''}
+                              </Text>
+                            </View>
+                          ))
+                        ) : (
+                          /* Template cardio */
+                          <Text style={[styles.exerciseDetailSummary, { color: colors.secondaryText }]}>
+                            {`${exercise.duration ? `${exercise.duration} min` : ''}${exercise.incline ? `${exercise.duration ? ' · ' : ''}${exercise.incline}% incline` : ''}${exercise.speed ? `${exercise.duration || exercise.incline ? ' · ' : ''}speed ${exercise.speed}` : ''}`}
+                          </Text>
+                        )}
+                      </View>
+                    ) : Array.isArray(exercise.sets) ? (
+                      /* Completed strength with set data */
                       <>
                         <Text style={[styles.exerciseDetailSummary, { color: colors.secondaryText }]}>
                           {exercise.sets.length} sets × {exercise.sets[0]?.reps || '-'} reps
@@ -375,6 +426,7 @@ const WorkoutDetailScreen = () => {
                         ))}
                       </>
                     ) : (
+                      /* Template strength */
                       <View style={styles.templateExerciseInfo}>
                         <Text style={[styles.exerciseDetailSummary, { color: colors.secondaryText }]}>
                           {exercise.sets} sets

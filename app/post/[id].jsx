@@ -2,10 +2,10 @@ import React, { useEffect, useState } from 'react';
 import { View, StyleSheet, ActivityIndicator, Text, TouchableOpacity, ScrollView } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { useThemeColors } from '../hooks/useThemeColors';
-import { getPostById } from '../api/postsApi';
-import { useAuth } from '../auth/auth';
-import Activity from '../components/common/Activity';
+import { useThemeColors } from '@/hooks/useThemeColors';
+import { getPostById } from '@/services/api/posts';
+import { useAuth } from '@/lib/auth';
+import Activity from '@/components/common/Activity';
 
 export default function PostDetailScreen() {
   const { id, openComments } = useLocalSearchParams();

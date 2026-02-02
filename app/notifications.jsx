@@ -11,26 +11,28 @@ import {
 import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { useThemeColors } from './hooks/useThemeColors';
-import { useNotifications } from './contexts/NotificationContext';
-import EmptyState from './components/common/EmptyState';
-import { useAuth } from './auth/auth';
-import { getUserProfile } from './api/usersApi';
+import { useThemeColors } from '@/hooks/useThemeColors';
+import { useNotifications } from '@/contexts/NotificationContext';
+import EmptyState from '@/components/common/EmptyState';
+import { useAuth } from '@/lib/auth';
+import { getUserProfile } from '@/services/api/users';
+import { acceptFollowRequest, rejectFollowRequest, getPendingFollowRequests } from '@/services/api/followRequests';
 
 const NotificationsScreen = () => {
   const colors = useThemeColors();
   const router = useRouter();
   const { user } = useAuth();
-  const { notifications, unreadCount, isLoading, refreshNotifications, markAllAsRead } = useNotifications();
+  const { notifications, isLoading, refreshNotifications, markAllAsRead } = useNotifications();
   const [actorProfiles, setActorProfiles] = useState({});
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [followRequests, setFollowRequests] = useState({});
+  const [processingRequests, setProcessingRequests] = useState({});
 
-  // Mark all as read when screen opens and there are unread notifications
+
+  // Mark all notifications as read when viewing this screen
   useEffect(() => {
-    if (unreadCount > 0) {
-      markAllAsRead();
-    }
-  }, [unreadCount, markAllAsRead]);
+    markAllAsRead();
+  }, [markAllAsRead]);
 
   // Fetch actor profiles for notifications
   useEffect(() => {
@@ -61,6 +63,66 @@ const NotificationsScreen = () => {
     }
   }, [notifications]);
 
+  // Fetch pending follow requests to map actor_id to request_id
+  useEffect(() => {
+    const fetchFollowRequests = async () => {
+      try {
+        const requests = await getPendingFollowRequests();
+        const requestsMap = {};
+        requests.forEach(req => {
+          requestsMap[req.requesterId.toString()] = req.id;
+        });
+        setFollowRequests(requestsMap);
+      } catch (error) {
+        console.error('Error fetching follow requests:', error);
+      }
+    };
+
+    // Only fetch if there are follow_request notifications
+    const hasFollowRequests = notifications.some(n => n.type === 'follow_request');
+    if (hasFollowRequests) {
+      fetchFollowRequests();
+    }
+  }, [notifications]);
+
+  const handleAcceptFollowRequest = async (actorId) => {
+    const requestId = followRequests[actorId];
+    if (!requestId) {
+      console.error('Follow request not found for actor:', actorId);
+      return;
+    }
+
+    setProcessingRequests(prev => ({ ...prev, [actorId]: 'accepting' }));
+    try {
+      await acceptFollowRequest(requestId);
+      // Refresh notifications to update the list
+      await refreshNotifications();
+    } catch (error) {
+      console.error('Error accepting follow request:', error);
+    } finally {
+      setProcessingRequests(prev => ({ ...prev, [actorId]: null }));
+    }
+  };
+
+  const handleRejectFollowRequest = async (actorId) => {
+    const requestId = followRequests[actorId];
+    if (!requestId) {
+      console.error('Follow request not found for actor:', actorId);
+      return;
+    }
+
+    setProcessingRequests(prev => ({ ...prev, [actorId]: 'rejecting' }));
+    try {
+      await rejectFollowRequest(requestId);
+      // Refresh notifications to update the list
+      await refreshNotifications();
+    } catch (error) {
+      console.error('Error rejecting follow request:', error);
+    } finally {
+      setProcessingRequests(prev => ({ ...prev, [actorId]: null }));
+    }
+  };
+
   const handleRefresh = async () => {
     setIsRefreshing(true);
     await refreshNotifications();
@@ -79,6 +141,14 @@ const NotificationsScreen = () => {
         return 'tagged you in a post';
       case 'comment_like':
         return 'liked your comment';
+      case 'reply':
+        return 'replied to your comment';
+      case 'follow_request':
+        return 'requested to follow you';
+      case 'follow_request_accepted':
+        return 'accepted your follow request';
+      case 'nudge':
+        return 'sent you a nudge';
       default:
         return 'interacted with you';
     }
@@ -96,6 +166,14 @@ const NotificationsScreen = () => {
         return { name: 'pricetag', color: colors.primary };
       case 'comment_like':
         return { name: 'heart', color: colors.error };
+      case 'reply':
+        return { name: 'chatbubble-outline', color: colors.primary };
+      case 'follow_request':
+        return { name: 'person-add-outline', color: colors.accent };
+      case 'follow_request_accepted':
+        return { name: 'checkmark-circle', color: colors.success || '#10B981' };
+      case 'nudge':
+        return { name: 'barbell-outline', color: colors.accent };
       default:
         return { name: 'notifications', color: colors.secondaryText };
     }
@@ -131,18 +209,18 @@ const NotificationsScreen = () => {
   };
 
   const handleNotificationPress = (notification) => {
-    // For follow notifications, go to profile
-    if (notification.type === 'follow') {
+    // For follow, follow request, and nudge notifications, go to profile
+    if (notification.type === 'follow' || notification.type === 'follow_request' || notification.type === 'follow_request_accepted' || notification.type === 'nudge') {
       handleProfilePress(notification);
       return;
     }
 
-    // For like/comment/tag/comment_like notifications, go to the post
-    if ((notification.type === 'like' || notification.type === 'comment' || notification.type === 'tag' || notification.type === 'comment_like') && notification.post_id) {
+    // For like/comment/tag/comment_like/reply notifications, go to the post
+    if ((notification.type === 'like' || notification.type === 'comment' || notification.type === 'tag' || notification.type === 'comment_like' || notification.type === 'reply') && notification.post_id) {
       router.push({
         pathname: `/post/${notification.post_id}`,
         params: {
-          openComments: (notification.type === 'comment' || notification.type === 'comment_like') ? 'true' : 'false'
+          openComments: (notification.type === 'comment' || notification.type === 'comment_like' || notification.type === 'reply') ? 'true' : 'false'
         }
       });
     }
@@ -153,6 +231,8 @@ const NotificationsScreen = () => {
     const actorName = actorProfile?.user?.name || actorProfile?.user?.username || 'Someone';
     const avatarUrl = actorProfile?.avatarUrl;
     const icon = getNotificationIcon(item.type);
+    const isFollowRequest = item.type === 'follow_request';
+    const isProcessing = processingRequests[item.actor_id];
 
     return (
       <TouchableOpacity
@@ -203,6 +283,34 @@ const NotificationsScreen = () => {
               {' '}{getNotificationText(item.type)}
             </Text>
             <Text style={[styles.timestamp, { color: colors.secondaryText }]}>{formatDate(item.created_at)}</Text>
+
+            {/* Follow request action buttons */}
+            {isFollowRequest && followRequests[item.actor_id] && (
+              <View style={styles.followRequestActions}>
+                <TouchableOpacity
+                  style={[styles.acceptButton, { backgroundColor: colors.primary }]}
+                  onPress={() => handleAcceptFollowRequest(item.actor_id)}
+                  disabled={!!isProcessing}
+                >
+                  {isProcessing === 'accepting' ? (
+                    <ActivityIndicator size="small" color={colors.onPrimary} />
+                  ) : (
+                    <Text style={[styles.acceptButtonText, { color: colors.onPrimary }]}>Accept</Text>
+                  )}
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.rejectButton, { borderColor: colors.border }]}
+                  onPress={() => handleRejectFollowRequest(item.actor_id)}
+                  disabled={!!isProcessing}
+                >
+                  {isProcessing === 'rejecting' ? (
+                    <ActivityIndicator size="small" color={colors.text} />
+                  ) : (
+                    <Text style={[styles.rejectButtonText, { color: colors.text }]}>Reject</Text>
+                  )}
+                </TouchableOpacity>
+              </View>
+            )}
           </View>
         </View>
       </TouchableOpacity>
@@ -345,5 +453,33 @@ const styles = StyleSheet.create({
   timestamp: {
     fontSize: 13,
     marginTop: 4,
+  },
+  followRequestActions: {
+    flexDirection: 'row',
+    marginTop: 10,
+    gap: 10,
+  },
+  acceptButton: {
+    paddingVertical: 8,
+    paddingHorizontal: 20,
+    borderRadius: 8,
+    minWidth: 80,
+    alignItems: 'center',
+  },
+  acceptButtonText: {
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  rejectButton: {
+    paddingVertical: 8,
+    paddingHorizontal: 20,
+    borderRadius: 8,
+    borderWidth: 1.5,
+    minWidth: 80,
+    alignItems: 'center',
+  },
+  rejectButtonText: {
+    fontSize: 14,
+    fontWeight: '600',
   },
 });

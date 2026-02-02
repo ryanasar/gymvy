@@ -1,18 +1,18 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useEffect, useRef, useState } from 'react';
 import { Alert, RefreshControl, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { deleteSplit, getSplitsByUserId } from '../api/splitsApi';
-import { useAuth } from '../auth/auth';
-import ChangeSplitModal from '../components/program/ChangeSplitModal';
-import SplitCard from '../components/program/SplitCard';
-import SavedWorkoutsTab from '../components/program/SavedWorkoutsTab';
-import ScreenHeader from '../components/ui/ScreenHeader';
-import TabBar from '../components/ui/TabBar';
-import { Colors } from '../constants/colors';
-import { useSync } from '../contexts/SyncContext';
-import { useWorkout } from '../contexts/WorkoutContext';
-import { clearLocalSplit } from '../utils/clearLocalSplit';
-import { useThemeColors } from '../hooks/useThemeColors';
+import { deleteSplit, getSplitsByUserId } from '@/services/api/splits';
+import { useAuth } from '@/lib/auth';
+import ChangeSplitModal from '@/components/program/ChangeSplitModal';
+import SplitCard from '@/components/program/SplitCard';
+import SavedWorkoutsTab from '@/components/program/SavedWorkoutsTab';
+import ScreenHeader from '@/components/ui/ScreenHeader';
+import TabBar from '@/components/ui/TabBar';
+import { Colors } from '@/constants/colors';
+import { useSync } from '@/contexts/SyncContext';
+import { useWorkout } from '@/contexts/WorkoutContext';
+import { clearLocalSplit } from '@/utils/clearLocalSplit';
+import { useThemeColors } from '@/hooks/useThemeColors';
 
 const ProgramScreen = () => {
   const colors = useThemeColors();
@@ -283,7 +283,7 @@ const ProgramScreen = () => {
   // Helper to clear local split data
   const clearLocalSplitData = async () => {
     try {
-      await clearLocalSplit();
+      await clearLocalSplit(user?.id);
       console.log('[Program] Cleared local split data');
     } catch (error) {
       console.error('[Program] Error clearing local split:', error);

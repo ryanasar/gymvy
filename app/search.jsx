@@ -2,11 +2,11 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TextInput, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import { searchUsers } from './api/usersApi';
-import { useAuth } from './auth/auth';
-import EmptyState from './components/common/EmptyState';
-import { useThemeColors } from './hooks/useThemeColors';
-import Avatar from './components/ui/Avatar';
+import { searchUsers } from '@/services/api/users';
+import { useAuth } from '@/lib/auth';
+import EmptyState from '@/components/common/EmptyState';
+import { useThemeColors } from '@/hooks/useThemeColors';
+import Avatar from '@/components/ui/Avatar';
 
 export default function SearchScreen() {
   const colors = useThemeColors();
@@ -24,9 +24,10 @@ export default function SearchScreen() {
         setIsSearching(true);
         try {
           const results = await searchUsers(searchQuery, user?.id);
-          setSearchResults(results);
+          setSearchResults(results || []);
         } catch (error) {
           console.error('Search error:', error);
+          setSearchResults([]);
         } finally {
           setIsSearching(false);
         }

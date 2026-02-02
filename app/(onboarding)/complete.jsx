@@ -9,9 +9,9 @@ import {
   Dimensions,
 } from 'react-native';
 import { useRouter } from 'expo-router';
-import { useAuth } from '../auth/auth';
-import { useThemeColors } from '../hooks/useThemeColors';
-import { completeUserOnboarding } from '../api/usersApi';
+import { useAuth } from '@/lib/auth';
+import { useThemeColors } from '@/hooks/useThemeColors';
+import { completeUserOnboarding } from '@/services/api/users';
 import { Ionicons } from '@expo/vector-icons';
 import Animated, {
   useSharedValue,

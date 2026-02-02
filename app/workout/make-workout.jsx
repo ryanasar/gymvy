@@ -8,17 +8,22 @@ import {
   StyleSheet,
   Alert,
   ActivityIndicator,
-  FlatList,
-  Modal
+  FlatList
 } from 'react-native';
-import { Image } from 'expo-image';
 import { router } from 'expo-router';
-import { Colors } from '../constants/colors';
-import { getAllExerciseTemplates } from '../api/exerciseTemplatesApi';
-import { createWorkout } from '../api/workoutsApi';
-import { createExercise } from '../api/exercisesApi';
-import { getAllMuscles } from '../api/musclesApi';
-import { useAuth } from '../auth/auth';
+import { Colors } from '@/constants/colors';
+import { getAllExerciseTemplates } from '@/services/api/exerciseTemplates';
+import { createWorkout } from '@/services/api/workouts';
+import { createExercise } from '@/services/api/exercises';
+import { useAuth } from '@/lib/auth';
+import ExercisePickerScreen from '@/components/exercises/ExercisePickerScreen';
+
+/**
+ * Check if an exercise is a cardio exercise
+ */
+const isCardioExercise = (exercise) => {
+  return exercise?.exerciseType === 'cardio';
+};
 
 const MakeWorkoutScreen = () => {
   const { user, refreshWorkouts } = useAuth();
@@ -26,10 +31,6 @@ const MakeWorkoutScreen = () => {
   const [workoutNotes, setWorkoutNotes] = useState('');
   const [selectedExercises, setSelectedExercises] = useState([]);
   const [availableExerciseTemplates, setAvailableExerciseTemplates] = useState([]);
-  const [filteredExerciseTemplates, setFilteredExerciseTemplates] = useState([]);
-  const [allMuscles, setAllMuscles] = useState([]);
-  const [selectedEquipment, setSelectedEquipment] = useState([]);
-  const [selectedMuscles, setSelectedMuscles] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showExerciseModal, setShowExerciseModal] = useState(false);
   const [creating, setCreating] = useState(false);
@@ -40,13 +41,8 @@ const MakeWorkoutScreen = () => {
 
   const loadExercises = async () => {
     try {
-      const [templates, muscles] = await Promise.all([
-        getAllExerciseTemplates(),
-        getAllMuscles()
-      ]);
+      const templates = await getAllExerciseTemplates();
       setAvailableExerciseTemplates(templates);
-      setFilteredExerciseTemplates(templates);
-      setAllMuscles(muscles);
     } catch (_error) {
       Alert.alert('Error', 'Failed to load exercise templates');
     } finally {
@@ -54,7 +50,8 @@ const MakeWorkoutScreen = () => {
     }
   };
 
-  const addExercise = (template) => {
+  const addExercise = (template, config) => {
+    const isCardio = template.exerciseType === 'cardio';
     const newExercise = {
       id: Date.now(),
       exerciseTemplateId: template.id,
@@ -63,12 +60,18 @@ const MakeWorkoutScreen = () => {
       equipment: template.equipment,
       difficulty: template.difficulty,
       muscles: template.muscles,
-      reps: '',
-      weight: '',
-      sets: 1
+      exerciseType: template.exerciseType || 'strength',
+      cardioFields: template.cardioFields,
+      // Strength fields
+      reps: isCardio ? '' : (config?.reps?.toString() || ''),
+      weight: isCardio ? '' : (config?.weight || ''),
+      sets: isCardio ? 1 : (config?.sets || 1),
+      // Cardio fields
+      duration: isCardio ? (config?.duration?.toString() || '') : '',
+      incline: isCardio ? (config?.incline?.toString() || '') : '',
+      speed: isCardio ? (config?.speed?.toString() || '') : ''
     };
     setSelectedExercises([...selectedExercises, newExercise]);
-    setShowExerciseModal(false);
   };
 
   const removeExercise = (id) => {
@@ -80,48 +83,6 @@ const MakeWorkoutScreen = () => {
       ex.id === id ? { ...ex, [field]: value } : ex
     ));
   };
-
-  const filterExercises = () => {
-    let filtered = availableExerciseTemplates;
-
-    if (selectedEquipment.length > 0) {
-      filtered = filtered.filter(template =>
-        template.equipment && selectedEquipment.some(equip =>
-          template.equipment.toLowerCase().includes(equip.toLowerCase())
-        )
-      );
-    }
-
-    if (selectedMuscles.length > 0) {
-      filtered = filtered.filter(template =>
-        template.muscles && template.muscles.some(muscleTemplate =>
-          selectedMuscles.includes(muscleTemplate.muscle?.id || muscleTemplate.muscleId)
-        )
-      );
-    }
-
-    setFilteredExerciseTemplates(filtered);
-  };
-
-  const clearFilters = () => {
-    setSelectedEquipment([]);
-    setSelectedMuscles([]);
-    setFilteredExerciseTemplates(availableExerciseTemplates);
-  };
-
-  const getUniqueEquipment = () => {
-    const equipment = new Set();
-    availableExerciseTemplates.forEach(template => {
-      if (template.equipment) {
-        equipment.add(template.equipment);
-      }
-    });
-    return Array.from(equipment).sort();
-  };
-
-  useEffect(() => {
-    filterExercises();
-  }, [selectedEquipment, selectedMuscles, availableExerciseTemplates]);
 
   const handleCreateWorkout = async () => {
     if (!workoutName.trim()) {
@@ -181,110 +142,111 @@ const MakeWorkoutScreen = () => {
     }
   };
 
-  const renderExerciseItem = ({ item }) => (
-    <View style={styles.exerciseItem}>
-      <View style={styles.exerciseHeader}>
-        <View style={styles.exerciseNameContainer}>
-          <Text style={styles.exerciseName}>{item.name}</Text>
-          {item.difficulty && (
-            <View style={[styles.difficultyBadgeSmall, { backgroundColor: getDifficultyColor(item.difficulty) }]}>
-              <Text style={styles.difficultyTextSmall}>{item.difficulty}</Text>
-            </View>
-          )}
-        </View>
-        <TouchableOpacity
-          onPress={() => removeExercise(item.id)}
-          style={styles.removeButton}
-        >
-          <Text style={styles.removeButtonText}>×</Text>
-        </TouchableOpacity>
-      </View>
+  const renderExerciseItem = ({ item }) => {
+    const isCardio = isCardioExercise(item);
+    const cardioFields = item.cardioFields || ['duration', 'incline'];
 
-      <View style={styles.exerciseInputs}>
-        <View style={styles.inputGroup}>
-          <Text style={styles.inputLabel}>Sets</Text>
-          <TextInput
-            style={styles.setsInput}
-            value={item.sets.toString()}
-            onChangeText={(value) => updateExercise(item.id, 'sets', parseInt(value) || 1)}
-            keyboardType="numeric"
-            placeholder="1"
-          />
-        </View>
-
-        <View style={styles.inputGroup}>
-          <Text style={styles.inputLabel}>Reps (optional)</Text>
-          <TextInput
-            style={styles.input}
-            value={item.reps}
-            onChangeText={(value) => updateExercise(item.id, 'reps', value)}
-            keyboardType="numeric"
-            placeholder="12"
-          />
-        </View>
-
-        <View style={styles.inputGroup}>
-          <Text style={styles.inputLabel}>Weight (optional)</Text>
-          <TextInput
-            style={styles.input}
-            value={item.weight}
-            onChangeText={(value) => updateExercise(item.id, 'weight', value)}
-            keyboardType="numeric"
-            placeholder="45"
-          />
-        </View>
-      </View>
-    </View>
-  );
-
-  const renderAvailableExercise = ({ item }) => (
-    <View style={styles.gridItemWrapper}>
-      <TouchableOpacity
-        style={styles.availableExerciseItem}
-        onPress={() => addExercise(item)}
-      >
-        {item.image && (
-          <Image
-            source={{ uri: item.image }}
-            style={styles.exerciseImage}
-            contentFit="cover"
-            transition={200}
-            cachePolicy="memory-disk"
-          />
-        )}
-
-        <View style={styles.exerciseContent}>
-          <View style={styles.exerciseTemplateHeader}>
-            <Text style={styles.availableExerciseName} numberOfLines={2}>{item.name}</Text>
+    return (
+      <View style={styles.exerciseItem}>
+        <View style={styles.exerciseHeader}>
+          <View style={styles.exerciseNameContainer}>
+            <Text style={styles.exerciseName}>{item.name}</Text>
             {item.difficulty && (
               <View style={[styles.difficultyBadgeSmall, { backgroundColor: getDifficultyColor(item.difficulty) }]}>
                 <Text style={styles.difficultyTextSmall}>{item.difficulty}</Text>
               </View>
             )}
           </View>
+          <TouchableOpacity
+            onPress={() => removeExercise(item.id)}
+            style={styles.removeButton}
+          >
+            <Text style={styles.removeButtonText}>×</Text>
+          </TouchableOpacity>
+        </View>
 
-          {item.equipment && (
-            <Text style={styles.exerciseMeta} numberOfLines={1}>{item.equipment}</Text>
-          )}
-
-          {item.muscles && item.muscles.length > 0 && (
-            <View style={styles.musclesContainer}>
-              <View style={styles.musclesList}>
-                {item.muscles.slice(0, 2).map((muscleTemplate, index) => (
-                  <Text key={index} style={styles.muscleTagSmall} numberOfLines={1}>
-                    {muscleTemplate.muscle?.name || muscleTemplate.name}{index < Math.min(item.muscles.length, 2) - 1 ? ', ' : ''}
-                  </Text>
-                ))}
-                {item.muscles.length > 2 && (
-                  <Text style={styles.muscleTagSmall}>+{item.muscles.length - 2}</Text>
-                )}
+        <View style={styles.exerciseInputs}>
+          {isCardio ? (
+            /* Cardio inputs */
+            <>
+              <View style={styles.inputGroup}>
+                <Text style={styles.inputLabel}>Duration (min)</Text>
+                <TextInput
+                  style={styles.input}
+                  value={item.duration}
+                  onChangeText={(value) => updateExercise(item.id, 'duration', value)}
+                  keyboardType="numeric"
+                  placeholder="30"
+                />
               </View>
-            </View>
+
+              {cardioFields.includes('incline') && (
+                <View style={styles.inputGroup}>
+                  <Text style={styles.inputLabel}>Incline (%)</Text>
+                  <TextInput
+                    style={styles.input}
+                    value={item.incline}
+                    onChangeText={(value) => updateExercise(item.id, 'incline', value)}
+                    keyboardType="numeric"
+                    placeholder="5"
+                  />
+                </View>
+              )}
+
+              {cardioFields.includes('speed') && (
+                <View style={styles.inputGroup}>
+                  <Text style={styles.inputLabel}>Speed</Text>
+                  <TextInput
+                    style={styles.input}
+                    value={item.speed}
+                    onChangeText={(value) => updateExercise(item.id, 'speed', value)}
+                    keyboardType="numeric"
+                    placeholder="6"
+                  />
+                </View>
+              )}
+            </>
+          ) : (
+            /* Strength inputs */
+            <>
+              <View style={styles.inputGroup}>
+                <Text style={styles.inputLabel}>Sets</Text>
+                <TextInput
+                  style={styles.setsInput}
+                  value={item.sets.toString()}
+                  onChangeText={(value) => updateExercise(item.id, 'sets', parseInt(value) || 1)}
+                  keyboardType="numeric"
+                  placeholder="1"
+                />
+              </View>
+
+              <View style={styles.inputGroup}>
+                <Text style={styles.inputLabel}>Reps (optional)</Text>
+                <TextInput
+                  style={styles.input}
+                  value={item.reps}
+                  onChangeText={(value) => updateExercise(item.id, 'reps', value)}
+                  keyboardType="numeric"
+                  placeholder="12"
+                />
+              </View>
+
+              <View style={styles.inputGroup}>
+                <Text style={styles.inputLabel}>Weight (optional)</Text>
+                <TextInput
+                  style={styles.input}
+                  value={item.weight}
+                  onChangeText={(value) => updateExercise(item.id, 'weight', value)}
+                  keyboardType="numeric"
+                  placeholder="45"
+                />
+              </View>
+            </>
           )}
         </View>
-      </TouchableOpacity>
-    </View>
-  );
+      </View>
+    );
+  };
 
   if (loading) {
     return (
@@ -366,102 +328,12 @@ const MakeWorkoutScreen = () => {
         </TouchableOpacity>
       </View>
 
-      <Modal
+      <ExercisePickerScreen
         visible={showExerciseModal}
-        animationType="slide"
-        presentationStyle="pageSheet"
-      >
-        <View style={styles.modalContainer}>
-          <View style={styles.modalHeader}>
-            <Text style={styles.modalTitle}>Select Exercise</Text>
-            <TouchableOpacity
-              onPress={() => setShowExerciseModal(false)}
-              style={styles.closeButton}
-            >
-              <Text style={styles.closeButtonText}>×</Text>
-            </TouchableOpacity>
-          </View>
-
-          <View style={styles.filtersContainer}>
-            <View style={styles.filterHeader}>
-              <Text style={styles.filterTitle}>Filter Exercises</Text>
-              {(selectedEquipment.length > 0 || selectedMuscles.length > 0) && (
-                <TouchableOpacity style={styles.clearFiltersButton} onPress={clearFilters}>
-                  <Text style={styles.clearFiltersText}>Clear All</Text>
-                </TouchableOpacity>
-              )}
-            </View>
-
-            <View style={styles.filterSection}>
-              <Text style={styles.filterSectionTitle}>Equipment</Text>
-              <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.chipScrollView}>
-                <View style={styles.chipContainer}>
-                  {getUniqueEquipment().map((equipment, index) => (
-                    <TouchableOpacity
-                      key={index}
-                      style={[
-                        styles.filterChip,
-                        selectedEquipment.includes(equipment) && styles.filterChipActive
-                      ]}
-                      onPress={() => {
-                        if (selectedEquipment.includes(equipment)) {
-                          setSelectedEquipment(selectedEquipment.filter(equip => equip !== equipment));
-                        } else {
-                          setSelectedEquipment([...selectedEquipment, equipment]);
-                        }
-                      }}
-                    >
-                      <Text style={[
-                        styles.filterChipText,
-                        selectedEquipment.includes(equipment) && styles.filterChipTextActive
-                      ]}>{equipment}</Text>
-                    </TouchableOpacity>
-                  ))}
-                </View>
-              </ScrollView>
-            </View>
-
-            <View style={styles.filterSection}>
-              <Text style={styles.filterSectionTitle}>Muscles</Text>
-              <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.chipScrollView}>
-                <View style={styles.chipContainer}>
-                  {allMuscles.map((muscle) => (
-                    <TouchableOpacity
-                      key={muscle.id}
-                      style={[
-                        styles.filterChip,
-                        selectedMuscles.includes(muscle.id) && styles.filterChipActive
-                      ]}
-                      onPress={() => {
-                        if (selectedMuscles.includes(muscle.id)) {
-                          setSelectedMuscles(selectedMuscles.filter(id => id !== muscle.id));
-                        } else {
-                          setSelectedMuscles([...selectedMuscles, muscle.id]);
-                        }
-                      }}
-                    >
-                      <Text style={[
-                        styles.filterChipText,
-                        selectedMuscles.includes(muscle.id) && styles.filterChipTextActive
-                      ]}>{muscle.name}</Text>
-                    </TouchableOpacity>
-                  ))}
-                </View>
-              </ScrollView>
-            </View>
-          </View>
-
-          <FlatList
-            data={filteredExerciseTemplates}
-            keyExtractor={(item) => item.id.toString()}
-            renderItem={renderAvailableExercise}
-            style={styles.exercisesList}
-            numColumns={2}
-            columnWrapperStyle={styles.gridRow}
-            ItemSeparatorComponent={() => <View style={styles.gridSeparator} />}
-          />
-        </View>
-      </Modal>
+        onClose={() => setShowExerciseModal(false)}
+        onAddExercise={addExercise}
+        exercises={availableExerciseTemplates}
+      />
     </View>
   );
 };
@@ -657,220 +529,22 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: Colors.light.secondaryText,
   },
-  modalContainer: {
-    flex: 1,
-    backgroundColor: Colors.light.background,
-  },
-  modalHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingTop: 60,
-    paddingBottom: 16,
-    backgroundColor: Colors.light.cardBackground,
-    shadowColor: Colors.light.shadow,
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
-    elevation: 1,
-  },
-  modalTitle: {
-    fontSize: 20,
-    fontWeight: '700',
-    color: Colors.light.text,
-  },
-  closeButton: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: Colors.light.borderLight,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  closeButtonText: {
-    fontSize: 20,
-    color: Colors.light.text,
-    fontWeight: 'bold',
-  },
-  exercisesList: {
-    flex: 1,
-    paddingHorizontal: 20,
-  },
-  availableExerciseItem: {
-    backgroundColor: Colors.light.cardBackground,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: Colors.light.borderLight,
-    overflow: 'hidden',
-  },
-  availableExerciseName: {
-    fontSize: 14,
-    color: Colors.light.text,
-    fontWeight: '600',
-    flex: 1,
-  },
-  exerciseTemplateHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 8,
-  },
   exerciseNameContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     flex: 1,
     gap: 8,
   },
-  difficultyBadge: {
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 12,
-  },
   difficultyBadgeSmall: {
     paddingHorizontal: 6,
     paddingVertical: 2,
     borderRadius: 8,
-  },
-  difficultyText: {
-    color: 'white',
-    fontSize: 12,
-    fontWeight: '600',
-    textTransform: 'capitalize',
   },
   difficultyTextSmall: {
     color: 'white',
     fontSize: 10,
     fontWeight: '600',
     textTransform: 'capitalize',
-  },
-  exerciseDescription: {
-    fontSize: 14,
-    color: Colors.light.secondaryText,
-    marginBottom: 8,
-    lineHeight: 20,
-  },
-  exerciseMetaRow: {
-    marginBottom: 8,
-  },
-  exerciseMeta: {
-    fontSize: 13,
-    color: Colors.light.secondaryText,
-    fontStyle: 'italic',
-  },
-  musclesContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    flexWrap: 'wrap',
-  },
-  musclesLabel: {
-    fontSize: 13,
-    color: Colors.light.secondaryText,
-    fontWeight: '500',
-  },
-  musclesList: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    flex: 1,
-  },
-  muscleTag: {
-    fontSize: 12,
-    color: Colors.light.primary,
-    fontWeight: '500',
-  },
-  // Filter styles
-  filtersContainer: {
-    backgroundColor: Colors.light.cardBackground,
-    borderBottomWidth: 1,
-    borderBottomColor: Colors.light.borderLight,
-    paddingVertical: 16,
-    paddingHorizontal: 20,
-  },
-  filterHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 16,
-  },
-  filterTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: Colors.light.text,
-  },
-  clearFiltersButton: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 6,
-    backgroundColor: Colors.light.error,
-  },
-  clearFiltersText: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: 'white',
-  },
-  filterSection: {
-    marginBottom: 16,
-  },
-  filterSectionTitle: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: Colors.light.text,
-    marginBottom: 8,
-  },
-  chipScrollView: {
-    flexGrow: 0,
-  },
-  chipContainer: {
-    flexDirection: 'row',
-    gap: 8,
-    paddingRight: 20,
-  },
-  filterChip: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 16,
-    backgroundColor: Colors.light.background,
-    borderWidth: 1,
-    borderColor: Colors.light.borderLight,
-  },
-  filterChipActive: {
-    backgroundColor: Colors.light.primary,
-    borderColor: Colors.light.primary,
-  },
-  filterChipText: {
-    fontSize: 12,
-    fontWeight: '500',
-    color: Colors.light.secondaryText,
-  },
-  filterChipTextActive: {
-    color: 'white',
-  },
-  // Grid styles
-  gridItemWrapper: {
-    flex: 1,
-    paddingHorizontal: 4,
-  },
-  gridRow: {
-    paddingHorizontal: 16,
-    justifyContent: 'space-between',
-  },
-  gridSeparator: {
-    height: 8,
-  },
-  exerciseImage: {
-    width: '100%',
-    height: 100,
-    borderTopLeftRadius: 12,
-    borderTopRightRadius: 12,
-    backgroundColor: Colors.light.background,
-  },
-  exerciseContent: {
-    padding: 12,
-  },
-  muscleTagSmall: {
-    fontSize: 10,
-    color: Colors.light.primary,
-    fontWeight: '500',
   },
 });
 

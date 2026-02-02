@@ -4,7 +4,7 @@ import {
   GOOGLE_CLIENT_SECRET,
   GOOGLE_REDIRECT_URI,
   JWT_SECRET,
-} from "@/constants";
+} from "@/constants/config";
 import * as jose from "jose";
 
 console.log("[Auth] POST handler called");

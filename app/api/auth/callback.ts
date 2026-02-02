@@ -1,4 +1,4 @@
-import { APP_SCHEME, FRONTENT_REDIRECT_URL } from "@/constants";
+import { APP_SCHEME, FRONTENT_REDIRECT_URL } from "@/constants/config";
 
 export async function GET(request: Request) {
   const incomingParams = new URLSearchParams(request.url.split("?")[1]);

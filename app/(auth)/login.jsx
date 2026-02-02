@@ -12,11 +12,11 @@ import {
   useColorScheme
 } from 'react-native';
 import { Image } from 'expo-image';
-import { useAuth } from '../auth/auth';
-import { useNetwork } from '../contexts/NetworkContext';
-import { supabase } from '../../supabase';
+import { useAuth } from '@/lib/auth';
+import { useNetwork } from '@/contexts/NetworkContext';
+import { supabase } from '@/lib/supabase';
 import { useRouter } from 'expo-router';
-import { useThemeColors } from '../hooks/useThemeColors';
+import { useThemeColors } from '@/hooks/useThemeColors';
 
 export default function LoginScreen() {
   const colorScheme = useColorScheme();

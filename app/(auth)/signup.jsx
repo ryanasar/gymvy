@@ -10,10 +10,10 @@ import {
   Platform,
   ScrollView
 } from 'react-native';
-import { supabase } from '../../supabase';
+import { supabase } from '@/lib/supabase';
 import { useRouter } from 'expo-router';
-import { useThemeColors } from '../hooks/useThemeColors';
-import { useNetwork } from '../contexts/NetworkContext';
+import { useThemeColors } from '@/hooks/useThemeColors';
+import { useNetwork } from '@/contexts/NetworkContext';
 
 export default function SignUpScreen() {
   const colors = useThemeColors();

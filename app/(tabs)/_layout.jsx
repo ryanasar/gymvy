@@ -1,15 +1,17 @@
 import { Tabs, useRouter } from "expo-router";
 import { useColorScheme, View, Text, StyleSheet } from "react-native";
 import { useEffect, useState } from "react";
-import { Colors } from '../constants/colors'
+import { Colors } from '@/constants/colors'
 import { Ionicons } from '@expo/vector-icons';
-import { useNotifications } from '../contexts/NotificationContext';
-import { getActiveWorkout } from '../../storage';
+import { useNotifications } from '@/contexts/NotificationContext';
+import { useAuth } from '@/lib/auth';
+import { getActiveWorkout } from '@/services/storage';
 
 export default function TabsLayout() {
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
   const { unreadCount } = useNotifications();
+  const { user } = useAuth();
   const router = useRouter();
   const [hasActiveWorkout, setHasActiveWorkout] = useState(false);
   const [checked, setChecked] = useState(false);
@@ -18,7 +20,7 @@ export default function TabsLayout() {
   useEffect(() => {
     const checkActiveWorkout = async () => {
       try {
-        const activeWorkout = await getActiveWorkout();
+        const activeWorkout = await getActiveWorkout(user?.id);
         setHasActiveWorkout(!!activeWorkout);
       } catch (error) {
         console.error('Error checking active workout:', error);
@@ -26,8 +28,8 @@ export default function TabsLayout() {
         setChecked(true);
       }
     };
-    checkActiveWorkout();
-  }, []);
+    if (user?.id) checkActiveWorkout();
+  }, [user?.id]);
 
   // Navigate to workout tab if there's an active workout
   useEffect(() => {

@@ -3,14 +3,14 @@ import { View, Text, StyleSheet, FlatList, ActivityIndicator, RefreshControl, To
 import { useFocusEffect, useScrollToTop } from '@react-navigation/native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { useAuth } from '../auth/auth';
-import { useSync } from '../contexts/SyncContext';
-import { useNotifications } from '../contexts/NotificationContext';
-import { getFollowingPosts } from '../api/postsApi';
-import Activity from '../components/common/Activity';
-import EmptyState from '../components/common/EmptyState';
-import { useThemeColors } from '../hooks/useThemeColors';
-import LoadingSpinner from '../components/ui/LoadingSpinner';
+import { useAuth } from '@/lib/auth';
+import { useSync } from '@/contexts/SyncContext';
+import { useNotifications } from '@/contexts/NotificationContext';
+import { getFollowingPosts } from '@/services/api/posts';
+import Activity from '@/components/common/Activity';
+import EmptyState from '@/components/common/EmptyState';
+import { useThemeColors } from '@/hooks/useThemeColors';
+import LoadingSpinner from '@/components/ui/LoadingSpinner';
 
 export default function HomeScreen() {
   const colors = useThemeColors();

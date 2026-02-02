@@ -1,6 +1,6 @@
 import { createClient } from "@supabase/supabase-js";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { SUPABASE_URL, SUPABASE_ANON_KEY } from "./constants";
+import { SUPABASE_URL, SUPABASE_ANON_KEY } from "./src/constants/config";
 
 // AsyncStorage adapter for Supabase auth storage
 // Note: Using AsyncStorage instead of SecureStore because Supabase sessions

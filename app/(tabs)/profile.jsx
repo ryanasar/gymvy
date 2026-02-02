@@ -1,17 +1,18 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { StyleSheet, Text, View, ScrollView, RefreshControl } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useFocusEffect } from '@react-navigation/native';
-import { useAuth } from '../auth/auth';
-import { useWorkout } from '../contexts/WorkoutContext';
-import ActivitiesTab from '../components/profile/PostsTab';
-import ProfileHeader from '../components/profile/ProfileHeader';
-import ProgressTab from '../components/profile/ProgressTab';
-import WorkoutPlansTab from '../components/profile/WorkoutPlansTab';
-import FollowListModal from '../components/profile/FollowListModal';
-import EditProfileModal from '../components/profile/EditProfileModal';
-import { useThemeColors } from '../hooks/useThemeColors';
-import TabBar from '../components/ui/TabBar';
+import { useAuth } from '@/lib/auth';
+import { useWorkout } from '@/contexts/WorkoutContext';
+import { useSync } from '@/contexts/SyncContext';
+import ActivitiesTab from '@/components/profile/PostsTab';
+import ProfileHeader from '@/components/profile/ProfileHeader';
+import ProgressTab from '@/components/profile/ProgressTab';
+import WorkoutPlansTab from '@/components/profile/WorkoutPlansTab';
+import FollowListModal from '@/components/profile/FollowListModal';
+import EditProfileModal from '@/components/profile/EditProfileModal';
+import { useThemeColors } from '@/hooks/useThemeColors';
+import TabBar from '@/components/ui/TabBar';
 
 const ProfileScreen = () => {
   const colors = useThemeColors();
@@ -21,8 +22,10 @@ const ProfileScreen = () => {
   const [modalType, setModalType] = useState('followers');
   const [editModalVisible, setEditModalVisible] = useState(false);
   const [progressKey, setProgressKey] = useState(0);
+  const [refreshing, setRefreshing] = useState(false);
   const { user, profile, posts, signOut, refreshPosts, refreshProfile } = useAuth();
   const { lastWorkoutCompleted } = useWorkout();
+  const { manualSync } = useSync();
 
   // Force ProgressTab to refresh when workout completion changes
   useEffect(() => {
@@ -39,6 +42,22 @@ const ProfileScreen = () => {
       }
     }, [user?.id])
   );
+
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    manualSync();
+    try {
+      await Promise.all([
+        refreshProfile?.(),
+        refreshPosts?.()
+      ]);
+      setProgressKey(prev => prev + 1);
+    } catch (error) {
+      console.error('Error refreshing profile:', error);
+    } finally {
+      setRefreshing(false);
+    }
+  };
 
   if (!user) {
     return (
@@ -89,65 +108,94 @@ const ProfileScreen = () => {
     }
   };
 
-  // Render all tabs but only show the selected one to prevent unmounting/remounting
-  const renderAllTabs = () => {
-    return (
-      <>
-        <View style={selectedTab === 'Progress' ? styles.tabVisible : styles.tabHidden}>
-          <ProgressTab key={progressKey} userId={user.id} onRefresh={async () => { await refreshProfile(); await refreshPosts(); }} />
-        </View>
-        <View style={selectedTab === 'Posts' ? styles.tabVisible : styles.tabHidden}>
-          <ActivitiesTab posts={posts} currentUserId={user.id} onRefresh={refreshPosts} />
-        </View>
-        <View style={selectedTab === 'Splits' ? styles.tabVisible : styles.tabHidden}>
-          <WorkoutPlansTab userId={user.id} />
-        </View>
-      </>
-    );
+  // Render the selected tab content
+  const renderSelectedTab = () => {
+    switch (selectedTab) {
+      case 'Progress':
+        return (
+          <ProgressTab
+            key={progressKey}
+            userId={user.id}
+            onRefresh={handleRefresh}
+            embedded
+          />
+        );
+      case 'Posts':
+        return (
+          <ActivitiesTab
+            posts={posts}
+            currentUserId={user.id}
+            onRefresh={refreshPosts}
+            embedded
+          />
+        );
+      case 'Splits':
+        return (
+          <WorkoutPlansTab
+            userId={user.id}
+            embedded
+          />
+        );
+      default:
+        return null;
+    }
   };
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
-
       {/* Header */}
       <View style={[styles.headerContainer, { backgroundColor: colors.cardBackground, shadowColor: colors.shadow }]}>
         <Text style={[styles.title, { color: colors.text }]}>Profile</Text>
       </View>
 
-      <ProfileHeader
-        profile={profile}
-        username={username}
-        name={name}
-        bio={bio}
-        avatarUrl={avatarUrl}
-        followedBy={followedBy}
-        following={following}
-        workouts={postsCount}
-        isOwnProfile={isOwnProfile}
-        isFollowing={isFollowing}
-        isPrivate={isPrivate}
-        isVerified={isVerified}
-        onSignOut={signOut}
-        onFollowersPress={handleOpenFollowersModal}
-        onFollowingPress={handleOpenFollowingModal}
-        onEditPress={handleOpenEditModal}
-      />
-      {/* Tabs */}
-      <TabBar
-        tabs={[
-          { key: 'Progress', label: 'Progress' },
-          { key: 'Posts', label: 'Posts' },
-          { key: 'Splits', label: 'Splits' },
-        ]}
-        activeTab={selectedTab}
-        onTabPress={setSelectedTab}
-        style={{ backgroundColor: colors.cardBackground, shadowColor: colors.shadow, shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.05, shadowRadius: 2, elevation: 1 }}
-      />
+      <ScrollView
+        style={styles.scrollView}
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={handleRefresh}
+            tintColor={colors.primary}
+          />
+        }
+      >
+        <ProfileHeader
+          profile={profile}
+          username={username}
+          name={name}
+          bio={bio}
+          avatarUrl={avatarUrl}
+          followedBy={followedBy}
+          following={following}
+          workouts={postsCount}
+          isOwnProfile={isOwnProfile}
+          isFollowing={isFollowing}
+          isPrivate={isPrivate}
+          isVerified={isVerified}
+          onSignOut={signOut}
+          onFollowersPress={handleOpenFollowersModal}
+          onFollowingPress={handleOpenFollowingModal}
+          onEditPress={handleOpenEditModal}
+        />
 
-      {/* Tab Content */}
-      <View style={[styles.tabContentContainer, { backgroundColor: colors.background }]}>
-        {renderAllTabs()}
-      </View>
+        {/* Tabs */}
+        <TabBar
+          tabs={[
+            { key: 'Progress', label: 'Progress' },
+            { key: 'Posts', label: 'Posts' },
+            { key: 'Splits', label: 'Splits' },
+          ]}
+          activeTab={selectedTab}
+          onTabPress={setSelectedTab}
+          style={{ backgroundColor: colors.cardBackground, shadowColor: colors.shadow, shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.05, shadowRadius: 2, elevation: 1 }}
+        />
+
+        {/* Tab Content */}
+        <View style={styles.tabContent}>
+          {renderSelectedTab()}
+        </View>
+      </ScrollView>
 
       {/* Follow List Modal */}
       <FollowListModal
@@ -164,7 +212,9 @@ const ProfileScreen = () => {
         userId={user?.id}
         currentBio={bio}
         currentAvatarUrl={avatarUrl}
+        currentIsPrivate={isPrivate}
         userName={name}
+        currentName={name}
         onProfileUpdated={handleProfileUpdated}
       />
     </View>
@@ -190,24 +240,14 @@ const styles = StyleSheet.create({
     fontSize: 28,
     fontWeight: '700',
   },
-  tabContentContainer: {
+  scrollView: {
     flex: 1,
-    position: 'relative',
   },
-  tabVisible: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
+  scrollContent: {
+    flexGrow: 1,
   },
-  tabHidden: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    opacity: 0,
-    pointerEvents: 'none',
+  tabContent: {
+    flex: 1,
+    minHeight: 400,
   },
 });

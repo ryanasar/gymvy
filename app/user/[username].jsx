@@ -2,19 +2,23 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Alert } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useThemeColors } from '../hooks/useThemeColors';
-import { getUserByUsername, followUser, unfollowUser } from '../api/usersApi';
-import { getPostsByUserId } from '../api/postsApi';
-import { createFollowNotification, deleteFollowNotification } from '../api/notificationsApi';
-import { useAuth } from '../auth/auth';
+import { useThemeColors } from '@/hooks/useThemeColors';
+import { getUserByUsername, followUser, unfollowUser } from '@/services/api/users';
+import { getPostsByUserId } from '@/services/api/posts';
+import { createFollowNotification, deleteFollowNotification } from '@/services/api/notifications';
+import { cancelFollowRequestByTargetId } from '@/services/api/followRequests';
+import { sendNudge } from '@/services/api/nudges';
+import { useAuth } from '@/lib/auth';
 import { Ionicons } from '@expo/vector-icons';
-import ProfileHeader from '../components/profile/ProfileHeader';
-import PostsTab from '../components/profile/PostsTab';
-import ProgressTab from '../components/profile/ProgressTab';
-import WorkoutPlansTab from '../components/profile/WorkoutPlansTab';
-import FollowListModal from '../components/profile/FollowListModal';
-import TabBar from '../components/ui/TabBar';
-import LoadingSpinner from '../components/ui/LoadingSpinner';
+import ProfileHeader from '@/components/profile/ProfileHeader';
+import PostsTab from '@/components/profile/PostsTab';
+import ProgressTab from '@/components/profile/ProgressTab';
+import WorkoutPlansTab from '@/components/profile/WorkoutPlansTab';
+import FollowListModal from '@/components/profile/FollowListModal';
+import NudgeModal from '@/components/profile/NudgeModal';
+import PrivateProfilePlaceholder from '@/components/profile/PrivateProfilePlaceholder';
+import TabBar from '@/components/ui/TabBar';
+import LoadingSpinner from '@/components/ui/LoadingSpinner';
 
 export default function UserProfileScreen() {
   const { username } = useLocalSearchParams();
@@ -28,9 +32,15 @@ export default function UserProfileScreen() {
   const [posts, setPosts] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isFollowing, setIsFollowing] = useState(false);
+  const [followStatus, setFollowStatus] = useState('none'); // 'none' | 'following' | 'requested'
   const [isFollowLoading, setIsFollowLoading] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
   const [modalType, setModalType] = useState('followers');
+  const [canNudge, setCanNudge] = useState(false);
+  const [nudgeModalVisible, setNudgeModalVisible] = useState(false);
+  const [isNudgeLoading, setIsNudgeLoading] = useState(false);
+
+  const isOwnProfile = currentUser?.username === username;
 
   useEffect(() => {
     loadUserData();
@@ -44,20 +54,47 @@ export default function UserProfileScreen() {
       const userData = await getUserByUsername(username);
       setUser(userData);
 
-      // Fetch posts using userId
-      if (userData?.id) {
-        const userPosts = await getPostsByUserId(userData.id);
-        setPosts(userPosts);
-      }
+      // Set follow status from API response
+      if (userData?.followStatus) {
+        setFollowStatus(userData.followStatus);
+        setIsFollowing(userData.followStatus === 'following');
 
-      // Check if current user is following this user
-      if (currentUser?.id && userData?.followedBy) {
+        // Enable nudge button when following (cooldown handled by API when sending)
+        setCanNudge(userData.followStatus === 'following');
+      } else if (currentUser?.id && userData?.followedBy) {
+        // Fallback: Check if current user is following this user
         const following = userData.followedBy.some(
           (follow) => follow.followedById === currentUser.id
         );
         setIsFollowing(following);
+        setFollowStatus(following ? 'following' : 'none');
+
+        // Enable nudge button when following (cooldown handled by API when sending)
+        setCanNudge(following);
       } else {
         setIsFollowing(false);
+        setFollowStatus('none');
+        setCanNudge(false);
+      }
+
+      // Fetch posts using userId (only if not private or if following)
+      if (userData?.id) {
+        const isPrivateAndNotFollowing = userData.profile?.isPrivate && userData.followStatus !== 'following';
+        if (!isPrivateAndNotFollowing) {
+          try {
+            const userPosts = await getPostsByUserId(userData.id);
+            setPosts(userPosts);
+          } catch (postsError) {
+            // If 403, account is private and we can't view
+            if (postsError?.response?.status === 403) {
+              setPosts([]);
+            } else {
+              console.error('Error fetching posts:', postsError);
+            }
+          }
+        } else {
+          setPosts([]);
+        }
       }
     } catch (error) {
       console.error('Error loading user data:', error);
@@ -78,19 +115,36 @@ export default function UserProfileScreen() {
     try {
       setIsFollowLoading(true);
 
-      if (isFollowing) {
+      if (followStatus === 'following') {
+        // Unfollow
         await unfollowUser(username, currentUser.id);
         setIsFollowing(false);
+        setFollowStatus('none');
         // Delete the follow notification
         if (user?.id) {
           await deleteFollowNotification(currentUser.id, user.id);
         }
+      } else if (followStatus === 'requested') {
+        // Cancel follow request
+        if (user?.id) {
+          await cancelFollowRequestByTargetId(user.id);
+        }
+        setFollowStatus('none');
       } else {
-        await followUser(username, currentUser.id);
-        setIsFollowing(true);
-        // Create a notification for the followed user
-        if (user?.id && user.id !== currentUser.id) {
-          await createFollowNotification(user.id, currentUser.id);
+        // Follow or send request
+        const result = await followUser(username, currentUser.id);
+
+        if (result.status === 'following') {
+          setIsFollowing(true);
+          setFollowStatus('following');
+          // Create a notification for the followed user (public account)
+          if (user?.id && user.id !== currentUser.id) {
+            await createFollowNotification(user.id, currentUser.id);
+          }
+        } else if (result.status === 'requested') {
+          // Private account - request sent
+          setFollowStatus('requested');
+          setIsFollowing(false);
         }
       }
 
@@ -103,7 +157,7 @@ export default function UserProfileScreen() {
       }
     } catch (error) {
       console.error('Error toggling follow:', error);
-      Alert.alert('Error', `Failed to ${isFollowing ? 'unfollow' : 'follow'} user`);
+      Alert.alert('Error', `Failed to ${followStatus === 'following' ? 'unfollow' : followStatus === 'requested' ? 'cancel request' : 'follow'} user`);
     } finally {
       setIsFollowLoading(false);
     }
@@ -123,8 +177,46 @@ export default function UserProfileScreen() {
     setModalVisible(false);
   };
 
+  const handleOpenNudgeModal = () => {
+    setNudgeModalVisible(true);
+  };
+
+  const handleCloseNudgeModal = () => {
+    setNudgeModalVisible(false);
+  };
+
+  const handleSendNudge = async (presetMessage, customMessage) => {
+    if (!user?.username) return;
+
+    setIsNudgeLoading(true);
+    try {
+      await sendNudge(user.username, presetMessage, customMessage);
+      Alert.alert('Nudge Sent! 👈', `Your nudge was sent to ${user.name || user.username}`);
+      setNudgeModalVisible(false);
+      setCanNudge(false); // Disable nudge button after sending
+    } catch (error) {
+      const errorMessage = error.response?.data?.error || 'Failed to send nudge';
+      if (error.response?.status === 429) {
+        const hoursRemaining = error.response?.data?.hoursRemaining || 12;
+        Alert.alert('Cooldown Active', `You can nudge this user again in ${hoursRemaining} hour${hoursRemaining === 1 ? '' : 's'}`);
+      } else {
+        Alert.alert('Error', errorMessage);
+      }
+    } finally {
+      setIsNudgeLoading(false);
+    }
+  };
+
+  // Check if this is a private account that we can't view
+  const isPrivateAndNotFollowing = user?.profile?.isPrivate && followStatus !== 'following' && !isOwnProfile;
+
   // Render all tabs but only show the selected one to prevent unmounting/remounting
   const renderAllTabs = () => {
+    // If private and not following, show placeholder for all tabs
+    if (isPrivateAndNotFollowing) {
+      return <PrivateProfilePlaceholder />;
+    }
+
     return (
       <>
         <View style={selectedTab === 'Progress' ? styles.tabVisible : styles.tabHidden}>
@@ -156,8 +248,6 @@ export default function UserProfileScreen() {
     );
   }
 
-  const isOwnProfile = currentUser?.username === username;
-
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       {/* Header with back button */}
@@ -183,12 +273,15 @@ export default function UserProfileScreen() {
         workouts={posts?.length || 0}
         isOwnProfile={isOwnProfile}
         isFollowing={isFollowing}
+        followStatus={followStatus}
         isPrivate={user.profile?.isPrivate}
         isVerified={user.profile?.isVerified}
         onFollowToggle={handleFollowToggle}
         isFollowLoading={isFollowLoading}
         onFollowersPress={handleOpenFollowersModal}
         onFollowingPress={handleOpenFollowingModal}
+        onNudgePress={handleOpenNudgeModal}
+        canNudge={canNudge}
       />
 
       {/* Tabs */}
@@ -214,6 +307,15 @@ export default function UserProfileScreen() {
         onClose={handleCloseModal}
         username={username}
         type={modalType}
+      />
+
+      {/* Nudge Modal */}
+      <NudgeModal
+        visible={nudgeModalVisible}
+        onClose={handleCloseNudgeModal}
+        onSendNudge={handleSendNudge}
+        recipientName={user?.name || user?.username || 'this user'}
+        isLoading={isNudgeLoading}
       />
     </View>
   );

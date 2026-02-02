@@ -8,8 +8,8 @@ import {
   Dimensions,
 } from 'react-native';
 import { useRouter } from 'expo-router';
-import { useAuth } from '../auth/auth';
-import { useThemeColors } from '../hooks/useThemeColors';
+import { useAuth } from '@/lib/auth';
+import { useThemeColors } from '@/hooks/useThemeColors';
 import { Ionicons } from '@expo/vector-icons';
 import Animated, {
   useSharedValue,

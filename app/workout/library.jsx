@@ -13,13 +13,13 @@ import { useRouter } from 'expo-router';
 import { useFocusEffect } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useThemeColors } from '../hooks/useThemeColors';
-import { useAuth } from '../auth/auth';
+import { useThemeColors } from '@/hooks/useThemeColors';
+import { useAuth } from '@/lib/auth';
 import {
   getSavedWorkouts,
   deleteSavedWorkout
-} from '../api/savedWorkoutsApi';
-import EmptyState from '../components/common/EmptyState';
+} from '@/services/api/savedWorkouts';
+import EmptyState from '@/components/common/EmptyState';
 
 const WorkoutLibraryScreen = () => {
   const colors = useThemeColors();
@@ -31,7 +31,7 @@ const WorkoutLibraryScreen = () => {
 
   const fetchSavedWorkouts = async () => {
     try {
-      const workouts = await getSavedWorkouts();
+      const workouts = await getSavedWorkouts(user?.id);
       setSavedWorkouts(workouts);
     } catch (error) {
       console.error('Failed to fetch saved workouts:', error);
@@ -43,8 +43,8 @@ const WorkoutLibraryScreen = () => {
 
   useFocusEffect(
     useCallback(() => {
-      fetchSavedWorkouts();
-    }, [])
+      if (user?.id) fetchSavedWorkouts();
+    }, [user?.id])
   );
 
   const handleDelete = (workoutId, workoutName) => {
@@ -58,7 +58,7 @@ const WorkoutLibraryScreen = () => {
           style: 'destructive',
           onPress: async () => {
             try {
-              await deleteSavedWorkout(workoutId);
+              await deleteSavedWorkout(user?.id, workoutId);
               setSavedWorkouts(prev => prev.filter(w => w.id !== workoutId));
             } catch (error) {
               Alert.alert('Error', 'Failed to delete workout');

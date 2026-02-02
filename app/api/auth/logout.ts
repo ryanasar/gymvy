@@ -3,7 +3,7 @@ import {
     COOKIE_OPTIONS,
     REFRESH_COOKIE_NAME,
     REFRESH_COOKIE_OPTIONS,
-  } from "@/constants";
+  } from "@/constants/config";
   
   export async function POST(request: Request) {
     try {

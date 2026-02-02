@@ -1,0 +1,151 @@
+import apiClient from './client';
+
+export const getPostById = async (postId) => {
+  try {
+    const response = await apiClient.get(`/posts/${postId}`);
+    return response.data;
+  } catch (error) {
+    console.error('Failed to fetch post by id:', error);
+    throw error;
+  }
+};
+
+export const getPostsByUserId = async (userId) => {
+  try {
+    const response = await apiClient.get(`/posts/user/${userId}`);
+    return response.data;
+  } catch (error) {
+    console.error('Failed to fetch posts by userId:', error);
+    throw error;
+  }
+};
+
+export const getPostsByUserIds = async (userIds) => {
+  try {
+    const response = await apiClient.post(`/posts/multiple`, { userIds });
+    return response.data;
+  } catch (error) {
+    console.error('Failed to fetch posts by userIds:', error);
+    throw error;
+  }
+};
+
+export const createPost = async (postData) => {
+  try {
+    const response = await apiClient.post(`/posts`, postData);
+    return response.data;
+  } catch (error) {
+    console.error('Failed to create post:', error);
+    throw error;
+  }
+};
+
+export const updatePost = async (postId, postData) => {
+  try {
+    const response = await apiClient.put(`/posts/${postId}`, postData);
+    return response.data;
+  } catch (error) {
+    console.error('Failed to update post:', error);
+    throw error;
+  }
+};
+
+export const deletePost = async (postId) => {
+  try {
+    const response = await apiClient.delete(`/posts/${postId}`);
+    return response.data;
+  } catch (error) {
+    console.error('Failed to delete post:', error);
+    throw error;
+  }
+};
+
+export const likePost = async (postId, userId) => {
+  try {
+    const response = await apiClient.post(`/posts/${postId}/like`, { userId });
+    return response.data;
+  } catch (error) {
+    console.error('Failed to like post:', error);
+    throw error;
+  }
+};
+
+export const unlikePost = async (postId, userId) => {
+  try {
+    const response = await apiClient.delete(`/posts/${postId}/like/${userId}`);
+    return response.data;
+  } catch (error) {
+    console.error('Failed to unlike post:', error);
+    throw error;
+  }
+};
+
+export const getComments = async (postId, userId) => {
+  try {
+    const params = userId ? { userId } : {};
+    const response = await apiClient.get(`/posts/${postId}/comments`, { params });
+    return response.data;
+  } catch (error) {
+    console.error('Failed to fetch comments:', error);
+    throw error;
+  }
+};
+
+export const createComment = async (postId, commentData) => {
+  try {
+    const response = await apiClient.post(`/posts/${postId}/comments`, commentData);
+    return response.data;
+  } catch (error) {
+    console.error('Failed to create comment:', error);
+    throw error;
+  }
+};
+
+/**
+ * Check if a workout post exists for today
+ * Returns the post if found, null otherwise
+ */
+export const getTodaysWorkoutPost = async (userId) => {
+  try {
+    const posts = await getPostsByUserId(userId);
+
+    // Get today's date at midnight for comparison
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    // Find a workout post created today (not a rest day post)
+    const post = posts.find(p => {
+      if (!p.workoutSessionId) return false; // Must have a workout session
+      const postDate = new Date(p.createdAt);
+      postDate.setHours(0, 0, 0, 0);
+      return postDate.getTime() === today.getTime();
+    });
+
+    return post || null;
+  } catch (error) {
+    console.error('Failed to check for today\'s workout post:', error);
+    return null;
+  }
+};
+
+/**
+ * Get posts from users that the current user is following (with pagination)
+ */
+export const getFollowingPosts = async (userId, cursor = null, limit = 10) => {
+  try {
+    const params = { limit };
+    if (cursor) {
+      params.cursor = cursor;
+    }
+
+    const response = await apiClient.get(`/posts/following/${userId}`, { params });
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching following posts:', error);
+    return { posts: [], nextCursor: null, hasMore: false };
+  }
+};
+
+export default function PostsApiPage() {
+  return null;
+}

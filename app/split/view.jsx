@@ -10,21 +10,28 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { Colors } from '../constants/colors';
-import { useThemeColors } from '../hooks/useThemeColors';
-import EmptyState from '../components/common/EmptyState';
-import { createSplit } from '../api/splitsApi';
-import { createSavedWorkout, getSavedWorkouts, deleteSavedWorkout } from '../api/savedWorkoutsApi';
-import { useAuth } from '../auth/auth';
-import { copyCustomExercises } from '../api/customExercisesApi';
-import { checkNetworkStatus } from '../../services/networkService';
+import { Colors } from '@/constants/colors';
+import { useThemeColors } from '@/hooks/useThemeColors';
+import EmptyState from '@/components/common/EmptyState';
+import { createSplit } from '@/services/api/splits';
+import { createSavedWorkout, getSavedWorkouts, deleteSavedWorkout } from '@/services/api/savedWorkouts';
+import { useAuth } from '@/lib/auth';
+import { copyCustomExercises } from '@/services/api/customExercises';
+import { checkNetworkStatus } from '@/services/network/networkService';
 
 const ViewSplitScreen = () => {
   const colors = useThemeColors();
   const router = useRouter();
   const params = useLocalSearchParams();
   const { user } = useAuth();
-  const splitData = params.splitData ? JSON.parse(params.splitData) : null;
+
+  // Safely parse JSON params with try-catch to prevent crashes
+  let splitData = null;
+  try {
+    splitData = params.splitData ? JSON.parse(params.splitData) : null;
+  } catch (e) {
+    console.error('[ViewSplit] Failed to parse splitData:', e);
+  }
 
   // Check if this is the user's own split - prevent saving your own split
   const isOwnSplit = user?.id && splitData?.userId === user.id;
@@ -40,10 +47,10 @@ const ViewSplitScreen = () => {
     let isMounted = true;
 
     const checkExistingSavedWorkouts = async () => {
-      if (!splitData?.workoutDays) return;
+      if (!splitData?.workoutDays || !user?.id) return;
 
       try {
-        const allSavedWorkouts = await getSavedWorkouts();
+        const allSavedWorkouts = await getSavedWorkouts(user.id);
         const matchedIds = {};
 
         // For each workout day, check if there's a saved workout with matching name
@@ -191,7 +198,7 @@ const ViewSplitScreen = () => {
 
       if (existingSavedId) {
         // Unsave - delete the saved workout
-        await deleteSavedWorkout(existingSavedId);
+        await deleteSavedWorkout(user?.id, existingSavedId);
         setSavedWorkoutIds(prev => {
           const updated = { ...prev };
           delete updated[index];
@@ -217,7 +224,7 @@ const ViewSplitScreen = () => {
           }),
         }));
 
-        const savedWorkout = await createSavedWorkout({
+        const savedWorkout = await createSavedWorkout(user?.id, {
           name: day.name || day.workoutName || `Day ${index + 1}`,
           description: splitData?.name ? `From ${splitData.name}` : '',
           emoji: day.emoji || splitData?.emoji || '💪',

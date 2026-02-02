@@ -1,17 +1,17 @@
 import React, { useState, useCallback } from 'react';
 import { View, Text, StyleSheet, ScrollView, RefreshControl } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
-import { useAuth } from '../auth/auth';
-import { useWorkout } from '../contexts/WorkoutContext';
-import { useThemeColors } from '../hooks/useThemeColors';
-import { storage } from '../../storage';
-import { getBodyWeightLog, addBodyWeightEntry } from '../../storage/bodyWeightStorage';
-import { getBodyWeightEntries, createBodyWeightEntry } from '../api/bodyWeightApi';
-import { getWorkoutSessionsByUserId } from '../api/workoutSessionsApi';
-import { getBestOneRMFromSets } from '../utils/oneRMCalculator';
-import BodyWeightCard from '../components/progress/BodyWeightCard';
-import ExerciseOneRMCard from '../components/progress/ExerciseOneRMCard';
-import ExercisePickerDropdown from '../components/progress/ExercisePickerDropdown';
+import { useAuth } from '@/lib/auth';
+import { useWorkout } from '@/contexts/WorkoutContext';
+import { useThemeColors } from '@/hooks/useThemeColors';
+import { storage } from '@/services/storage';
+import { addBodyWeightEntry } from '@/services/storage/bodyWeightStorage';
+import { getBodyWeightEntries, createBodyWeightEntry } from '@/services/api/bodyWeight';
+import { getWorkoutSessionsByUserId } from '@/services/api/workoutSessions';
+import { getBestOneRMFromSets } from '@/utils/oneRMCalculator';
+import BodyWeightCard from '@/components/progress/BodyWeightCard';
+import ExerciseOneRMCard from '@/components/progress/ExerciseOneRMCard';
+import ExercisePickerDropdown from '@/components/progress/ExercisePickerDropdown';
 
 const BIG_THREE = ['Bench Press', 'Squat', 'Deadlift'];
 
@@ -91,37 +91,31 @@ export default function ProgressScreen() {
 
   const loadData = useCallback(async () => {
     try {
-      // Load body weight data
-      let localEntries = await getBodyWeightLog();
+      // Load body weight data from backend only (local storage deprecated)
+      let entries = [];
 
-      // Try to fetch and merge backend entries
       if (user?.id) {
         try {
           const backendEntries = await getBodyWeightEntries(user.id);
           if (backendEntries && backendEntries.length > 0) {
-            const localDates = new Set(localEntries.map(e => e.date));
-            for (const be of backendEntries) {
-              const dateStr = be.date.split('T')[0];
-              if (!localDates.has(dateStr)) {
-                localEntries.push({
-                  date: dateStr,
-                  weight: be.weight,
-                  timestamp: be.createdAt,
-                });
-              }
-            }
-            localEntries.sort((a, b) => a.date.localeCompare(b.date));
+            entries = backendEntries.map(be => ({
+              date: be.date.split('T')[0],
+              weight: be.weight,
+              timestamp: be.createdAt,
+            })).sort((a, b) => a.date.localeCompare(b.date));
           }
         } catch {
-          // Backend fetch failed, use local data only
+          // Backend fetch failed
         }
       }
 
-      setBodyWeightData(localEntries);
+      // Filter out invalid entries (weight must be reasonable: 50-500 lbs)
+      const validEntries = entries.filter(e => e.weight >= 50 && e.weight <= 500);
+      setBodyWeightData(validEntries);
 
       // Load exercise data if we have the exercise database
       if (Object.keys(exerciseDatabase).length > 0) {
-        const completedHistory = await storage.getCompletedHistory();
+        const completedHistory = await storage.getCompletedHistory(user?.id);
 
         // Fetch backend workout sessions
         let backendSessions = [];
@@ -210,7 +204,7 @@ export default function ProgressScreen() {
     setSelectedOtherExercise(exerciseName);
 
     // Calculate 1RM data for the selected exercise
-    const completedHistory = await storage.getCompletedHistory();
+    const completedHistory = await storage.getCompletedHistory(user?.id);
     let backendSessions = [];
     if (user?.id) {
       try {
@@ -226,7 +220,7 @@ export default function ProgressScreen() {
 
   const handleLogWeight = async (weight) => {
     // Save locally
-    await addBodyWeightEntry(weight);
+    await addBodyWeightEntry(user?.id, weight);
 
     // Fire-and-forget backend save
     if (user?.id) {

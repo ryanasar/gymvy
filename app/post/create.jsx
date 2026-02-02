@@ -1,5 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
+import * as MediaLibrary from 'expo-media-library';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import {
@@ -14,17 +15,17 @@ import {
   View,
 } from 'react-native';
 import { Image } from 'expo-image';
-import { Colors } from '../constants/colors';
-import { useThemeColors } from '../hooks/useThemeColors';
-import { useAuth } from '../auth/auth';
-import { useSync } from '../contexts/SyncContext';
-import { createPost, updatePost } from '../api/postsApi';
-import { uploadImage, deleteImage } from '../api/storageApi';
-import { storage } from '../../storage';
-import { preparePostImage } from '../utils/imageUpload';
+import { Colors } from '@/constants/colors';
+import { useThemeColors } from '@/hooks/useThemeColors';
+import { useAuth } from '@/lib/auth';
+import { useSync } from '@/contexts/SyncContext';
+import { createPost, updatePost } from '@/services/api/posts';
+import { uploadImage, deleteImage } from '@/services/api/storage';
+import { storage } from '@/services/storage';
+import { preparePostImage } from '@/utils/imageUpload';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import TagUsersModal from '../components/post/TagUsersModal';
-import { createTagNotification } from '../api/notificationsApi';
+import TagUsersModal from '@/components/post/TagUsersModal';
+import { createTagNotification } from '@/services/api/notifications';
 
 const CreatePostScreen = () => {
   const colors = useThemeColors();
@@ -37,18 +38,32 @@ const CreatePostScreen = () => {
   const postId = params.postId;
   const isEditMode = !!postId;
 
-  const workoutData = params.workoutData ? JSON.parse(params.workoutData) : null;
+  // Safely parse JSON params with try-catch to prevent crashes
+  let workoutData = null;
+  let initialTaggedUsers = [];
+  try {
+    workoutData = params.workoutData ? JSON.parse(params.workoutData) : null;
+  } catch (e) {
+    console.error('[CreatePost] Failed to parse workoutData:', e);
+  }
+  try {
+    initialTaggedUsers = params.taggedUsers ? JSON.parse(params.taggedUsers) : [];
+  } catch (e) {
+    console.error('[CreatePost] Failed to parse taggedUsers:', e);
+  }
+
   const workoutSessionId = params.workoutSessionId;
   const splitId = params.splitId;
   const streak = params.streak ? parseInt(params.streak) : null;
   const isSplitCompleted = params.isSplitCompleted === 'true';
   const initialDescription = params.description || '';
+  const initialImageUrl = params.imageUrl || null;
 
   const [description, setDescription] = useState(initialDescription);
   const [selectedImage, setSelectedImage] = useState(null);
-  const [uploadedImageUrl, setUploadedImageUrl] = useState(null);
+  const [uploadedImageUrl, setUploadedImageUrl] = useState(initialImageUrl);
   const [uploadedImagePath, setUploadedImagePath] = useState(null);
-  const [taggedUsers, setTaggedUsers] = useState([]);
+  const [taggedUsers, setTaggedUsers] = useState(initialTaggedUsers);
   const [showTagUsersModal, setShowTagUsersModal] = useState(false);
   const [isPosting, setIsPosting] = useState(false);
 
@@ -76,9 +91,9 @@ const CreatePostScreen = () => {
   const handleTakePhoto = async () => {
     try {
       // Request camera permissions
-      const { status } = await ImagePicker.requestCameraPermissionsAsync();
+      const { status: cameraStatus } = await ImagePicker.requestCameraPermissionsAsync();
 
-      if (status !== 'granted') {
+      if (cameraStatus !== 'granted') {
         Alert.alert(
           'Permission Required',
           'Camera permission is required to take photos. Please enable it in your device settings.'
@@ -95,7 +110,18 @@ const CreatePostScreen = () => {
       });
 
       if (!result.canceled && result.assets && result.assets.length > 0) {
-        setSelectedImage(result.assets[0].uri);
+        const photoUri = result.assets[0].uri;
+        setSelectedImage(photoUri);
+
+        // Save to camera roll
+        try {
+          const { status: mediaStatus } = await MediaLibrary.requestPermissionsAsync();
+          if (mediaStatus === 'granted') {
+            await MediaLibrary.saveToLibraryAsync(photoUri);
+          }
+        } catch (saveError) {
+          console.warn('Could not save to camera roll:', saveError);
+        }
       }
     } catch (error) {
       console.error('Error taking photo:', error);
@@ -171,7 +197,20 @@ const CreatePostScreen = () => {
           setUploadedImagePath(imagePath);
         } catch (uploadError) {
           console.error('Error uploading image:', uploadError);
-          Alert.alert('Warning', 'Failed to upload image, but post will be created without it.');
+          const userChoice = await new Promise(resolve => {
+            Alert.alert(
+              'Image Upload Failed',
+              uploadError.message || 'Failed to upload image.',
+              [
+                { text: 'Post Without Image', onPress: () => resolve('continue') },
+                { text: 'Cancel', style: 'cancel', onPress: () => resolve('cancel') },
+              ]
+            );
+          });
+          if (userChoice === 'cancel') {
+            setIsPosting(false);
+            return;
+          }
           imageUrl = null;
           imagePath = null;
         }
@@ -182,6 +221,7 @@ const CreatePostScreen = () => {
         const postData = {
           description: description.trim() || null,
           imageUrl: imageUrl || null,
+          taggedUserIds: taggedUsers.map(u => u.id),
         };
 
         await updatePost(postId, postData);
@@ -208,20 +248,37 @@ const CreatePostScreen = () => {
             databaseWorkoutSessionId = await storage.getWorkoutDatabaseId(workoutSessionId);
 
             if (!databaseWorkoutSessionId) {
-              console.warn('[CreatePost] Workout not synced yet, syncing now...');
-              // Trigger a sync and wait for it
-              await manualSync();
-              // Try to get the database ID again - wait a bit for sync to complete
-              await new Promise(resolve => setTimeout(resolve, 2000));
+              console.log('[CreatePost] Workout not synced yet, waiting for sync...');
+
+              // Await sync completion (if sync is in progress, this waits for it)
+              try {
+                await manualSync();
+              } catch (error) {
+                console.warn('[CreatePost] Sync error:', error);
+              }
+
+              // Check if ID is now available after sync
               databaseWorkoutSessionId = await storage.getWorkoutDatabaseId(workoutSessionId);
+
+              // If still not available, poll briefly as a fallback
+              if (!databaseWorkoutSessionId) {
+                const maxWaitMs = 5000;
+                const pollIntervalMs = 500;
+                const startTime = Date.now();
+
+                while (Date.now() - startTime < maxWaitMs) {
+                  await new Promise(r => setTimeout(r, pollIntervalMs));
+                  databaseWorkoutSessionId = await storage.getWorkoutDatabaseId(workoutSessionId);
+                  if (databaseWorkoutSessionId) break;
+                }
+              }
 
               if (!databaseWorkoutSessionId) {
                 Alert.alert(
-                  'Sync Required',
-                  'Your workout needs to be synced to the server before posting. Please try again in a moment.',
-                  [{ text: 'OK', onPress: () => router.back() }]
+                  'Sync Failed',
+                  'Could not sync your workout. Please check your internet connection and try again.',
+                  [{ text: 'OK', onPress: () => setIsPosting(false) }]
                 );
-                setIsPosting(false);
                 return;
               }
             }
@@ -239,6 +296,7 @@ const CreatePostScreen = () => {
           streak: streak > 1 ? streak : null,
           isSplitCompleted: isSplitCompleted || false,
           taggedUserIds: taggedUsers.map(u => u.id),
+          activityType: 'workout',
         };
 
         const createdPost = await createPost(postData);
@@ -368,17 +426,20 @@ const CreatePostScreen = () => {
           {/* Image Upload Section */}
           <View style={styles.section}>
             <Text style={[styles.sectionLabel, { color: colors.text }]}>Photo</Text>
-            {selectedImage ? (
+            {selectedImage || uploadedImageUrl ? (
               <View style={styles.imageContainer}>
                 <Image
-                  source={{ uri: selectedImage }}
+                  source={{ uri: selectedImage || uploadedImageUrl }}
                   style={styles.selectedImage}
                   contentFit="cover"
                   transition={200}
                 />
                 <TouchableOpacity
                   style={styles.removeImageButton}
-                  onPress={() => setSelectedImage(null)}
+                  onPress={() => {
+                    setSelectedImage(null);
+                    setUploadedImageUrl(null);
+                  }}
                 >
                   <Text style={styles.removeImageText}>✕</Text>
                 </TouchableOpacity>

@@ -1,0 +1,194 @@
+import React from 'react';
+import { View, Text, StyleSheet } from 'react-native';
+import { Colors } from '@/constants/colors';
+import { exercises as exerciseDatabaseSource } from '@/data/exercises/exerciseDatabase';
+
+/**
+ * Check if an exercise is a cardio exercise
+ * Looks up the exercise type from the database if not directly on the exercise object
+ */
+const isCardioExercise = (exercise) => {
+  if (exercise?.exerciseType === 'cardio') return true;
+  if (exercise?.template?.exerciseType === 'cardio') return true;
+  if (exercise?.exerciseTemplate?.exerciseType === 'cardio') return true;
+
+  // Look up in the database by id or name
+  const dbExercise = exerciseDatabaseSource.find(e =>
+    e.id === exercise?.id ||
+    e.id?.toString() === exercise?.id?.toString() ||
+    e.name === exercise?.name
+  );
+  return dbExercise?.exerciseType === 'cardio';
+};
+
+/**
+ * Format exercise details based on type (cardio vs strength)
+ */
+const formatExerciseDetails = (exercise) => {
+  if (isCardioExercise(exercise)) {
+    const parts = [];
+    if (exercise.duration) parts.push(`Duration: ${exercise.duration} min`);
+    if (exercise.incline) parts.push(`Incline: ${exercise.incline}%`);
+    if (exercise.speed) parts.push(`Speed: ${exercise.speed}`);
+    return parts.join(' | ');
+  }
+
+  // Strength exercise - show sets, reps, weight
+  return `Sets: ${exercise.sets || '-'} | Reps: ${exercise.reps || '-'} | Weight: ${exercise.weight || '-'} lbs`;
+};
+
+const WorkoutPlan = ({ plan }) => {
+  const {
+    id,
+    user,
+    isPublic,
+    numDays,
+    workoutDays,
+    likes,
+    comments,
+  } = plan;
+
+  const colorScheme = 'light'; // Replace with useColorScheme() if using dynamic theming
+
+  return (
+    <View style={[styles.card, { backgroundColor: Colors[colorScheme].background, borderColor: Colors[colorScheme].tabIconDefault }]}>
+      {/* Author Info */}
+      <View style={styles.authorSection}>
+        <Text style={[styles.authorName, { color: Colors[colorScheme].text }]}>{user?.name || user?.username}</Text>
+        <Text style={[styles.visibility, { color: Colors[colorScheme].secondaryText }]}>{isPublic ? 'Public' : 'Private'}</Text>
+      </View>
+
+      {/* Plan Info */}
+      <Text style={[styles.title, { color: Colors[colorScheme].text }]}>Split #{id}</Text>
+      <Text style={[styles.numDays, { color: Colors[colorScheme].text }]}>Number of Days: {numDays}</Text>
+
+      {/* Workout Days */}
+      {workoutDays && workoutDays.length > 0 && (
+        <View style={styles.workoutDaysSection}>
+          {workoutDays.map((day) => (
+            <View key={day.id} style={styles.dayItem}>
+              <Text style={[styles.dayTitle, { color: Colors[colorScheme].text }]}>Day {day.dayIndex + 1}</Text>
+              {day.isRest ? (
+                <Text style={[styles.restDay, { color: Colors[colorScheme].icon }]}>Rest Day</Text>
+              ) : (
+                <>
+                  <Text style={[styles.workoutTitle, { color: Colors[colorScheme].text }]}>Workout: {day.workout?.title}</Text>
+                  {day.workout?.exercises && day.workout.exercises.length > 0 && (
+                    <View style={styles.exerciseList}>
+                      {day.workout.exercises.map((exercise) => (
+                        <View key={exercise.id} style={styles.exerciseItem}>
+                          <Text style={[styles.exerciseName, { color: Colors[colorScheme].text }]}>{exercise.template?.name || exercise.name}</Text>
+                          <Text style={[styles.exerciseDetails, { color: Colors[colorScheme].secondaryText }]}>
+                            {formatExerciseDetails(exercise)}
+                          </Text>
+                          {!isCardioExercise(exercise) && exercise.template?.equipment && (
+                            <Text style={[styles.exerciseEquipment, { color: Colors[colorScheme].secondaryText }]}>
+                              Equipment: {exercise.template.equipment}
+                            </Text>
+                          )}
+                        </View>
+                      ))}
+                    </View>
+                  )}
+                  {day.workout?.notes && (
+                    <Text style={[styles.workoutNotes, { color: Colors[colorScheme].secondaryText }]}>Notes: {day.workout.notes}</Text>
+                  )}
+                </>
+              )}
+            </View>
+          ))}
+        </View>
+      )}
+
+      {/* Likes and Comments */}
+      <View style={styles.statsSection}>
+        <Text style={[styles.stat, { color: Colors[colorScheme].secondaryText }]}>{likes?.length || 0} Likes</Text>
+        <Text style={[styles.stat, { color: Colors[colorScheme].secondaryText }]}>{comments?.length || 0} Comments</Text>
+      </View>
+    </View>
+  );
+};
+
+export default WorkoutPlan;
+
+const styles = StyleSheet.create({
+  card: {
+    padding: 16,
+    shadowColor: '#000',
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 2,
+    borderBottomWidth: 1,
+  },
+  authorSection: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 6,
+  },
+  authorName: {
+    fontWeight: 'bold',
+    fontSize: 14,
+  },
+  visibility: {
+    fontSize: 12,
+  },
+  title: {
+    fontSize: 16,
+    fontWeight: '600',
+    marginVertical: 4,
+  },
+  numDays: {
+    fontSize: 14,
+    marginBottom: 8,
+  },
+  workoutDaysSection: {
+    marginTop: 8,
+  },
+  dayItem: {
+    marginBottom: 12,
+  },
+  dayTitle: {
+    fontWeight: 'bold',
+    fontSize: 14,
+  },
+  restDay: {
+    fontStyle: 'italic',
+    fontSize: 13,
+  },
+  workoutTitle: {
+    fontSize: 14,
+    fontWeight: '500',
+    marginTop: 4,
+  },
+  exerciseList: {
+    marginLeft: 8,
+    marginTop: 4,
+  },
+  exerciseItem: {
+    marginBottom: 4,
+  },
+  exerciseName: {
+    fontWeight: '500',
+  },
+  exerciseDetails: {
+    fontSize: 12,
+  },
+  exerciseEquipment: {
+    fontSize: 11,
+    fontStyle: 'italic',
+    marginTop: 2,
+  },
+  workoutNotes: {
+    marginTop: 4,
+    fontStyle: 'italic',
+    fontSize: 12,
+  },
+  statsSection: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 8,
+  },
+  stat: {
+    fontSize: 12,
+  },
+});

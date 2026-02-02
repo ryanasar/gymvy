@@ -1,19 +1,20 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Alert, Keyboard } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
-import { Colors } from '../constants/colors';
-import { useThemeColors } from '../hooks/useThemeColors';
-import { useWorkout } from '../contexts/WorkoutContext';
-import { useAuth } from '../auth/auth';
-import { useSync } from '../contexts/SyncContext';
-import { getSplitsByUserId } from '../api/splitsApi';
+import { Ionicons } from '@expo/vector-icons';
+import { Colors } from '@/constants/colors';
+import { useThemeColors } from '@/hooks/useThemeColors';
+import { useWorkout } from '@/contexts/WorkoutContext';
+import { useAuth } from '@/lib/auth';
+import { useSync } from '@/contexts/SyncContext';
+import { getSplitsByUserId, createSplit, updateSplit } from '@/services/api/splits';
 
 // Import split creation steps
-import SplitNameStep from '../components/splitCreation/SplitNameStep';
-import TrainingDaysStep from '../components/splitCreation/TrainingDaysStep';
-import SplitOverviewStep from '../components/splitCreation/SplitOverviewStep';
-import EditDayStep from '../components/splitCreation/EditDayStep';
-import SplitReview from '../components/splitCreation/SplitReview';
+import SplitNameStep from '@/components/split-creation/SplitNameStep';
+import TrainingDaysStep from '@/components/split-creation/TrainingDaysStep';
+import SplitOverviewStep from '@/components/split-creation/SplitOverviewStep';
+import EditDayStep from '@/components/split-creation/EditDayStep';
+import SplitReview from '@/components/split-creation/SplitReview';
 
 const CreateSplitScreen = () => {
   const router = useRouter();
@@ -62,8 +63,8 @@ const CreateSplitScreen = () => {
 
   const steps = [
     { id: 1, title: 'Name', component: SplitNameStep },
-    { id: 2, title: 'Days', component: TrainingDaysStep },
-    { id: 3, title: 'Overview', component: SplitOverviewStep },
+    { id: 2, title: 'Length', component: TrainingDaysStep },
+    { id: 3, title: 'Days', component: SplitOverviewStep },
     { id: 4, title: 'Edit Day', component: EditDayStep },
     { id: 5, title: 'Review', component: SplitReview }
   ];
@@ -130,12 +131,14 @@ const CreateSplitScreen = () => {
 
   const handleCancel = () => {
     Alert.alert(
-      'Cancel Split Creation',
-      'Are you sure you want to cancel? All progress will be lost.',
+      isEditMode ? 'Discard Changes?' : 'Cancel Split Creation?',
+      isEditMode
+        ? 'Your changes will not be saved.'
+        : 'All progress will be lost.',
       [
         { text: 'Keep Editing', style: 'cancel' },
         {
-          text: 'Yes, Cancel',
+          text: isEditMode ? 'Discard' : 'Cancel',
           style: 'destructive',
           onPress: () => router.back()
         }
@@ -210,7 +213,6 @@ const CreateSplitScreen = () => {
 
       if (isEditMode) {
         // Update existing split
-        const { updateSplit } = require('../api/splitsApi');
         await updateSplit(parseInt(editingSplitId), splitPayload);
 
         // If this is the active split, update it locally so today's workout reflects changes
@@ -250,7 +252,6 @@ const CreateSplitScreen = () => {
         ]);
       } else {
         // Create new split
-        const { createSplit } = require('../api/splitsApi');
         const createdSplit = await createSplit(splitPayload);
 
         // Trigger automatic sync
@@ -319,6 +320,46 @@ const CreateSplitScreen = () => {
     setSplitData(prev => ({ ...prev, ...updates }));
   };
 
+  // Check if a step is fully completed
+  const isStepCompleted = (stepId) => {
+    switch (stepId) {
+      case 1:
+        return splitData.name.trim() !== '';
+      case 2:
+        return splitData.totalDays >= 3 && splitData.totalDays <= 10;
+      case 3:
+        // All days must be configured (not just initialized)
+        return splitData.workoutDays.length === splitData.totalDays &&
+          splitData.workoutDays.every(day =>
+            day.isRest || (day.workoutName?.trim() && day.exercises?.length > 0)
+          );
+      case 5:
+        return true;
+      default:
+        return false;
+    }
+  };
+
+  // Check if a step is accessible (for create mode)
+  const isStepAccessible = (stepId) => {
+    // In edit mode, all steps are accessible
+    if (isEditMode) return true;
+
+    // In create mode, can only access current step or completed previous steps
+    if (stepId === 1) return true;
+    if (stepId === 2) return isStepCompleted(1);
+    if (stepId === 3) return isStepCompleted(1) && isStepCompleted(2);
+    if (stepId === 5) return isStepCompleted(1) && isStepCompleted(2) && isStepCompleted(3);
+    return false;
+  };
+
+  // Handle tab navigation
+  const handleStepNavigation = (targetStep) => {
+    if (targetStep === 4) return; // Edit day accessed via Overview
+    if (!isEditMode && !isStepAccessible(targetStep)) return;
+    setCurrentStep(targetStep);
+  };
+
   const canProceed = () => {
     switch (currentStep) {
       case 1: // Name step
@@ -357,36 +398,41 @@ const CreateSplitScreen = () => {
         )}
       </View>
 
-      {/* Progress Indicator - Hide step 4 (Edit Day) as it's accessed via step 3 */}
-      <View style={[styles.progressContainer, { backgroundColor: colors.cardBackground }]}>
-        {steps.filter(step => step.id !== 4).map((step, index) => {
-          // Adjust displayed step number for step 5 (Review) to show as step 4
-          const displayStepId = step.id > 4 ? step.id - 1 : step.id;
+      {/* Step Tabs */}
+      <View style={[styles.stepTabsContainer, { backgroundColor: colors.cardBackground }]}>
+        {steps.filter(step => step.id !== 4).map((step) => {
           const isActive = currentStep === step.id || (currentStep === 4 && step.id === 3);
+          const isCompleted = isStepCompleted(step.id);
+          const canNavigate = isEditMode || isStepAccessible(step.id);
 
           return (
-            <View key={step.id} style={styles.progressStep}>
-              <View style={[
-                styles.progressCircle,
-                { backgroundColor: colors.borderLight },
-                isActive && [styles.progressCircleActive, { backgroundColor: colors.primary }]
-              ]}>
+            <TouchableOpacity
+              key={step.id}
+              style={[styles.stepTab, !canNavigate && styles.stepTabDisabled]}
+              onPress={() => canNavigate && handleStepNavigation(step.id)}
+              activeOpacity={canNavigate ? 0.7 : 1}
+              disabled={!canNavigate}
+            >
+              <View style={styles.stepTabContent}>
+                {isCompleted && !isActive && (
+                  <Ionicons
+                    name="checkmark-circle"
+                    size={14}
+                    color={colors.success}
+                    style={styles.stepTabCheckmark}
+                  />
+                )}
                 <Text style={[
-                  styles.progressNumber,
-                  { color: colors.secondaryText },
-                  isActive && [styles.progressNumberActive, { color: colors.onPrimary }]
+                  styles.stepTabText,
+                  { color: isActive ? colors.primary : (canNavigate ? colors.text : colors.secondaryText + '50') }
                 ]}>
-                  {displayStepId}
+                  {step.title}
                 </Text>
               </View>
-              <Text style={[
-                styles.progressLabel,
-                { color: colors.secondaryText },
-                isActive && [styles.progressLabelActive, { color: colors.primary }]
-              ]}>
-                {step.title}
-              </Text>
-            </View>
+              {isActive && (
+                <View style={[styles.stepTabIndicator, { backgroundColor: colors.primary }]} />
+              )}
+            </TouchableOpacity>
           );
         })}
       </View>
@@ -467,46 +513,41 @@ const styles = StyleSheet.create({
   placeholder: {
     width: 60, // Balance the cancel button
   },
-  progressContainer: {
+  stepTabsContainer: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    paddingHorizontal: 20,
-    paddingVertical: 20,
     backgroundColor: Colors.light.cardBackground,
+    paddingHorizontal: 8,
   },
-  progressStep: {
-    alignItems: 'center',
+  stepTab: {
     flex: 1,
-  },
-  progressCircle: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: Colors.light.borderLight,
-    justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 8,
+    paddingTop: 14,
+    paddingHorizontal: 4,
   },
-  progressCircleActive: {
-    backgroundColor: Colors.light.primary,
+  stepTabDisabled: {
+    opacity: 0.5,
   },
-  progressNumber: {
-    fontSize: 14,
+  stepTabContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 10,
+    position: 'relative',
+  },
+  stepTabCheckmark: {
+    position: 'absolute',
+    left: -18,
+  },
+  stepTabText: {
+    fontSize: 13,
     fontWeight: '600',
-    color: Colors.light.secondaryText,
   },
-  progressNumberActive: {
-    color: Colors.light.onPrimary,
-  },
-  progressLabel: {
-    fontSize: 12,
-    fontWeight: '500',
-    color: Colors.light.secondaryText,
-    textAlign: 'center',
-  },
-  progressLabelActive: {
-    color: Colors.light.primary,
-    fontWeight: '600',
+  stepTabIndicator: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    height: 3,
   },
   content: {
     flex: 1,

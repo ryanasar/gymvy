@@ -15,16 +15,18 @@ import { useRouter, useLocalSearchParams } from 'expo-router';
 import DraggableFlatList from 'react-native-draggable-flatlist';
 import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useThemeColors } from '../hooks/useThemeColors';
-import { createSavedWorkout, updateSavedWorkout } from '../api/savedWorkoutsApi';
-import { exercises } from '../data/exercises/exerciseDatabase';
-import ExerciseCard from '../components/exercises/ExerciseCard';
-import EmptyState from '../components/common/EmptyState';
+import { useThemeColors } from '@/hooks/useThemeColors';
+import { useAuth } from '@/lib/auth';
+import { createSavedWorkout, updateSavedWorkout } from '@/services/api/savedWorkouts';
+import { exercises } from '@/data/exercises/exerciseDatabase';
+import ExerciseCard from '@/components/exercises/ExerciseCard';
+import EmptyState from '@/components/common/EmptyState';
 
 const CreateSavedWorkoutScreen = () => {
   const colors = useThemeColors();
   const router = useRouter();
   const params = useLocalSearchParams();
+  const { user } = useAuth();
 
   // Parse params for edit mode
   const isEditMode = params.mode === 'edit';
@@ -99,9 +101,9 @@ const CreateSavedWorkoutScreen = () => {
       };
 
       if (isEditMode && workoutId) {
-        await updateSavedWorkout(workoutId, workoutPayload);
+        await updateSavedWorkout(user?.id, workoutId, workoutPayload);
       } else {
-        await createSavedWorkout(workoutPayload);
+        await createSavedWorkout(user?.id, workoutPayload);
       }
 
       router.back();

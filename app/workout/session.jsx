@@ -1,29 +1,37 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import React, { useEffect, useRef, useState, useCallback } from 'react';
+import React, { useEffect, useRef, useState, useCallback, useMemo } from 'react';
 import { Alert, Animated, AppState, KeyboardAvoidingView, Modal, Platform, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import DraggableFlatList, { ScaleDecorator } from 'react-native-draggable-flatlist';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import Svg, { Circle } from 'react-native-svg';
-import { Colors } from '../constants/colors';
-import { useThemeColors } from '../hooks/useThemeColors';
-import { useWorkout } from '../contexts/WorkoutContext';
-import ExerciseCard from '../components/exercises/ExerciseCard';
-import { useSync } from '../contexts/SyncContext';
-import { startWorkout, startFreestyleWorkout, startSavedWorkout, updateWorkoutSet, completeWorkout, cancelWorkout, getActiveWorkout, calculateStreakFromLocal, storage } from '../../storage';
-import { createSavedWorkout } from '../api/savedWorkoutsApi';
-import LiveActivity from '../modules/LiveActivity';
-import { getCustomExercises } from '../api/customExercisesApi';
+import { Colors } from '@/constants/colors';
+import { useThemeColors } from '@/hooks/useThemeColors';
+import { useWorkout } from '@/contexts/WorkoutContext';
+import ExercisePickerScreen from '@/components/exercises/ExercisePickerScreen';
+import ExerciseCard from '@/components/exercises/ExerciseCard';
+import { useSync } from '@/contexts/SyncContext';
+import { useAuth } from '@/lib/auth';
+import { startWorkout, startFreestyleWorkout, startSavedWorkout, updateWorkoutSet, completeWorkout, cancelWorkout, getActiveWorkout, calculateStreakFromLocal, storage } from '@/services/storage';
+import { createSavedWorkout } from '@/services/api/savedWorkouts';
+import LiveActivity from '@/lib/modules/LiveActivity';
+import { getCustomExercises } from '@/services/api/customExercises';
 
 const WorkoutSessionScreen = () => {
   const colors = useThemeColors();
   const router = useRouter();
   const params = useLocalSearchParams();
+  const { user } = useAuth();
   const { markWorkoutCompleted } = useWorkout();
-  const { updatePendingCount } = useSync();
+  const { updatePendingCount, manualSync } = useSync();
 
-  // Parse workout data from params
-  const workoutData = params.workoutData ? JSON.parse(params.workoutData) : null;
+  // Safely parse workout data from params with try-catch to prevent crashes
+  let workoutData = null;
+  try {
+    workoutData = params.workoutData ? JSON.parse(params.workoutData) : null;
+  } catch (e) {
+    console.error('[WorkoutSession] Failed to parse workoutData:', e);
+  }
 
   // New params for freestyle/saved workout modes
   const workoutSource = params.source || 'split'; // 'split', 'freestyle', or 'saved'
@@ -33,6 +41,7 @@ const WorkoutSessionScreen = () => {
   const [currentSetIndex, setCurrentSetIndex] = useState(0);
   const [exercises, setExercises] = useState([]);
   const [workoutSessionId, setWorkoutSessionId] = useState(null);
+  const [isInitializing, setIsInitializing] = useState(true);
   const [showOptionsMenu, setShowOptionsMenu] = useState(false);
   const [exerciseDatabase, setExerciseDatabase] = useState([]);
 
@@ -44,38 +53,37 @@ const WorkoutSessionScreen = () => {
 
   // Add Exercise Modal state
   const [showAddExerciseModal, setShowAddExerciseModal] = useState(false);
-  const [addExerciseSearch, setAddExerciseSearch] = useState('');
-  const [addExerciseMuscleFilter, setAddExerciseMuscleFilter] = useState('all');
-  const [selectedNewExercise, setSelectedNewExercise] = useState(null);
-  const [newExerciseSets, setNewExerciseSets] = useState('3');
-  const [newExerciseReps, setNewExerciseReps] = useState('10');
-  const [newExerciseWeight, setNewExerciseWeight] = useState('');
 
   // Swap Exercise Modal state
   const [showSwapExerciseModal, setShowSwapExerciseModal] = useState(false);
   const [swapExerciseSearch, setSwapExerciseSearch] = useState('');
-
-  // Muscle groups for filtering
-  const muscleGroups = [
-    { id: 'all', name: 'All Exercises' },
-    { id: 'chest', name: 'Chest' },
-    { id: 'lats', name: 'Back' },
-    { id: 'front_delts', name: 'Shoulders' },
-    { id: 'biceps', name: 'Biceps' },
-    { id: 'triceps', name: 'Triceps' },
-    { id: 'quadriceps', name: 'Legs' },
-    { id: 'core', name: 'Core' },
-    { id: 'hamstrings', name: 'Hamstrings' },
-    { id: 'glutes', name: 'Glutes' },
-    { id: 'calves', name: 'Calves' },
-    { id: 'forearms', name: 'Forearms' }
-  ];
 
   // Reorder Exercises Modal state
   const [showReorderModal, setShowReorderModal] = useState(false);
 
   // Completion state - prevents interaction during finish animation
   const [isCompleting, setIsCompleting] = useState(false);
+
+  // Helper to detect if an exercise is cardio
+  const isCardioExercise = (exercise) => {
+    if (!exercise) return false;
+    // Check if exercise itself has exerciseType
+    if (exercise.exerciseType === 'cardio') return true;
+    // Look up in exercise database
+    const dbExercise = exerciseDatabase.find(e =>
+      e.id === exercise.id || e.name === exercise.name
+    );
+    return dbExercise?.exerciseType === 'cardio';
+  };
+
+  // Helper to get cardio fields for an exercise
+  const getCardioFields = (exercise) => {
+    if (!exercise) return ['duration', 'incline'];
+    const dbExercise = exerciseDatabase.find(e =>
+      e.id === exercise.id || e.name === exercise.name
+    );
+    return dbExercise?.cardioFields || exercise.cardioFields || ['duration', 'incline'];
+  };
 
   // Rest Timer state
   const [showRestTimer, setShowRestTimer] = useState(false);
@@ -149,7 +157,7 @@ const WorkoutSessionScreen = () => {
     const loadExerciseDatabase = async () => {
       try {
         const bundledExercises = await storage.getExercises();
-        const customExercises = await getCustomExercises();
+        const customExercises = await getCustomExercises(user?.id);
         // Merge bundled and custom exercises, marking custom ones
         const allExercises = [
           ...(bundledExercises || []),
@@ -160,14 +168,14 @@ const WorkoutSessionScreen = () => {
         console.error('[Session] Error loading exercise database:', error);
       }
     };
-    loadExerciseDatabase();
-  }, []);
+    if (user?.id) loadExerciseDatabase();
+  }, [user?.id]);
 
   // Check for existing workout session and restore if exists
   useEffect(() => {
     const checkForActiveWorkout = async () => {
       try {
-        const activeWorkout = await getActiveWorkout();
+        const activeWorkout = await getActiveWorkout(user?.id);
 
         if (activeWorkout) {
           // Validate that the active workout has properly structured exercises with sets
@@ -176,7 +184,7 @@ const WorkoutSessionScreen = () => {
           );
 
           if (hasInvalidExercises) {
-            await cancelWorkout(activeWorkout.id);
+            await cancelWorkout(user?.id, activeWorkout.id);
             // Fall through to create new workout
           } else {
             // Restore the workout state from storage
@@ -191,12 +199,13 @@ const WorkoutSessionScreen = () => {
               setExercises([]);
               LiveActivity.startWorkout(activeWorkout.workoutName || 'Freestyle Workout', 'Add exercises', '', 0, 0);
               liveActivityStartedRef.current = true;
+              setIsInitializing(false);
               return;
             }
 
             // Load exercise database to get exercise names (bundled + custom)
             const bundledExercises = await storage.getExercises();
-            const customExercises = await getCustomExercises();
+            const customExercises = await getCustomExercises(user?.id);
             const exerciseMap = {};
             bundledExercises.forEach(ex => {
               exerciseMap[ex.id] = ex;
@@ -209,12 +218,12 @@ const WorkoutSessionScreen = () => {
             });
 
             // Resolve any unresolved exercise IDs from backend
-            const { getCustomExerciseById } = await import('../api/customExercisesApi');
+            const { getCustomExerciseById } = await import('@/services/api/customExercises');
             for (const exercise of activeWorkout.exercises) {
               const id = exercise.exerciseId;
               if (!exerciseMap[id] && !exerciseMap[String(id)]) {
                 try {
-                  const resolved = await getCustomExerciseById(id);
+                  const resolved = await getCustomExerciseById(user?.id, id);
                   if (resolved) {
                     exerciseMap[id] = { ...resolved, isCustom: true };
                     exerciseMap[String(id)] = { ...resolved, isCustom: true };
@@ -275,6 +284,7 @@ const WorkoutSessionScreen = () => {
             // Start Live Activity for restored workout
             updateLiveActivity(restoredExercises, restoredExIndex, restoredSetIndex, true);
 
+            setIsInitializing(false);
             return;
           }
         }
@@ -284,7 +294,7 @@ const WorkoutSessionScreen = () => {
 
         if (workoutSource === 'freestyle') {
           // Start freestyle workout (empty exercises)
-          newWorkout = await startFreestyleWorkout();
+          newWorkout = await startFreestyleWorkout(user?.id);
           setWorkoutSessionId(newWorkout.id);
           setWorkoutName(newWorkout.workoutName);
           setCurrentSource('freestyle');
@@ -293,19 +303,20 @@ const WorkoutSessionScreen = () => {
           // Start Live Activity for freestyle workout
           LiveActivity.startWorkout(newWorkout.workoutName, 'Add exercises', '', 0, 0);
           liveActivityStartedRef.current = true;
+          setIsInitializing(false);
           return;
         }
 
         if (workoutSource === 'saved' && savedWorkoutId) {
           // Start from saved workout
-          newWorkout = await startSavedWorkout(savedWorkoutId);
+          newWorkout = await startSavedWorkout(user?.id, savedWorkoutId);
           setWorkoutSessionId(newWorkout.id);
           setWorkoutName(newWorkout.workoutName);
           setCurrentSource('saved');
 
           // Load exercise database to get exercise names
           const bundledEx = await storage.getExercises();
-          const customEx = await getCustomExercises();
+          const customEx = await getCustomExercises(user?.id);
           const exerciseMap = {};
           bundledEx.forEach(ex => {
             exerciseMap[ex.id] = ex;
@@ -343,6 +354,7 @@ const WorkoutSessionScreen = () => {
             LiveActivity.startWorkout(newWorkout.workoutName, 'Add exercises', '', 0, 0);
             liveActivityStartedRef.current = true;
           }
+          setIsInitializing(false);
           return;
         }
 
@@ -351,14 +363,14 @@ const WorkoutSessionScreen = () => {
           const splitId = workoutData.splitId || 'unknown';
           const dayIndex = (workoutData.dayNumber || 1) - 1;
 
-          newWorkout = await startWorkout(splitId, dayIndex);
+          newWorkout = await startWorkout(user?.id, splitId, dayIndex);
           setWorkoutSessionId(newWorkout.id);
           setWorkoutName(workoutData.dayName || 'Workout');
           setCurrentSource('split');
 
           // Load exercise database to get exercise names (bundled + custom)
           const bundledEx = await storage.getExercises();
-          const customEx = await getCustomExercises();
+          const customEx = await getCustomExercises(user?.id);
           const exerciseMap = {};
           bundledEx.forEach(ex => {
             exerciseMap[ex.id] = ex;
@@ -397,14 +409,16 @@ const WorkoutSessionScreen = () => {
 
           // Start Live Activity for new workout
           updateLiveActivity(initializedExercises, 0, 0, true);
+          setIsInitializing(false);
         }
       } catch (error) {
         console.error('[Session] Error checking for active workout:', error);
+        setIsInitializing(false);
       }
     };
 
     checkForActiveWorkout();
-  }, [updateLiveActivity, workoutSource, savedWorkoutId]);
+  }, [updateLiveActivity, workoutSource, savedWorkoutId, user?.id]);
 
   // Rest timer countdown effect
   useEffect(() => {
@@ -529,7 +543,7 @@ const WorkoutSessionScreen = () => {
 
     // Update storage
     try {
-      const activeWorkout = await storage.getActiveWorkout();
+      const activeWorkout = await storage.getActiveWorkout(user?.id);
       if (activeWorkout && activeWorkout.id === workoutSessionId) {
         // Reorder exercises in storage to match the new order
         const reorderedStorageExercises = data.map(uiExercise => {
@@ -539,12 +553,18 @@ const WorkoutSessionScreen = () => {
         }).filter(Boolean);
 
         activeWorkout.exercises = reorderedStorageExercises;
-        await storage.saveActiveWorkout(activeWorkout);
+        await storage.saveActiveWorkout(user?.id, activeWorkout);
       }
     } catch (error) {
       console.error('[Session] Error reordering exercises in storage:', error);
     }
   }, [exercises, currentExerciseIndex, workoutSessionId]);
+
+  // Get existing exercise IDs for the picker - must be before early returns
+  const existingExerciseIds = useMemo(() =>
+    exercises.map(e => e.id).filter(Boolean),
+    [exercises]
+  );
 
   // For split workouts, require workoutData. For freestyle/saved, workoutSessionId is sufficient.
   const isFreestyleOrSaved = currentSource === 'freestyle' || currentSource === 'saved' || workoutSource === 'freestyle' || workoutSource === 'saved';
@@ -562,9 +582,8 @@ const WorkoutSessionScreen = () => {
   }
 
   // Loading state - waiting for workout session to initialize
-  // For freestyle/saved: show loading while workoutSessionId is not set
-  // For split: if no exercises and no workout data, something is wrong
-  if (!exercises.length && !workoutSessionId) {
+  // Only check isInitializing since it's set to false only after all data is loaded
+  if (isInitializing) {
     return (
       <View style={[styles.container, { backgroundColor: colors.background }]}>
         <View style={[styles.header, { backgroundColor: colors.cardBackground, borderBottomColor: colors.borderLight }]}>
@@ -605,15 +624,29 @@ const WorkoutSessionScreen = () => {
       const exercise = exercises[exerciseIndex];
       // Use numeric exerciseId to match the workout storage format
       const exerciseId = parseInt(exercise.id) || exercise.id || exercise.name;
+      const isCardio = isCardioExercise(exercise);
+
+      const updateData = {
+        completed: setData.completed
+      };
+
+      if (isCardio) {
+        // Cardio fields
+        updateData.duration = parseFloat(setData.duration) || 0;
+        updateData.incline = parseFloat(setData.incline) || 0;
+        updateData.speed = parseFloat(setData.speed) || 0;
+      } else {
+        // Strength fields
+        updateData.reps = parseInt(setData.reps) || 0;
+        updateData.weight = parseFloat(setData.weight) || 0;
+      }
+
       await updateWorkoutSet(
+        user?.id,
         workoutSessionId,
         exerciseId,
         setIndex,
-        {
-          reps: parseInt(setData.reps) || 0,
-          weight: parseFloat(setData.weight) || 0,
-          completed: setData.completed
-        }
+        updateData
       );
     } catch (error) {
       console.error('[Session] Error saving set to storage:', error);
@@ -644,7 +677,7 @@ const WorkoutSessionScreen = () => {
 
     // Also add the set to storage
     try {
-      const activeWorkout = await storage.getActiveWorkout();
+      const activeWorkout = await storage.getActiveWorkout(user?.id);
       if (activeWorkout && activeWorkout.id === workoutSessionId) {
         const exercise = activeWorkout.exercises[currentExerciseIndex];
         const newSetIndex = exercise.sets.length;
@@ -658,7 +691,7 @@ const WorkoutSessionScreen = () => {
           completed: false
         });
 
-        await storage.saveActiveWorkout(activeWorkout);
+        await storage.saveActiveWorkout(user?.id, activeWorkout);
       }
     } catch (error) {
       console.error('[Session] Error adding set to storage:', error);
@@ -696,7 +729,7 @@ const WorkoutSessionScreen = () => {
 
     // Update storage
     try {
-      const activeWorkout = await storage.getActiveWorkout();
+      const activeWorkout = await storage.getActiveWorkout(user?.id);
       if (activeWorkout && activeWorkout.id === workoutSessionId) {
         const exercise = activeWorkout.exercises[currentExerciseIndex];
 
@@ -708,7 +741,7 @@ const WorkoutSessionScreen = () => {
           set.setIndex = idx;
         });
 
-        await storage.saveActiveWorkout(activeWorkout);
+        await storage.saveActiveWorkout(user?.id, activeWorkout);
       }
     } catch (error) {
       console.error('[Session] Error deleting set from storage:', error);
@@ -748,9 +781,24 @@ const WorkoutSessionScreen = () => {
             // Adjust index before removing so all state updates batch together
             // and avoid a render where currentExerciseIndex is out of bounds.
             if (currentExerciseIndex >= exercises.length - 1) {
-              setCurrentExerciseIndex(Math.max(0, currentExerciseIndex - 1));
+              const newExerciseIndex = Math.max(0, currentExerciseIndex - 1);
+              setCurrentExerciseIndex(newExerciseIndex);
+
+              // Navigate to appropriate set based on previous exercise's completion state
+              const previousExercise = exercises[newExerciseIndex];
+              if (previousExercise && previousExercise.completedSets >= previousExercise.totalSets) {
+                // All sets completed - go to last set (shows finish button)
+                setCurrentSetIndex(previousExercise.totalSets - 1);
+              } else if (previousExercise) {
+                // Find first incomplete set
+                const firstIncomplete = previousExercise.sessionSets.findIndex(s => !s.completed);
+                setCurrentSetIndex(firstIncomplete >= 0 ? firstIncomplete : 0);
+              } else {
+                setCurrentSetIndex(0);
+              }
+            } else {
+              setCurrentSetIndex(0);
             }
-            setCurrentSetIndex(0);
 
             // Remove from UI
             setExercises(prev => {
@@ -761,10 +809,10 @@ const WorkoutSessionScreen = () => {
 
             // Update storage
             try {
-              const activeWorkout = await storage.getActiveWorkout();
+              const activeWorkout = await storage.getActiveWorkout(user?.id);
               if (activeWorkout && activeWorkout.id === workoutSessionId) {
                 activeWorkout.exercises.splice(currentExerciseIndex, 1);
-                await storage.saveActiveWorkout(activeWorkout);
+                await storage.saveActiveWorkout(user?.id, activeWorkout);
               }
             } catch (error) {
               console.error('[Session] Error deleting exercise from storage:', error);
@@ -777,35 +825,36 @@ const WorkoutSessionScreen = () => {
 
   const openAddExerciseModal = () => {
     setShowOptionsMenu(false);
-    setAddExerciseSearch('');
-    setAddExerciseMuscleFilter('all');
-    setSelectedNewExercise(null);
-    setNewExerciseSets('3');
-    setNewExerciseReps('10');
-    setNewExerciseWeight('');
     setShowAddExerciseModal(true);
   };
 
-  const handleAddExercise = async () => {
-    if (!selectedNewExercise) {
-      Alert.alert('Select Exercise', 'Please select an exercise to add.');
-      return;
-    }
-
-    const sets = parseInt(newExerciseSets) || 3;
-    const reps = parseInt(newExerciseReps) || 10;
-    const weight = newExerciseWeight ? parseFloat(newExerciseWeight) : 0;
+  const handleAddExercise = async (selectedExercise, config) => {
+    const isCardio = isCardioExercise(selectedExercise);
+    // Cardio exercises default to 1 set
+    const sets = isCardio ? 1 : (config.sets || 3);
+    const reps = config.reps || 10;
+    const weight = config.weight ? parseFloat(config.weight) : 0;
+    const duration = parseFloat(config.duration) || 20;
+    const incline = parseFloat(config.incline) || 0;
+    const speed = parseFloat(config.speed) || 5;
 
     // Create new exercise for UI
     const newExercise = {
-      name: selectedNewExercise.name,
-      id: selectedNewExercise.id,
+      name: selectedExercise.name,
+      id: selectedExercise.id,
+      exerciseType: selectedExercise.exerciseType,
+      cardioFields: selectedExercise.cardioFields,
       completedSets: 0,
       totalSets: sets,
       sessionSets: Array.from({ length: sets }, (_, idx) => ({
         setNumber: idx + 1,
-        weight: weight.toString(),
-        reps: reps.toString(),
+        // Strength fields
+        weight: isCardio ? null : weight.toString(),
+        reps: isCardio ? null : reps.toString(),
+        // Cardio fields
+        duration: isCardio ? duration.toString() : null,
+        incline: isCardio ? incline.toString() : null,
+        speed: isCardio ? speed.toString() : null,
         completed: false
       }))
     };
@@ -819,26 +868,31 @@ const WorkoutSessionScreen = () => {
 
     // Update storage
     try {
-      const activeWorkout = await storage.getActiveWorkout();
+      const activeWorkout = await storage.getActiveWorkout(user?.id);
       if (activeWorkout && activeWorkout.id === workoutSessionId) {
         const storageExercise = {
-          exerciseId: selectedNewExercise.id,
+          exerciseId: selectedExercise.id,
+          exerciseType: selectedExercise.exerciseType,
+          cardioFields: selectedExercise.cardioFields,
           sets: Array.from({ length: sets }, (_, idx) => ({
             setIndex: idx,
-            reps: reps,
-            weight: weight,
+            // Strength fields
+            reps: isCardio ? null : reps,
+            weight: isCardio ? null : weight,
+            // Cardio fields
+            duration: isCardio ? duration : null,
+            incline: isCardio ? incline : null,
+            speed: isCardio ? speed : null,
             completed: false
           }))
         };
 
         activeWorkout.exercises.splice(currentExerciseIndex + 1, 0, storageExercise);
-        await storage.saveActiveWorkout(activeWorkout);
+        await storage.saveActiveWorkout(user?.id, activeWorkout);
       }
     } catch (error) {
       console.error('[Session] Error adding exercise to storage:', error);
     }
-
-    setShowAddExerciseModal(false);
   };
 
   const openSwapExerciseModal = () => {
@@ -871,10 +925,10 @@ const WorkoutSessionScreen = () => {
 
     // Update storage - only change the exerciseId, preserve all sets
     try {
-      const activeWorkout = await storage.getActiveWorkout();
+      const activeWorkout = await storage.getActiveWorkout(user?.id);
       if (activeWorkout && activeWorkout.id === workoutSessionId) {
         activeWorkout.exercises[currentExerciseIndex].exerciseId = newExercise.id;
-        await storage.saveActiveWorkout(activeWorkout);
+        await storage.saveActiveWorkout(user?.id, activeWorkout);
       }
     } catch (error) {
       console.error('[Session] Error swapping exercise in storage:', error);
@@ -885,32 +939,6 @@ const WorkoutSessionScreen = () => {
     setShowOptionsMenu(false);
     setShowReorderModal(true);
   };
-
-  // Filter exercises for search with muscle group filter
-  const filteredExercisesForAdd = exerciseDatabase.filter(ex => {
-    // Exclude exercises already in workout
-    if (exercises.some(e => e.id === ex.id)) return false;
-
-    // Apply muscle filter first (only primary muscles)
-    if (addExerciseMuscleFilter !== 'all') {
-      const primaryMatch = ex.primaryMuscles && ex.primaryMuscles.includes(addExerciseMuscleFilter);
-      if (!primaryMatch) return false;
-    }
-
-    // Then apply search filter
-    if (addExerciseSearch.trim()) {
-      const lowercaseQuery = addExerciseSearch.toLowerCase();
-      return (
-        ex.name.toLowerCase().includes(lowercaseQuery) ||
-        ex.primaryMuscles?.some(muscle => muscle.toLowerCase().includes(lowercaseQuery)) ||
-        ex.secondaryMuscles?.some(muscle => muscle.toLowerCase().includes(lowercaseQuery)) ||
-        ex.equipment?.toLowerCase().includes(lowercaseQuery) ||
-        ex.category?.toLowerCase().includes(lowercaseQuery)
-      );
-    }
-
-    return true;
-  });
 
   const filteredExercisesForSwap = exerciseDatabase.filter(ex =>
     ex.name.toLowerCase().includes(swapExerciseSearch.toLowerCase()) &&
@@ -1184,6 +1212,7 @@ const WorkoutSessionScreen = () => {
         const exercise = exercises[currentExerciseIndex];
         const exerciseId = parseInt(exercise.id) || exercise.id || exercise.name;
         await updateWorkoutSet(
+          user?.id,
           workoutSessionId,
           exerciseId,
           previousSetIndex,
@@ -1256,6 +1285,7 @@ const WorkoutSessionScreen = () => {
           // Save to storage immediately
           const prevExerciseId = parseInt(prevExercise.id) || prevExercise.id || prevExercise.name;
           updateWorkoutSet(
+            user?.id,
             workoutSessionId,
             prevExerciseId,
             targetSetIndex,
@@ -1298,18 +1328,69 @@ const WorkoutSessionScreen = () => {
     LiveActivity.stopWorkout();
     liveActivityStartedRef.current = false;
 
+    // Build completed workout data first (actual exercises/sets performed during session)
+    // This is used for both split and individual workouts
+    let workoutTotalSets = 0;
+    exercises.forEach(ex => {
+      if (ex.totalSets) {
+        workoutTotalSets += ex.totalSets;
+      } else if (ex.sessionSets && Array.isArray(ex.sessionSets)) {
+        workoutTotalSets += ex.sessionSets.length;
+      }
+    });
+
+    const completedWorkoutData = {
+      source: currentSource,
+      workoutSessionId,
+      workoutName,
+      totalSets: workoutTotalSets,
+      exercises: exercises.map(ex => ({
+        name: ex.name,
+        sets: ex.totalSets, // Use totalSets as 'sets' for ExerciseList display compatibility
+        completedSets: ex.completedSets,
+        totalSets: ex.totalSets,
+        primaryMuscle: ex.primaryMuscle || ex.muscleGroup,
+      })),
+      completedAt: Date.now(),
+    };
+
     // Mark workout as complete in storage (moves to pending sync)
     if (workoutSessionId) {
       try {
-        await completeWorkout(workoutSessionId);
+        await completeWorkout(user?.id, workoutSessionId);
+
+        // Update pending count and sync immediately to get database ID
+        await updatePendingCount();
+        await manualSync();
+
+        // Get the database ID after sync completes
+        const databaseId = await storage.getWorkoutDatabaseId(workoutSessionId);
+        if (databaseId) {
+          completedWorkoutData.databaseWorkoutSessionId = databaseId;
+        }
 
         // Only mark split workouts as completed in context (affects day progression)
         if (currentSource === 'split') {
-          markWorkoutCompleted(workoutSessionId);
-        }
+          // Extract workout details for calendar popup
+          const muscleGroups = [];
+          exercises.forEach(ex => {
+            const muscle = ex.primaryMuscle || ex.muscleGroup;
+            if (muscle && !muscleGroups.includes(muscle)) {
+              muscleGroups.push(muscle);
+            }
+          });
 
-        // Update pending count for sync
-        await updatePendingCount();
+          const workoutDetails = {
+            workoutName: workoutName,
+            muscleGroups,
+            totalExercises: exercises.length,
+            totalSets: workoutTotalSets || null,
+            splitEmoji: workoutData?.emoji,
+          };
+
+          // Pass the actual completed workout data (4th param) for display on workout tab
+          markWorkoutCompleted(workoutSessionId, false, workoutDetails, completedWorkoutData);
+        }
       } catch (error) {
         console.error('[Session] Error completing workout in storage:', error);
       }
@@ -1323,19 +1404,6 @@ const WorkoutSessionScreen = () => {
       return;
     }
 
-    // Collect workout data for individual workouts
-    const completedWorkoutData = {
-      source: currentSource,
-      workoutSessionId,
-      workoutName,
-      exercises: exercises.map(ex => ({
-        name: ex.name,
-        completedSets: ex.completedSets,
-        totalSets: ex.totalSets,
-      })),
-      completedAt: Date.now(),
-    };
-
     // Navigate back to workout tab - animation will play there
     router.replace({
       pathname: '/(tabs)/workout',
@@ -1347,155 +1415,6 @@ const WorkoutSessionScreen = () => {
       }
     });
   };
-
-  // Render Add Exercise Modal - extracted for reuse in empty state
-  const renderAddExerciseModal = () => (
-    <Modal
-      visible={showAddExerciseModal}
-      animationType="slide"
-      presentationStyle="pageSheet"
-      onRequestClose={() => setShowAddExerciseModal(false)}
-    >
-      <KeyboardAvoidingView
-        style={[styles.fullScreenModal, { backgroundColor: colors.background }]}
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      >
-        <View style={[styles.fullScreenModalHeader, { backgroundColor: colors.cardBackground, borderBottomColor: colors.borderLight }]}>
-          <TouchableOpacity onPress={() => setShowAddExerciseModal(false)}>
-            <Text style={[styles.modalCancelText, { color: colors.secondaryText }]}>Cancel</Text>
-          </TouchableOpacity>
-          <Text style={[styles.fullScreenModalTitle, { color: colors.text }]}>Add Exercise</Text>
-          <TouchableOpacity onPress={handleAddExercise}>
-            <Text style={[styles.modalSaveText, { color: colors.primary }, !selectedNewExercise && styles.modalSaveTextDisabled]}>
-              Add
-            </Text>
-          </TouchableOpacity>
-        </View>
-
-        <View style={[styles.searchContainer, { backgroundColor: colors.cardBackground, borderColor: colors.borderLight }]}>
-          <Ionicons name="search" size={20} color={colors.secondaryText} />
-          <TextInput
-            style={[styles.searchInput, { color: colors.text }]}
-            placeholder="Search exercises..."
-            placeholderTextColor={colors.secondaryText}
-            value={addExerciseSearch}
-            onChangeText={setAddExerciseSearch}
-            autoCapitalize="none"
-          />
-          {addExerciseSearch.length > 0 && (
-            <TouchableOpacity onPress={() => setAddExerciseSearch('')}>
-              <Ionicons name="close-circle" size={20} color={colors.secondaryText} />
-            </TouchableOpacity>
-          )}
-        </View>
-
-        {/* Muscle Group Filter Pills */}
-        <View style={styles.filterSection}>
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            style={styles.filterScrollView}
-            contentContainerStyle={styles.filterScrollContent}
-          >
-            {muscleGroups.map((muscle) => (
-              <TouchableOpacity
-                key={muscle.id}
-                style={[
-                  styles.filterPill,
-                  { backgroundColor: colors.borderLight + '80' },
-                  addExerciseMuscleFilter === muscle.id && [styles.filterPillActive, { backgroundColor: colors.primary, borderColor: colors.primary, shadowColor: colors.primary }]
-                ]}
-                onPress={() => {
-                  setAddExerciseMuscleFilter(muscle.id);
-                  if (muscle.id !== 'all' && addExerciseSearch.trim()) {
-                    setAddExerciseSearch('');
-                  }
-                }}
-                activeOpacity={0.8}
-              >
-                <Text style={[
-                  styles.filterPillText,
-                  { color: colors.text },
-                  addExerciseMuscleFilter === muscle.id && [styles.filterPillTextActive, { color: colors.onPrimary }]
-                ]}>
-                  {muscle.name}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </ScrollView>
-        </View>
-
-        {selectedNewExercise && (
-          <View style={[styles.selectedExerciseConfig, { backgroundColor: colors.cardBackground, borderColor: colors.primary + '40' }]}>
-            <View style={styles.selectedExerciseBadge}>
-              <Text style={[styles.selectedExerciseName, { color: colors.text }]}>{selectedNewExercise.name}</Text>
-              <TouchableOpacity onPress={() => setSelectedNewExercise(null)}>
-                <Ionicons name="close-circle" size={20} color={colors.secondaryText} />
-              </TouchableOpacity>
-            </View>
-
-            <View style={styles.exerciseConfigRow}>
-              <View style={styles.configInputGroup}>
-                <Text style={[styles.configLabel, { color: colors.secondaryText }]}>Sets</Text>
-                <TextInput
-                  style={[styles.configInput, { backgroundColor: colors.background, borderColor: colors.borderLight, color: colors.text }]}
-                  value={newExerciseSets}
-                  onChangeText={setNewExerciseSets}
-                  keyboardType="numeric"
-                  placeholder="3"
-                  placeholderTextColor={colors.secondaryText}
-                />
-              </View>
-              <View style={styles.configInputGroup}>
-                <Text style={[styles.configLabel, { color: colors.secondaryText }]}>Reps</Text>
-                <TextInput
-                  style={[styles.configInput, { backgroundColor: colors.background, borderColor: colors.borderLight, color: colors.text }]}
-                  value={newExerciseReps}
-                  onChangeText={setNewExerciseReps}
-                  keyboardType="numeric"
-                  placeholder="10"
-                  placeholderTextColor={colors.secondaryText}
-                />
-              </View>
-              <View style={styles.configInputGroup}>
-                <Text style={[styles.configLabel, { color: colors.secondaryText }]}>Weight (opt)</Text>
-                <TextInput
-                  style={[styles.configInput, { backgroundColor: colors.background, borderColor: colors.borderLight, color: colors.text }]}
-                  value={newExerciseWeight}
-                  onChangeText={setNewExerciseWeight}
-                  keyboardType="numeric"
-                  placeholder="0"
-                  placeholderTextColor={colors.secondaryText}
-                />
-              </View>
-            </View>
-          </View>
-        )}
-
-        <ScrollView style={styles.exerciseList} contentContainerStyle={styles.exerciseListContent}>
-          {filteredExercisesForAdd.map(exercise => (
-            <View key={exercise.id} style={selectedNewExercise?.id === exercise.id ? [styles.selectedExerciseWrapper, { borderColor: colors.primary }] : undefined}>
-              <ExerciseCard
-                exercise={exercise}
-                onPress={() => setSelectedNewExercise(exercise)}
-                compact={true}
-                showMuscles={false}
-                showCategory={false}
-              />
-              {selectedNewExercise?.id === exercise.id && (
-                <View style={[styles.selectedCheckmark, { backgroundColor: colors.primary }]}>
-                  <Ionicons name="checkmark" size={16} color={colors.onPrimary} />
-                </View>
-              )}
-            </View>
-          ))}
-          {filteredExercisesForAdd.length === 0 && (
-            <Text style={[styles.noExercisesText, { color: colors.secondaryText }]}>No exercises found</Text>
-          )}
-        </ScrollView>
-      </KeyboardAvoidingView>
-    </Modal>
-  );
 
   // Render Save Workout Modal for freestyle completion
   const renderSaveWorkoutModal = () => (
@@ -1520,7 +1439,7 @@ const WorkoutSessionScreen = () => {
           <TouchableOpacity onPress={async () => {
             if (saveWorkoutName.trim()) {
               try {
-                await createSavedWorkout({
+                await createSavedWorkout(user?.id, {
                   name: saveWorkoutName.trim(),
                   emoji: '💪',
                   exercises: exercises.map(ex => ({
@@ -1583,14 +1502,27 @@ const WorkoutSessionScreen = () => {
   // Helper to complete the finish flow
   const finishWorkoutCompletion = () => {
     // Collect workout data for individual workouts
+    // Calculate total sets for the workout
+    let workoutTotalSets = 0;
+    exercises.forEach(ex => {
+      if (ex.totalSets) {
+        workoutTotalSets += ex.totalSets;
+      } else if (ex.sessionSets && Array.isArray(ex.sessionSets)) {
+        workoutTotalSets += ex.sessionSets.length;
+      }
+    });
+
     const completedWorkoutData = {
       source: currentSource,
       workoutSessionId,
       workoutName,
+      totalSets: workoutTotalSets,
       exercises: exercises.map(ex => ({
         name: ex.name,
+        sets: ex.totalSets, // Use totalSets as 'sets' for ExerciseList display compatibility
         completedSets: ex.completedSets,
         totalSets: ex.totalSets,
+        primaryMuscle: ex.primaryMuscle || ex.muscleGroup,
       })),
       completedAt: Date.now(),
     };
@@ -1643,7 +1575,7 @@ const WorkoutSessionScreen = () => {
 
             if (workoutSessionId) {
               try {
-                await cancelWorkout(workoutSessionId);
+                await cancelWorkout(user?.id, workoutSessionId);
               } catch (error) {
                 console.error('[Session] Error cancelling workout:', error);
               }
@@ -1811,7 +1743,107 @@ const WorkoutSessionScreen = () => {
                   </View>
                 </View>
               </View>
+            ) : isCardioExercise(currentExercise) ? (
+              /* CARDIO: Duration + incline/speed inputs */
+              <View style={styles.setInputs}>
+                <View style={styles.inputGroup}>
+                  <Text style={[styles.inputLabel, { color: colors.secondaryText }]}>TIME (MIN)</Text>
+                  <View style={[styles.inputWrapper, { shadowColor: colors.shadow }]}>
+                    <TextInput
+                      style={[
+                        styles.input,
+                        { backgroundColor: colors.cardBackground, borderColor: colors.borderLight, color: colors.text },
+                        (!currentSet?.duration || currentSet?.duration === '0') && { color: colors.secondaryText + '60', borderColor: colors.borderLight + '60' }
+                      ]}
+                      placeholder="20"
+                      value={currentSet?.duration !== undefined ? currentSet.duration : '20'}
+                      onChangeText={(value) => updateSetData('duration', value.replace(/[^0-9.]/g, ''))}
+                      onFocus={() => {
+                        if (currentSet?.duration === '0') {
+                          updateSetData('duration', '');
+                        }
+                      }}
+                      onBlur={() => {
+                        if (!currentSet?.duration || currentSet?.duration === '') {
+                          updateSetData('duration', '0');
+                        }
+                      }}
+                      keyboardType="decimal-pad"
+                      maxLength={5}
+                      contextMenuHidden={true}
+                      placeholderTextColor={colors.secondaryText + '80'}
+                      selectionColor={colors.primary}
+                    />
+                  </View>
+                </View>
+
+                {/* Dynamic second field based on exercise cardioFields */}
+                {getCardioFields(currentExercise).includes('incline') ? (
+                  <View style={styles.inputGroup}>
+                    <Text style={[styles.inputLabel, { color: colors.secondaryText }]}>INCLINE (%)</Text>
+                    <View style={[styles.inputWrapper, { shadowColor: colors.shadow }]}>
+                      <TextInput
+                        style={[
+                          styles.input,
+                          { backgroundColor: colors.cardBackground, borderColor: colors.borderLight, color: colors.text },
+                          (!currentSet?.incline || currentSet?.incline === '0') && { color: colors.secondaryText + '60', borderColor: colors.borderLight + '60' }
+                        ]}
+                        placeholder="0"
+                        value={currentSet?.incline !== undefined ? currentSet.incline : '0'}
+                        onChangeText={(value) => updateSetData('incline', value.replace(/[^0-9.]/g, ''))}
+                        onFocus={() => {
+                          if (currentSet?.incline === '0') {
+                            updateSetData('incline', '');
+                          }
+                        }}
+                        onBlur={() => {
+                          if (!currentSet?.incline || currentSet?.incline === '') {
+                            updateSetData('incline', '0');
+                          }
+                        }}
+                        keyboardType="decimal-pad"
+                        maxLength={4}
+                        contextMenuHidden={true}
+                        placeholderTextColor={colors.secondaryText + '80'}
+                        selectionColor={colors.primary}
+                      />
+                    </View>
+                  </View>
+                ) : (
+                  <View style={styles.inputGroup}>
+                    <Text style={[styles.inputLabel, { color: colors.secondaryText }]}>SPEED</Text>
+                    <View style={[styles.inputWrapper, { shadowColor: colors.shadow }]}>
+                      <TextInput
+                        style={[
+                          styles.input,
+                          { backgroundColor: colors.cardBackground, borderColor: colors.borderLight, color: colors.text },
+                          (!currentSet?.speed || currentSet?.speed === '0') && { color: colors.secondaryText + '60', borderColor: colors.borderLight + '60' }
+                        ]}
+                        placeholder="5"
+                        value={currentSet?.speed !== undefined ? currentSet.speed : '5'}
+                        onChangeText={(value) => updateSetData('speed', value.replace(/[^0-9.]/g, ''))}
+                        onFocus={() => {
+                          if (currentSet?.speed === '0') {
+                            updateSetData('speed', '');
+                          }
+                        }}
+                        onBlur={() => {
+                          if (!currentSet?.speed || currentSet?.speed === '') {
+                            updateSetData('speed', '0');
+                          }
+                        }}
+                        keyboardType="decimal-pad"
+                        maxLength={4}
+                        contextMenuHidden={true}
+                        placeholderTextColor={colors.secondaryText + '80'}
+                        selectionColor={colors.primary}
+                      />
+                    </View>
+                  </View>
+                )}
+              </View>
             ) : (
+              /* STRENGTH: weight/reps inputs */
               <View style={styles.setInputs}>
                 <View style={styles.inputGroup}>
                   <Text style={[styles.inputLabel, { color: colors.secondaryText }]}>WEIGHT (LBS)</Text>
@@ -1931,18 +1963,38 @@ const WorkoutSessionScreen = () => {
             {currentExercise.sessionSets
               .filter(set => set.completed)
               .map((set, index) => {
-                const hasWeight = set.weight && set.weight !== '' && set.weight !== '0';
-                const hasReps = set.reps && set.reps !== '' && set.reps !== '0';
-
                 let details = '';
-                if (hasWeight && hasReps) {
-                  details = `${set.weight} lbs × ${set.reps} reps`;
-                } else if (hasWeight) {
-                  details = `${set.weight} lbs`;
-                } else if (hasReps) {
-                  details = `${set.reps} reps`;
+
+                if (isCardioExercise(currentExercise)) {
+                  // Cardio display
+                  const hasDuration = set.duration && set.duration !== '' && set.duration !== '0';
+                  const hasIncline = set.incline && set.incline !== '' && set.incline !== '0';
+                  const hasSpeed = set.speed && set.speed !== '' && set.speed !== '0';
+                  const cardioFields = getCardioFields(currentExercise);
+
+                  if (hasDuration && cardioFields.includes('incline') && hasIncline) {
+                    details = `${set.duration} min @ ${set.incline}% incline`;
+                  } else if (hasDuration && cardioFields.includes('speed') && hasSpeed) {
+                    details = `${set.duration} min @ speed ${set.speed}`;
+                  } else if (hasDuration) {
+                    details = `${set.duration} min`;
+                  } else {
+                    details = 'Completed';
+                  }
                 } else {
-                  details = 'Completed';
+                  // Strength display
+                  const hasWeight = set.weight && set.weight !== '' && set.weight !== '0';
+                  const hasReps = set.reps && set.reps !== '' && set.reps !== '0';
+
+                  if (hasWeight && hasReps) {
+                    details = `${set.weight} lbs × ${set.reps} reps`;
+                  } else if (hasWeight) {
+                    details = `${set.weight} lbs`;
+                  } else if (hasReps) {
+                    details = `${set.reps} reps`;
+                  } else {
+                    details = 'Completed';
+                  }
                 }
 
                 return (
@@ -1971,7 +2023,9 @@ const WorkoutSessionScreen = () => {
             </View>
             <Text style={[styles.nextExerciseName, { color: colors.text }]}>{nextExercise.name}</Text>
             <Text style={[styles.nextExerciseDetails, { color: colors.secondaryText }]}>
-              {nextExercise.totalSets || nextExercise.sets} sets{nextExercise.reps ? ` × ${nextExercise.reps} reps` : ''}
+              {isCardioExercise(nextExercise)
+                ? `${nextExercise.duration ? `${nextExercise.duration} min` : ''}${nextExercise.incline ? `${nextExercise.duration ? ' · ' : ''}${nextExercise.incline}% incline` : ''}${nextExercise.speed ? `${nextExercise.duration || nextExercise.incline ? ' · ' : ''}speed ${nextExercise.speed}` : ''}`
+                : `${nextExercise.totalSets || nextExercise.sets} sets${nextExercise.reps ? ` × ${nextExercise.reps} reps` : ''}`}
             </Text>
           </TouchableOpacity>
         )}
@@ -2070,152 +2124,13 @@ const WorkoutSessionScreen = () => {
       </Modal>
 
       {/* Add Exercise Modal */}
-      <Modal
+      <ExercisePickerScreen
         visible={showAddExerciseModal}
-        animationType="slide"
-        presentationStyle="pageSheet"
-        onRequestClose={() => setShowAddExerciseModal(false)}
-      >
-        <KeyboardAvoidingView
-          style={[styles.fullScreenModal, { backgroundColor: colors.background }]}
-          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        >
-          <View style={[styles.fullScreenModalHeader, { backgroundColor: colors.cardBackground, borderBottomColor: colors.borderLight }]}>
-            <TouchableOpacity onPress={() => setShowAddExerciseModal(false)}>
-              <Text style={[styles.modalCancelText, { color: colors.secondaryText }]}>Cancel</Text>
-            </TouchableOpacity>
-            <Text style={[styles.fullScreenModalTitle, { color: colors.text }]}>Add Exercise</Text>
-            <TouchableOpacity onPress={handleAddExercise}>
-              <Text style={[styles.modalSaveText, { color: colors.primary }, !selectedNewExercise && styles.modalSaveTextDisabled]}>
-                Add
-              </Text>
-            </TouchableOpacity>
-          </View>
-
-          <View style={[styles.searchContainer, { backgroundColor: colors.cardBackground, borderColor: colors.borderLight }]}>
-            <Ionicons name="search" size={20} color={colors.secondaryText} />
-            <TextInput
-              style={[styles.searchInput, { color: colors.text }]}
-              placeholder="Search exercises..."
-              placeholderTextColor={colors.secondaryText}
-              value={addExerciseSearch}
-              onChangeText={setAddExerciseSearch}
-              autoCapitalize="none"
-            />
-            {addExerciseSearch.length > 0 && (
-              <TouchableOpacity onPress={() => setAddExerciseSearch('')}>
-                <Ionicons name="close-circle" size={20} color={colors.secondaryText} />
-              </TouchableOpacity>
-            )}
-          </View>
-
-          {/* Muscle Group Filter Pills */}
-          <View style={styles.filterSection}>
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              style={styles.filterScrollView}
-              contentContainerStyle={styles.filterScrollContent}
-            >
-              {muscleGroups.map((muscle) => (
-                <TouchableOpacity
-                  key={muscle.id}
-                  style={[
-                    styles.filterPill,
-                    { backgroundColor: colors.borderLight + '80' },
-                    addExerciseMuscleFilter === muscle.id && [styles.filterPillActive, { backgroundColor: colors.primary, borderColor: colors.primary, shadowColor: colors.primary }]
-                  ]}
-                  onPress={() => {
-                    setAddExerciseMuscleFilter(muscle.id);
-                    // Clear search when switching muscle filters for better UX
-                    if (muscle.id !== 'all' && addExerciseSearch.trim()) {
-                      setAddExerciseSearch('');
-                    }
-                  }}
-                  activeOpacity={0.8}
-                >
-                  <Text style={[
-                    styles.filterPillText,
-                    { color: colors.text },
-                    addExerciseMuscleFilter === muscle.id && [styles.filterPillTextActive, { color: colors.onPrimary }]
-                  ]}>
-                    {muscle.name}
-                  </Text>
-                </TouchableOpacity>
-              ))}
-            </ScrollView>
-          </View>
-
-          {selectedNewExercise && (
-            <View style={[styles.selectedExerciseConfig, { backgroundColor: colors.cardBackground, borderColor: colors.primary + '40' }]}>
-              <View style={styles.selectedExerciseBadge}>
-                <Text style={[styles.selectedExerciseName, { color: colors.text }]}>{selectedNewExercise.name}</Text>
-                <TouchableOpacity onPress={() => setSelectedNewExercise(null)}>
-                  <Ionicons name="close-circle" size={20} color={colors.secondaryText} />
-                </TouchableOpacity>
-              </View>
-
-              <View style={styles.exerciseConfigRow}>
-                <View style={styles.configInputGroup}>
-                  <Text style={[styles.configLabel, { color: colors.secondaryText }]}>Sets</Text>
-                  <TextInput
-                    style={[styles.configInput, { backgroundColor: colors.background, borderColor: colors.borderLight, color: colors.text }]}
-                    value={newExerciseSets}
-                    onChangeText={setNewExerciseSets}
-                    keyboardType="numeric"
-                    placeholder="3"
-                    placeholderTextColor={colors.secondaryText}
-                  />
-                </View>
-                <View style={styles.configInputGroup}>
-                  <Text style={[styles.configLabel, { color: colors.secondaryText }]}>Reps</Text>
-                  <TextInput
-                    style={[styles.configInput, { backgroundColor: colors.background, borderColor: colors.borderLight, color: colors.text }]}
-                    value={newExerciseReps}
-                    onChangeText={setNewExerciseReps}
-                    keyboardType="numeric"
-                    placeholder="10"
-                    placeholderTextColor={colors.secondaryText}
-                  />
-                </View>
-                <View style={styles.configInputGroup}>
-                  <Text style={[styles.configLabel, { color: colors.secondaryText }]}>Weight (opt)</Text>
-                  <TextInput
-                    style={[styles.configInput, { backgroundColor: colors.background, borderColor: colors.borderLight, color: colors.text }]}
-                    value={newExerciseWeight}
-                    onChangeText={setNewExerciseWeight}
-                    keyboardType="numeric"
-                    placeholder="0"
-                    placeholderTextColor={colors.secondaryText}
-                  />
-                </View>
-              </View>
-            </View>
-          )}
-
-          <ScrollView style={styles.exerciseList} contentContainerStyle={styles.exerciseListContent}>
-            {filteredExercisesForAdd.map(exercise => (
-              <View key={exercise.id} style={selectedNewExercise?.id === exercise.id ? [styles.selectedExerciseWrapper, { borderColor: colors.primary }] : undefined}>
-                <ExerciseCard
-                  exercise={exercise}
-                  onPress={() => setSelectedNewExercise(exercise)}
-                  compact={true}
-                  showMuscles={false}
-                  showCategory={false}
-                />
-                {selectedNewExercise?.id === exercise.id && (
-                  <View style={[styles.selectedCheckmark, { backgroundColor: colors.primary }]}>
-                    <Ionicons name="checkmark" size={16} color={colors.onPrimary} />
-                  </View>
-                )}
-              </View>
-            ))}
-            {filteredExercisesForAdd.length === 0 && (
-              <Text style={[styles.noExercisesText, { color: colors.secondaryText }]}>No exercises found</Text>
-            )}
-          </ScrollView>
-        </KeyboardAvoidingView>
-      </Modal>
+        onClose={() => setShowAddExerciseModal(false)}
+        onAddExercise={handleAddExercise}
+        exercises={exerciseDatabase}
+        existingExerciseIds={existingExerciseIds}
+      />
 
       {/* Swap Exercise Modal */}
       <Modal
@@ -2368,6 +2283,27 @@ export default WorkoutSessionScreen;
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+  },
+  exerciseTypeTabs: {
+    flexDirection: 'row',
+    borderBottomWidth: 1,
+  },
+  exerciseTypeTab: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 14,
+    gap: 8,
+    borderBottomWidth: 2,
+    borderBottomColor: 'transparent',
+  },
+  exerciseTypeTabActive: {
+    // borderBottomColor set dynamically
+  },
+  exerciseTypeTabText: {
+    fontSize: 15,
+    fontWeight: '600',
   },
   header: {
     flexDirection: 'row',
@@ -2835,6 +2771,30 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 16,
     color: Colors.light.text,
+  },
+
+  // Exercise Type Tabs (Strength / Cardio)
+  exerciseTypeTabs: {
+    flexDirection: 'row',
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.light.borderLight,
+  },
+  exerciseTypeTab: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 14,
+    gap: 8,
+    borderBottomWidth: 2,
+    borderBottomColor: 'transparent',
+  },
+  exerciseTypeTabActive: {
+    borderBottomColor: Colors.light.primary,
+  },
+  exerciseTypeTabText: {
+    fontSize: 15,
+    fontWeight: '600',
   },
 
   // Filter Section

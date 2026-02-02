@@ -12,8 +12,8 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import { supabase } from '../../supabase';
-import { Colors } from '../constants/colors';
+import { supabase } from '@/lib/supabase';
+import { Colors } from '@/constants/colors';
 
 export default function ForgotPasswordScreen() {
   const router = useRouter();
