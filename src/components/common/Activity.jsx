@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import React, { useState, useEffect, useRef } from 'react';
-import { Alert, StyleSheet, Text, TouchableOpacity, View, Pressable, Modal, Dimensions } from 'react-native';
+import { Alert, StyleSheet, Text, TouchableOpacity, View, Pressable, Dimensions } from 'react-native';
 import { Image } from 'expo-image';
 import { deletePost, likePost, unlikePost } from '@/services/api/posts';
 import { createLikeNotification, deleteLikeNotification } from '@/services/api/notifications';
@@ -12,6 +12,7 @@ import Avatar from '@/components/ui/Avatar';
 import Badge from '@/components/ui/Badge';
 import CommentModal from '@/components/common/CommentModal';
 import SocialActions from '@/components/common/SocialActions';
+import ZoomableImageModal from '@/components/ui/ZoomableImageModal';
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
 
@@ -473,36 +474,11 @@ const Activity = ({ post, currentUserId, onPostUpdated, onPostDeleted, initialOp
       />
 
       {/* Expanded Image Modal */}
-      <Modal
+      <ZoomableImageModal
         visible={showExpandedImage}
-        transparent={true}
-        animationType="fade"
-        onRequestClose={() => setShowExpandedImage(false)}
-      >
-        <TouchableOpacity
-          style={styles.expandedImageOverlay}
-          activeOpacity={1}
-          onPress={() => setShowExpandedImage(false)}
-        >
-          <View style={styles.expandedImageContainer}>
-            {imageUrl && (
-              <Image
-                source={{ uri: imageUrl }}
-                style={styles.expandedImage}
-                contentFit="contain"
-                transition={200}
-              />
-            )}
-          </View>
-          <TouchableOpacity
-            style={styles.expandedImageCloseButton}
-            onPress={() => setShowExpandedImage(false)}
-            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-          >
-            <Ionicons name="close" size={28} color="#FFFFFF" />
-          </TouchableOpacity>
-        </TouchableOpacity>
-      </Modal>
+        onClose={() => setShowExpandedImage(false)}
+        imageUri={imageUrl}
+      />
     </Pressable>
   );
 };
@@ -670,30 +646,5 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     opacity: 0.7,
     fontStyle: 'italic',
-  },
-  expandedImageOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.9)',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  expandedImageContainer: {
-    width: SCREEN_WIDTH,
-    height: SCREEN_WIDTH,
-  },
-  expandedImage: {
-    width: '100%',
-    height: '100%',
-  },
-  expandedImageCloseButton: {
-    position: 'absolute',
-    top: 60,
-    left: 20,
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
-    justifyContent: 'center',
-    alignItems: 'center',
   },
 });

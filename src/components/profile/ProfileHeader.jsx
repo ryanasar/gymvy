@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
-import { StyleSheet, Text, TouchableOpacity, View, ActivityIndicator, Modal, Dimensions } from 'react-native';
+import { StyleSheet, Text, TouchableOpacity, View, ActivityIndicator, Dimensions } from 'react-native';
 import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
 import { useThemeColors } from '@/hooks/useThemeColors';
 import SettingsDropdown from './SettingsDropdown';
 import Avatar from '@/components/ui/Avatar';
+import ZoomableImageModal from '@/components/ui/ZoomableImageModal';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -151,36 +152,13 @@ const ProfileHeader = ({
       ) : null}
 
       {/* Expanded Avatar Modal */}
-      <Modal
+      <ZoomableImageModal
         visible={showExpandedAvatar}
-        transparent={true}
-        animationType="fade"
-        onRequestClose={() => setShowExpandedAvatar(false)}
-      >
-        <TouchableOpacity
-          style={styles.expandedOverlay}
-          activeOpacity={1}
-          onPress={() => setShowExpandedAvatar(false)}
-        >
-          <View style={styles.expandedAvatarContainer}>
-            {avatarUrl && (
-              <Image
-                source={{ uri: avatarUrl }}
-                style={styles.expandedAvatar}
-                contentFit="cover"
-                transition={200}
-              />
-            )}
-          </View>
-          <TouchableOpacity
-            style={styles.expandedCloseButton}
-            onPress={() => setShowExpandedAvatar(false)}
-            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-          >
-            <Ionicons name="close" size={28} color="#FFFFFF" />
-          </TouchableOpacity>
-        </TouchableOpacity>
-      </Modal>
+        onClose={() => setShowExpandedAvatar(false)}
+        imageUri={avatarUrl}
+        contentFit="cover"
+        imageStyle={styles.expandedAvatarImage}
+      />
     </View>
   );
 };
@@ -352,31 +330,9 @@ const styles = StyleSheet.create({
   },
 
   // Expanded Avatar Modal
-  expandedOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.9)',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  expandedAvatarContainer: {
+  expandedAvatarImage: {
     width: SCREEN_WIDTH - 48,
     height: SCREEN_WIDTH - 48,
     borderRadius: (SCREEN_WIDTH - 48) / 2,
-    overflow: 'hidden',
-  },
-  expandedAvatar: {
-    width: '100%',
-    height: '100%',
-  },
-  expandedCloseButton: {
-    position: 'absolute',
-    top: 60,
-    left: 20,
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
-    justifyContent: 'center',
-    alignItems: 'center',
   },
 });
