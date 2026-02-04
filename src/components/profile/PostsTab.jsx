@@ -6,7 +6,7 @@ import { useSync } from '@/contexts/SyncContext';
 import Activity from '@/components/common/Activity';
 import EmptyState from '@/components/common/EmptyState';
 
-const ActivitiesTab = ({ posts, currentUserId, onRefresh, embedded = false }) => {
+const ActivitiesTab = ({ posts, currentUserId, onRefresh, embedded = false, isLoading = false }) => {
   const colors = useThemeColors();
   const [localPosts, setLocalPosts] = useState(posts);
   const [refreshing, setRefreshing] = useState(false);
@@ -39,6 +39,21 @@ const ActivitiesTab = ({ posts, currentUserId, onRefresh, embedded = false }) =>
     }
     setRefreshing(false);
   };
+
+  // Show skeleton while loading
+  if (isLoading) {
+    return (
+      <View style={[styles.skeletonContainer, { backgroundColor: colors.background }]}>
+        {[1, 2, 3].map(i => (
+          <View key={i} style={[styles.skeletonCard, { backgroundColor: colors.cardBackground }]}>
+            <View style={[styles.skeletonHeader, { backgroundColor: colors.borderLight }]} />
+            <View style={[styles.skeletonBody, { backgroundColor: colors.borderLight }]} />
+            <View style={[styles.skeletonBodyShort, { backgroundColor: colors.borderLight }]} />
+          </View>
+        ))}
+      </View>
+    );
+  }
 
   if (!localPosts || localPosts.length === 0) {
     return (
@@ -95,6 +110,33 @@ const ActivitiesTab = ({ posts, currentUserId, onRefresh, embedded = false }) =>
 export default ActivitiesTab;
 
 const styles = StyleSheet.create({
+  skeletonContainer: {
+    flex: 1,
+    paddingHorizontal: 8,
+    paddingTop: 8,
+  },
+  skeletonCard: {
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 12,
+  },
+  skeletonHeader: {
+    height: 14,
+    borderRadius: 7,
+    width: '40%',
+    marginBottom: 12,
+  },
+  skeletonBody: {
+    height: 12,
+    borderRadius: 6,
+    width: '100%',
+    marginBottom: 8,
+  },
+  skeletonBodyShort: {
+    height: 12,
+    borderRadius: 6,
+    width: '70%',
+  },
   embeddedContainer: {
     paddingBottom: 100,
     paddingHorizontal: 8,

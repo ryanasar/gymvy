@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { View, Text, StyleSheet, FlatList, ActivityIndicator, RefreshControl, TouchableOpacity } from 'react-native';
 import { useFocusEffect, useScrollToTop } from '@react-navigation/native';
 import { useRouter } from 'expo-router';
@@ -28,8 +28,25 @@ export default function HomeScreen() {
   // Ref for FlatList to enable scroll to top
   const flatListRef = useRef(null);
 
+  // Track last refresh time for cooldown
+  const lastRefreshRef = useRef(0);
+
+  // Navigation guard to prevent double-click issues
+  const isNavigatingRef = useRef(false);
+
   // Enable scroll to top when tapping the Home tab while already on it
   useScrollToTop(flatListRef);
+
+  // Navigation handler with double-click protection
+  const handleNavigation = useCallback((path) => {
+    if (isNavigatingRef.current) return;
+    isNavigatingRef.current = true;
+    router.push(path);
+    // Reset after navigation completes
+    setTimeout(() => {
+      isNavigatingRef.current = false;
+    }, 500);
+  }, [router]);
 
   const scrollToTop = () => {
     flatListRef.current?.scrollToOffset({ offset: 0, animated: true });
@@ -41,22 +58,27 @@ export default function HomeScreen() {
     }
   }, [user?.id]);
 
-  // Refresh feed when tab comes into focus
+  // Refresh feed when tab comes into focus (silent refresh - no loading indicator)
+  // Only refresh if 30+ seconds have passed since last refresh to reduce API calls
   useFocusEffect(
     React.useCallback(() => {
       if (user?.id) {
-        loadPosts(true);
+        const now = Date.now();
+        if (now - lastRefreshRef.current > 30000) {
+          loadPosts(true, true);
+          lastRefreshRef.current = now;
+        }
       }
     }, [user?.id])
   );
 
-  const loadPosts = async (refresh = false) => {
+  const loadPosts = async (refresh = false, silent = false) => {
     if (!user?.id) return;
 
     try {
-      if (refresh) {
+      if (refresh && !silent) {
         setRefreshing(true);
-      } else {
+      } else if (!refresh) {
         setIsLoading(true);
       }
 
@@ -130,14 +152,16 @@ export default function HomeScreen() {
           <Text style={[styles.title, { color: colors.text }]}>Home</Text>
           <View style={styles.headerIcons}>
             <TouchableOpacity
-              onPress={() => router.push('/search')}
+              onPress={() => handleNavigation('/search')}
               style={styles.notificationButton}
+              disabled={isNavigatingRef.current}
             >
               <Ionicons name="search-outline" size={24} color={colors.text} />
             </TouchableOpacity>
             <TouchableOpacity
-              onPress={() => router.push('/notifications')}
+              onPress={() => handleNavigation('/notifications')}
               style={styles.notificationButton}
+              disabled={isNavigatingRef.current}
             >
               <Ionicons name="notifications-outline" size={24} color={colors.text} />
               {unreadCount > 0 && (
@@ -164,14 +188,16 @@ export default function HomeScreen() {
         </TouchableOpacity>
         <View style={styles.headerIcons}>
           <TouchableOpacity
-            onPress={() => router.push('/search')}
+            onPress={() => handleNavigation('/search')}
             style={styles.notificationButton}
+            disabled={isNavigatingRef.current}
           >
             <Ionicons name="search-outline" size={24} color={colors.text} />
           </TouchableOpacity>
           <TouchableOpacity
-            onPress={() => router.push('/notifications')}
+            onPress={() => handleNavigation('/notifications')}
             style={styles.notificationButton}
+            disabled={isNavigatingRef.current}
           >
             <Ionicons name="notifications-outline" size={24} color={colors.text} />
             {unreadCount > 0 && (

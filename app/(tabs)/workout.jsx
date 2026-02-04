@@ -1,6 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useEffect, useMemo, useRef, useState, useCallback } from 'react';
+// Navigation guard ref for double-click prevention
 import { ActivityIndicator, Alert, Modal, ScrollView, StyleSheet, Text, TouchableOpacity, View, RefreshControl } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import CelebrationAnimation from '@/components/animations/CelebrationAnimation';
@@ -72,29 +73,61 @@ const WorkoutScreen = () => {
   const [showChangeDayModal, setShowChangeDayModal] = useState(false);
   const [isDaySelecting, setIsDaySelecting] = useState(false);
 
+  // Navigation guard to prevent double-click issues
+  const isNavigatingRef = useRef(false);
+
+  // Track last check time for cooldown on API calls
+  const lastPostedCheckRef = useRef(0);
+  // Track last focus time to prevent rapid re-execution of focus effects
+  const lastFocusTimeRef = useRef(0);
+  const FOCUS_COOLDOWN_MS = 1000;
+
+  // Navigation handler with double-click protection
+  const handleNavigation = useCallback((path, params = null) => {
+    if (isNavigatingRef.current) return;
+    isNavigatingRef.current = true;
+    if (params) {
+      router.push({ pathname: path, params });
+    } else {
+      router.push(path);
+    }
+    // Reset after navigation completes
+    setTimeout(() => {
+      isNavigatingRef.current = false;
+    }, 500);
+  }, [router]);
+
   const isCompleted = todaysWorkoutCompleted;
   const completedSessionId = cachedSessionId;
 
-  // Auto-sync when workout tab is focused
+  // Auto-sync when workout tab is focused (with cooldown to prevent rapid re-sync)
   useFocusEffect(
     useCallback(() => {
+      const now = Date.now();
+      if (now - lastFocusTimeRef.current < FOCUS_COOLDOWN_MS) return;
+      lastFocusTimeRef.current = now;
       manualSync();
     }, [manualSync])
   );
 
   // Check if workout has been posted when tab is focused
+  // Only check if 30+ seconds have passed since last check to reduce API calls
   useFocusEffect(
     useCallback(() => {
       const checkIfPosted = async () => {
         // Only check if workout is completed today and user is logged in
         if (todaysWorkoutCompleted && user?.id) {
-          try {
-            // Check the API for a workout post created today
-            const post = await getTodaysWorkoutPost(user.id);
-            setHasPosted(!!post);
-          } catch (error) {
-            console.error('Error checking if posted:', error);
-            setHasPosted(false);
+          const now = Date.now();
+          if (now - lastPostedCheckRef.current > 30000) {
+            try {
+              // Check the API for a workout post created today
+              const post = await getTodaysWorkoutPost(user.id);
+              setHasPosted(!!post);
+              lastPostedCheckRef.current = now;
+            } catch (error) {
+              console.error('Error checking if posted:', error);
+              setHasPosted(false);
+            }
           }
         } else {
           setHasPosted(false);
@@ -325,10 +358,7 @@ const WorkoutScreen = () => {
   };
 
   const openEditWorkout = () => {
-    router.push({
-      pathname: '/workout/edit',
-      params: { type: 'split-day' }
-    });
+    handleNavigation('/workout/edit', { type: 'split-day' });
   };
 
   // Load saved workouts for no-split and different workout modal
@@ -347,6 +377,85 @@ const WorkoutScreen = () => {
   );
 
 
+
+  // Render the Change Day Modal - extracted to avoid duplication
+  const renderChangeDayModal = () => (
+    <Modal
+      visible={showChangeDayModal}
+      animationType="slide"
+      presentationStyle="pageSheet"
+      onRequestClose={() => setShowChangeDayModal(false)}
+    >
+      <View style={[styles.modalContainer, { backgroundColor: colors.background }]}>
+        <View style={[styles.modalHeader, { backgroundColor: colors.cardBackground, shadowColor: colors.shadow }]}>
+          <Text style={[styles.modalTitle, { color: colors.text }]}>Choose Workout Day</Text>
+          <TouchableOpacity
+            style={styles.modalCloseButton}
+            onPress={() => setShowChangeDayModal(false)}
+          >
+            <Ionicons name="close" size={24} color={colors.text} />
+          </TouchableOpacity>
+        </View>
+        <Text style={[styles.modalSubtitle, { color: colors.secondaryText }]}>
+          Select which day you'd like to train today
+        </Text>
+        <ScrollView
+          style={styles.modalScrollView}
+          contentContainerStyle={styles.modalContent}
+          showsVerticalScrollIndicator={false}
+        >
+          {/* Day List */}
+          {(activeSplit?.days || activeSplit?.workoutDays)?.map((day, index) => {
+            const isRest = day.isRest;
+            const dayName = isRest ? 'Rest Day' : (day.name || day.workoutName || day.dayName || `Day ${index + 1}`);
+            let exerciseCount = 0;
+            if (!isRest && day.exercises) {
+              try {
+                exerciseCount = typeof day.exercises === 'string'
+                  ? JSON.parse(day.exercises).length
+                  : Array.isArray(day.exercises) ? day.exercises.length : 0;
+              } catch (e) {
+                exerciseCount = 0;
+              }
+            }
+
+            return (
+              <TouchableOpacity
+                key={index}
+                style={[styles.dayPickerCard, { backgroundColor: colors.cardBackground, borderColor: colors.borderLight, opacity: isDaySelecting ? 0.5 : 1 }]}
+                onPress={() => handleDaySelectedWrapper(index)}
+                activeOpacity={0.7}
+                disabled={isDaySelecting}
+              >
+                <View style={styles.dayPickerCardContent}>
+                  {day.emoji && <Text style={styles.dayPickerEmoji}>{day.emoji}</Text>}
+                  <View style={styles.dayPickerInfo}>
+                    <Text style={[styles.dayPickerName, { color: colors.text }]}>{dayName}</Text>
+                    {!isRest && exerciseCount > 0 && (
+                      <Text style={[styles.dayPickerExercises, { color: colors.secondaryText }]}>
+                        {exerciseCount} exercises
+                      </Text>
+                    )}
+                  </View>
+                </View>
+                {isRest && (
+                  <View style={[styles.restDayBadge, { backgroundColor: colors.borderLight + '40' }]}>
+                    <Ionicons name="moon" size={14} color={colors.secondaryText} />
+                    <Text style={[styles.restDayBadgeText, { color: colors.secondaryText }]}>Rest</Text>
+                  </View>
+                )}
+                {isDaySelecting ? (
+                  <ActivityIndicator size="small" color={colors.primary} />
+                ) : (
+                  <Ionicons name="chevron-forward" size={20} color={colors.primary} />
+                )}
+              </TouchableOpacity>
+            );
+          })}
+        </ScrollView>
+      </View>
+    </Modal>
+  );
 
   // Show loading state while context initializes
   if (!isInitialized) {
@@ -432,12 +541,9 @@ const WorkoutScreen = () => {
                       exercises: completedIndividualWorkout.exercises || [],
                       source: completedIndividualWorkout.source || 'freestyle',
                     };
-                    router.push({
-                      pathname: '/post/create',
-                      params: {
-                        workoutData: JSON.stringify(workoutDataForPost),
-                        workoutSessionId: completedIndividualWorkout.workoutSessionId?.toString() || '',
-                      },
+                    handleNavigation('/post/create', {
+                      workoutData: JSON.stringify(workoutDataForPost),
+                      workoutSessionId: completedIndividualWorkout.workoutSessionId?.toString() || '',
                     });
                   }}
                   onUncomplete={async () => {
@@ -457,10 +563,7 @@ const WorkoutScreen = () => {
               <SavedWorkoutDetailCard
                 workout={selectedSavedWorkout}
                 onBack={() => setSelectedSavedWorkout(null)}
-                onEdit={(workout) => router.push({
-                  pathname: '/workout/make-workout',
-                  params: { editWorkoutId: workout.id }
-                })}
+                onEdit={(workout) => handleNavigation('/workout/make-workout', { editWorkoutId: workout.id })}
                 onMarkComplete={async (workout) => {
                   // Show celebration immediately (optimistic UI)
                   setSelectedSavedWorkout(null);
@@ -505,8 +608,9 @@ const WorkoutScreen = () => {
                 {/* Freestyle Workout Option */}
                 <TouchableOpacity
                   style={[styles.freestyleCard, { backgroundColor: colors.cardBackground, borderColor: colors.primary + '30' }]}
-                  onPress={() => router.push({ pathname: '/workout/session', params: { source: 'freestyle' } })}
+                  onPress={() => handleNavigation('/workout/session', { source: 'freestyle' })}
                   activeOpacity={0.8}
+                  disabled={isNavigatingRef.current}
                 >
                   <View style={[styles.freestyleIconContainer, { backgroundColor: colors.primary + '15' }]}>
                     <Ionicons name="flash" size={22} color={colors.primary} />
@@ -545,7 +649,8 @@ const WorkoutScreen = () => {
                 </Text>
                 <TouchableOpacity
                   style={[styles.createSplitButtonPrimary, { backgroundColor: colors.primary }]}
-                  onPress={() => router.push('/program')}
+                  onPress={() => handleNavigation('/program')}
+                  disabled={isNavigatingRef.current}
                 >
                   <Ionicons name="add" size={20} color="#FFFFFF" />
                   <Text style={styles.createSplitButtonPrimaryText}>Create a Workout Split</Text>
@@ -611,76 +716,6 @@ const WorkoutScreen = () => {
           </View>
         </ScrollView>
 
-        {/* Change Workout Modal */}
-        <Modal
-          visible={showChangeDayModal}
-          animationType="slide"
-          presentationStyle="pageSheet"
-          onRequestClose={() => setShowChangeDayModal(false)}
-        >
-          <View style={[styles.modalContainer, { backgroundColor: colors.background }]}>
-            <View style={[styles.modalHeader, { backgroundColor: colors.cardBackground, shadowColor: colors.shadow }]}>
-              <Text style={[styles.modalTitle, { color: colors.text }]}>Choose Workout Day</Text>
-              <TouchableOpacity
-                style={styles.modalCloseButton}
-                onPress={() => setShowChangeDayModal(false)}
-              >
-                <Ionicons name="close" size={24} color={colors.text} />
-              </TouchableOpacity>
-            </View>
-            <Text style={[styles.modalSubtitle, { color: colors.secondaryText }]}>
-              Select which day you'd like to train today
-            </Text>
-            <ScrollView
-              style={styles.modalScrollView}
-              contentContainerStyle={styles.modalContent}
-              showsVerticalScrollIndicator={false}
-            >
-              {/* Day List */}
-              {(activeSplit?.days || activeSplit?.workoutDays)?.map((day, index) => {
-                const isRest = day.isRest;
-                const dayName = isRest ? 'Rest Day' : (day.name || day.workoutName || `Day ${index + 1}`);
-                const exerciseCount = !isRest && day.exercises
-                  ? (typeof day.exercises === 'string' ? JSON.parse(day.exercises).length : day.exercises.length)
-                  : 0;
-
-                return (
-                  <TouchableOpacity
-                    key={index}
-                    style={[styles.dayPickerCard, { backgroundColor: colors.cardBackground, borderColor: colors.borderLight, opacity: isDaySelecting ? 0.5 : 1 }]}
-                    onPress={() => handleDaySelectedWrapper(index)}
-                    activeOpacity={0.7}
-                    disabled={isDaySelecting}
-                  >
-                    <View style={styles.dayPickerCardContent}>
-                      {day.emoji && <Text style={styles.dayPickerEmoji}>{day.emoji}</Text>}
-                      <View style={styles.dayPickerInfo}>
-                        <Text style={[styles.dayPickerName, { color: colors.text }]}>{dayName}</Text>
-                        {!isRest && exerciseCount > 0 && (
-                          <Text style={[styles.dayPickerExercises, { color: colors.secondaryText }]}>
-                            {exerciseCount} exercises
-                          </Text>
-                        )}
-                      </View>
-                    </View>
-                    {isRest && (
-                      <View style={[styles.restDayBadge, { backgroundColor: colors.borderLight + '40' }]}>
-                        <Ionicons name="moon" size={14} color={colors.secondaryText} />
-                        <Text style={[styles.restDayBadgeText, { color: colors.secondaryText }]}>Rest</Text>
-                      </View>
-                    )}
-                    {isDaySelecting ? (
-                      <ActivityIndicator size="small" color={colors.primary} />
-                    ) : (
-                      <Ionicons name="chevron-forward" size={20} color={colors.primary} />
-                    )}
-                  </TouchableOpacity>
-                );
-              })}
-            </ScrollView>
-          </View>
-        </Modal>
-
         {/* Celebration Animation */}
         {showCelebration && (
           <CelebrationAnimation
@@ -690,6 +725,9 @@ const WorkoutScreen = () => {
             }}
           />
         )}
+
+        {/* Change Workout Modal - rendered here for rest day view */}
+        {renderChangeDayModal()}
       </View>
     );
   }
@@ -871,10 +909,7 @@ const WorkoutScreen = () => {
               }
               await markIndividualWorkoutCompleted(null);
             }}
-            onEditWorkout={(workout) => router.push({
-              pathname: '/workout/make-workout',
-              params: { editWorkoutId: workout.id }
-            })}
+            onEditWorkout={(workout) => handleNavigation('/workout/make-workout', { editWorkoutId: workout.id })}
             onSelectWorkout={(workout) => setSelectedSavedWorkout(workout)}
             onBackFromWorkout={() => setSelectedSavedWorkout(null)}
             onMarkComplete={async (workout) => {
@@ -918,83 +953,8 @@ const WorkoutScreen = () => {
         )}
       </ScrollView>
 
-      {/* Change Workout Modal */}
-      <Modal
-        visible={showChangeDayModal}
-        animationType="slide"
-        presentationStyle="pageSheet"
-        onRequestClose={() => setShowChangeDayModal(false)}
-      >
-        <View style={[styles.modalContainer, { backgroundColor: colors.background }]}>
-          <View style={[styles.modalHeader, { backgroundColor: colors.cardBackground, shadowColor: colors.shadow }]}>
-            <Text style={[styles.modalTitle, { color: colors.text }]}>Choose Workout Day</Text>
-            <TouchableOpacity
-              style={styles.modalCloseButton}
-              onPress={() => setShowChangeDayModal(false)}
-            >
-              <Ionicons name="close" size={24} color={colors.text} />
-            </TouchableOpacity>
-          </View>
-          <Text style={[styles.modalSubtitle, { color: colors.secondaryText }]}>
-            Select which day you'd like to train today
-          </Text>
-          <ScrollView
-            style={styles.modalScrollView}
-            contentContainerStyle={styles.modalContent}
-            showsVerticalScrollIndicator={false}
-          >
-            {/* Day List */}
-            {(activeSplit?.days || activeSplit?.workoutDays)?.map((day, index) => {
-              const isRest = day.isRest;
-              const dayName = isRest ? 'Rest Day' : (day.name || day.workoutName || day.dayName || `Day ${index + 1}`);
-              let exerciseCount = 0;
-              if (!isRest && day.exercises) {
-                try {
-                  exerciseCount = typeof day.exercises === 'string'
-                    ? JSON.parse(day.exercises).length
-                    : Array.isArray(day.exercises) ? day.exercises.length : 0;
-                } catch (e) {
-                  exerciseCount = 0;
-                }
-              }
-
-              return (
-                <TouchableOpacity
-                  key={index}
-                  style={[styles.dayPickerCard, { backgroundColor: colors.cardBackground, borderColor: colors.borderLight, opacity: isDaySelecting ? 0.5 : 1 }]}
-                  onPress={() => handleDaySelectedWrapper(index)}
-                  activeOpacity={0.7}
-                  disabled={isDaySelecting}
-                >
-                  <View style={styles.dayPickerCardContent}>
-                    {day.emoji && <Text style={styles.dayPickerEmoji}>{day.emoji}</Text>}
-                    <View style={styles.dayPickerInfo}>
-                      <Text style={[styles.dayPickerName, { color: colors.text }]}>{dayName}</Text>
-                      {!isRest && exerciseCount > 0 && (
-                        <Text style={[styles.dayPickerExercises, { color: colors.secondaryText }]}>
-                          {exerciseCount} exercises
-                        </Text>
-                      )}
-                    </View>
-                  </View>
-                  {isRest && (
-                    <View style={[styles.restDayBadge, { backgroundColor: colors.borderLight + '40' }]}>
-                      <Ionicons name="moon" size={14} color={colors.secondaryText} />
-                      <Text style={[styles.restDayBadgeText, { color: colors.secondaryText }]}>Rest</Text>
-                    </View>
-                  )}
-                  {isDaySelecting ? (
-                    <ActivityIndicator size="small" color={colors.primary} />
-                  ) : (
-                    <Ionicons name="chevron-forward" size={20} color={colors.primary} />
-                  )}
-                </TouchableOpacity>
-              );
-            })}
-          </ScrollView>
-        </View>
-      </Modal>
-
+      {/* Change Workout Modal - shared instance */}
+      {renderChangeDayModal()}
 
       {/* Celebration Animation */}
       {showCelebration && (

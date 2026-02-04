@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Alert, StyleSheet, Text, TouchableOpacity, View, Pressable, Dimensions } from 'react-native';
 import { Image } from 'expo-image';
 import { deletePost, likePost, unlikePost } from '@/services/api/posts';
@@ -78,6 +78,22 @@ const Activity = ({ post, currentUserId, onPostUpdated, onPostDeleted, initialOp
     likes?.some(like => like.userId === currentUserId) || false
   );
   const isLikingRef = useRef(false);
+  // Navigation guard to prevent double-click issues
+  const isNavigatingRef = useRef(false);
+
+  // Navigation handler with double-click protection
+  const handleNavigation = useCallback((path, params = null) => {
+    if (isNavigatingRef.current) return;
+    isNavigatingRef.current = true;
+    if (params) {
+      router.push({ pathname: path, params });
+    } else {
+      router.push(path);
+    }
+    setTimeout(() => {
+      isNavigatingRef.current = false;
+    }, 500);
+  }, [router]);
 
   useEffect(() => {
     const likedFromServer = likes?.some(like => like.userId === currentUserId) || false;
@@ -188,29 +204,33 @@ const Activity = ({ post, currentUserId, onPostUpdated, onPostDeleted, initialOp
   const handleCardPress = () => {
     if (isRestDay) return;
     if (workoutData) {
-      router.push({
-        pathname: '../workout/workoutDetail',
-        params: {
-          postId: id.toString(),
-          workoutData: JSON.stringify(workoutData),
-          splitData: split ? JSON.stringify(split) : '',
-        }
+      handleNavigation('../workout/workoutDetail', {
+        postId: id.toString(),
+        workoutData: JSON.stringify(workoutData),
+        splitData: split ? JSON.stringify(split) : '',
       });
     }
   };
 
   const handleProfilePress = () => {
     if (author?.username) {
-      router.push(`/user/${author.username}`);
+      handleNavigation(`/user/${author.username}`);
     }
   };
 
   const handleLike = async () => {
+    // Double-check the ref to prevent race conditions
     if (isLikingRef.current) return;
     isLikingRef.current = true;
+
+    // Capture current state to avoid stale closure issues
     const wasLiked = isLiked;
-    setIsLiked(!isLiked);
-    setLocalLikeCount(prev => wasLiked ? prev - 1 : prev + 1);
+    const currentLikeCount = localLikeCount;
+
+    // Optimistic UI update
+    setIsLiked(!wasLiked);
+    setLocalLikeCount(wasLiked ? currentLikeCount - 1 : currentLikeCount + 1);
+
     try {
       if (wasLiked) {
         await unlikePost(id, currentUserId);
@@ -228,30 +248,31 @@ const Activity = ({ post, currentUserId, onPostUpdated, onPostDeleted, initialOp
         onPostUpdated({
           ...post,
           likes: updatedLikes,
-          _count: { ...post._count, likes: wasLiked ? localLikeCount - 1 : localLikeCount + 1 }
+          _count: { ...post._count, likes: wasLiked ? currentLikeCount - 1 : currentLikeCount + 1 }
         });
       }
     } catch (error) {
+      // Rollback on error
       setIsLiked(wasLiked);
-      setLocalLikeCount(prev => wasLiked ? prev + 1 : prev - 1);
+      setLocalLikeCount(currentLikeCount);
       Alert.alert('Error', 'Failed to update like');
     } finally {
-      isLikingRef.current = false;
+      // Add a small delay before allowing next like to prevent rapid tapping
+      setTimeout(() => {
+        isLikingRef.current = false;
+      }, 300);
     }
   };
 
   const handleEditPost = () => {
-    router.push({
-      pathname: '/post/create',
-      params: {
-        postId: id.toString(),
-        description: description || '',
-        workoutData: workoutData ? JSON.stringify(workoutData) : '',
-        workoutSessionId: post.workoutSessionId?.toString() || '',
-        splitId: post.splitId?.toString() || '',
-        imageUrl: imageUrl || '',
-        taggedUsers: taggedUsers ? JSON.stringify(taggedUsers) : '',
-      },
+    handleNavigation('/post/create', {
+      postId: id.toString(),
+      description: description || '',
+      workoutData: workoutData ? JSON.stringify(workoutData) : '',
+      workoutSessionId: post.workoutSessionId?.toString() || '',
+      splitId: post.splitId?.toString() || '',
+      imageUrl: imageUrl || '',
+      taggedUsers: taggedUsers ? JSON.stringify(taggedUsers) : '',
     });
   };
 
@@ -426,7 +447,7 @@ const Activity = ({ post, currentUserId, onPostUpdated, onPostDeleted, initialOp
                 key={taggedUser.id}
                 label={`🏋️ @${taggedUser.username}`}
                 color={colors.primary}
-                onPress={() => router.push(`/user/${taggedUser.username}`)}
+                onPress={() => handleNavigation(`/user/${taggedUser.username}`)}
               />
             ))}
           </View>

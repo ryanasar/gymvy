@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { ScrollView, StyleSheet, RefreshControl, View } from 'react-native';
 import { Colors } from '@/constants/colors';
 import { getWorkoutSessionsByUserId } from '@/services/api/workoutSessions';
@@ -6,30 +6,73 @@ import { getPostsByUserId } from '@/services/api/posts';
 import { getCalendarData } from '@/services/api/dailyActivity';
 import { useThemeColors } from '@/hooks/useThemeColors';
 import { useWorkout } from '@/contexts/WorkoutContext';
+import { usePreload } from '@/contexts/PreloadContext';
 import { useAuth } from '@/lib/auth';
 import { getCalendarDataForDisplay } from '@/services/storage/calendarStorage';
 import WorkoutCalendar from '@/components/progress/WorkoutCalendar';
 
-const ProgressTab = ({ userId, onRefresh, embedded = false }) => {
+const ProgressTab = ({ userId, onRefresh, embedded = false, prefetchedCalendarData = null }) => {
   const colors = useThemeColors();
   const [refreshing, setRefreshing] = useState(false);
   const [workoutsByDay, setWorkoutsByDay] = useState([]);
   const { lastWorkoutCompleted, todaysWorkout } = useWorkout();
+  const { calendarData: preloadedCalendar, calendarLoading, refreshCalendar } = usePreload();
   const { user: currentUser } = useAuth();
   const isInitialMount = useRef(true);
   const isFetching = useRef(false);
   const hasBackfilled = useRef(false);
+  const isMountedRef = useRef(true);
 
   // Determine if viewing own profile or another user's profile
   const isOwnProfile = currentUser?.id === userId;
 
-  // Initial load - only fetch once with backend backfill
+  // Use prefetched calendar data for other users' profiles (from parallel fetch)
   useEffect(() => {
-    if (userId && !hasBackfilled.current) {
+    if (!isOwnProfile && prefetchedCalendarData && prefetchedCalendarData.activities) {
+      // Transform DailyActivity data to the format expected by WorkoutCalendar
+      const calendarDataMap = prefetchedCalendarData.activities.map(activity => ({
+        date: activity.date.split('T')[0],
+        volume: activity.activityType === 'workout' ? 1 : 0,
+        isRestDay: activity.activityType !== 'workout',
+        isFreeRestDay: activity.activityType === 'free_rest',
+        workoutName: activity.workoutName || null,
+        muscleGroups: activity.muscleGroups || [],
+        totalExercises: activity.totalExercises || null,
+        totalSets: activity.totalSets || null,
+        durationMinutes: activity.durationMinutes || null,
+        splitName: activity.split?.name || null,
+        splitEmoji: activity.split?.emoji || null,
+      }));
+      setWorkoutsByDay(calendarDataMap);
+      hasBackfilled.current = true;
+      setRefreshing(false);
+    }
+  }, [isOwnProfile, prefetchedCalendarData]);
+
+  // Use preloaded calendar data for own profile
+  useEffect(() => {
+    if (isOwnProfile && preloadedCalendar && preloadedCalendar.length > 0 && !calendarLoading) {
+      setWorkoutsByDay(preloadedCalendar);
+      hasBackfilled.current = true;
+      setRefreshing(false);
+    }
+  }, [isOwnProfile, preloadedCalendar, calendarLoading]);
+
+  // Initial load for OTHER users' profiles - fetch their data (only if not prefetched)
+  useEffect(() => {
+    isMountedRef.current = true;
+
+    // Skip fetching if we have prefetched data or already backfilled
+    if (userId && !isOwnProfile && !hasBackfilled.current && !prefetchedCalendarData) {
       setRefreshing(true);
       fetchProgressData(true);
     }
-  }, [userId]);
+    // Cleanup on unmount - prevent setState after unmount
+    return () => {
+      isMountedRef.current = false;
+      isFetching.current = false;
+    };
+  }, [userId, isOwnProfile, prefetchedCalendarData]);
 
   // Refresh data when workout is completed or uncompleted (skip initial mount)
   // Only refresh for OWN profile, not when viewing other users
@@ -41,10 +84,10 @@ const ProgressTab = ({ userId, onRefresh, embedded = false }) => {
 
     // Only refresh when viewing own profile and workout status changes
     if (userId && isOwnProfile) {
-      // Only refresh from local storage, don't fetch from backend again
-      fetchProgressData(false);
+      // Refresh calendar from preload context
+      refreshCalendar();
     }
-  }, [lastWorkoutCompleted, isOwnProfile]);
+  }, [lastWorkoutCompleted, isOwnProfile, refreshCalendar]);
 
   const fetchProgressData = async (includeBackend = false) => {
     // Prevent concurrent fetches
@@ -189,33 +232,53 @@ const ProgressTab = ({ userId, onRefresh, embedded = false }) => {
             });
           }
 
-          setWorkoutsByDay(Object.values(calendarDataMap));
+          if (isMountedRef.current) {
+            setWorkoutsByDay(Object.values(calendarDataMap));
+          }
         } catch (backendError) {
           console.error('[ProgressTab] Error fetching other user calendar:', backendError);
-          setWorkoutsByDay([]);
+          if (isMountedRef.current) {
+            setWorkoutsByDay([]);
+          }
         }
         return;
       }
 
-      // For OWN profile: Fetch calendar data from backend (no local storage)
-      // Calendar is now backend-only via DailyActivity table
-      const calendarData = await getCalendarDataForDisplay(userId);
-      setWorkoutsByDay(calendarData);
+      // For OWN profile: Use preloaded calendar data from PreloadContext
+      // This is handled by the useEffect above, but as a fallback:
+      if (preloadedCalendar && preloadedCalendar.length > 0) {
+        setWorkoutsByDay(preloadedCalendar);
+      } else {
+        // Fallback to direct fetch if preloaded data not available
+        const calendarData = await getCalendarDataForDisplay(userId);
+        setWorkoutsByDay(calendarData);
+      }
       hasBackfilled.current = true;
 
     } catch (error) {
       // Set empty data on error
-      setWorkoutsByDay([]);
+      if (isMountedRef.current) {
+        setWorkoutsByDay([]);
+      }
     } finally {
-      setRefreshing(false);
+      if (isMountedRef.current) {
+        setRefreshing(false);
+      }
       isFetching.current = false;
     }
   };
 
   const handleRefresh = async () => {
     setRefreshing(true);
-    hasBackfilled.current = false;
-    await fetchProgressData(true);
+    if (isOwnProfile) {
+      // Use preload context for own profile
+      await refreshCalendar();
+      setRefreshing(false);
+    } else {
+      // Fetch other user's data directly
+      hasBackfilled.current = false;
+      await fetchProgressData(true);
+    }
     if (onRefresh) await onRefresh();
   };
 

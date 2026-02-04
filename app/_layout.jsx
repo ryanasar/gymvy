@@ -2,6 +2,7 @@ import 'fast-text-encoding';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { AuthProvider } from '@/lib/auth';
 import { WorkoutProvider } from '@/contexts/WorkoutContext';
+import { PreloadProvider } from '@/contexts/PreloadContext';
 import { SyncProvider } from '@/contexts/SyncContext';
 import { NotificationProvider } from '@/contexts/NotificationContext';
 import { PushNotificationProvider } from '@/contexts/PushNotificationContext';
@@ -19,7 +20,8 @@ export default function RootLayout() {
         <AuthProvider>
           <PushNotificationProvider>
             <WorkoutProvider>
-              <SyncProvider>
+              <PreloadProvider>
+                <SyncProvider>
                 <NotificationProvider>
                   <OfflineBanner />
                   <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.background } }}>
@@ -32,6 +34,7 @@ export default function RootLayout() {
                   </Stack>
                 </NotificationProvider>
               </SyncProvider>
+              </PreloadProvider>
             </WorkoutProvider>
           </PushNotificationProvider>
         </AuthProvider>

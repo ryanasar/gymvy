@@ -1,7 +1,8 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { Alert, RefreshControl, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { deleteSplit, getSplitsByUserId } from '@/services/api/splits';
+import { useFocusEffect } from '@react-navigation/native';
+import { deleteSplit } from '@/services/api/splits';
 import { useAuth } from '@/lib/auth';
 import ChangeSplitModal from '@/components/program/ChangeSplitModal';
 import SplitCard from '@/components/program/SplitCard';
@@ -11,6 +12,7 @@ import TabBar from '@/components/ui/TabBar';
 import { Colors } from '@/constants/colors';
 import { useSync } from '@/contexts/SyncContext';
 import { useWorkout } from '@/contexts/WorkoutContext';
+import { usePreload } from '@/contexts/PreloadContext';
 import { clearLocalSplit } from '@/utils/clearLocalSplit';
 import { useThemeColors } from '@/hooks/useThemeColors';
 
@@ -21,43 +23,60 @@ const ProgramScreen = () => {
   const { user } = useAuth();
   const { manualSync } = useSync();
   const { activeSplit, currentWeek, currentDayIndex, changeActiveSplit, todaysWorkout } = useWorkout();
+  const { splitsList, splitsLoading, refreshSplits } = usePreload();
   const [allUserSplits, setAllUserSplits] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [showChangeSplitModal, setShowChangeSplitModal] = useState(false);
-  const hasFetchedRef = useRef(false);
 
   // Tab toggle state: 'splits' or 'saved'
   const [activeTab, setActiveTab] = useState('splits');
 
-  // Fetch splits only on mount
-  useEffect(() => {
-    if (user?.id && !hasFetchedRef.current) {
-      fetchSplits();
-      hasFetchedRef.current = true;
+  // Navigation guard to prevent double-click issues
+  const isNavigatingRef = useRef(false);
+
+  // Navigation handler with double-click protection
+  const handleNavigation = useCallback((path, params = null) => {
+    if (isNavigatingRef.current) return;
+    isNavigatingRef.current = true;
+    if (params) {
+      router.push({ pathname: path, params });
+    } else {
+      router.push(path);
     }
-  }, [user?.id]);
+    setTimeout(() => {
+      isNavigatingRef.current = false;
+    }, 500);
+  }, [router]);
+
+  // Format preloaded splits when they become available
+  useEffect(() => {
+    if (splitsList && splitsList.length > 0) {
+      formatAndSetSplits(splitsList);
+      setLoading(false);
+    } else if (!splitsLoading) {
+      setLoading(false);
+    }
+  }, [splitsList, splitsLoading, activeSplit?.id]);
 
   // Refetch only when returning from split creation/editing with refreshSplits param
   useEffect(() => {
-    if (params.refreshSplits === 'true' && hasFetchedRef.current) {
-      fetchSplits();
+    if (params.refreshSplits === 'true') {
+      refreshSplits();
       // Clear the param
       router.setParams({ refreshSplits: undefined });
     }
   }, [params.refreshSplits]);
 
-  // Re-sync when activeSplit changes
-  useEffect(() => {
-    if (allUserSplits.length > 0) {
-      setAllUserSplits(prevSplits =>
-        prevSplits.map(split => ({
-          ...split,
-          isActive: activeSplit?.id === split.id
-        }))
-      );
-    }
-  }, [activeSplit?.id]);
+  // Silently refresh splits on tab focus
+  useFocusEffect(
+    React.useCallback(() => {
+      // Only refresh if we already have data (background refresh)
+      if (allUserSplits.length > 0) {
+        refreshSplits();
+      }
+    }, [allUserSplits.length, refreshSplits])
+  );
 
   // Auto-activate first split if no active split exists but splits are available
   useEffect(() => {
@@ -67,65 +86,57 @@ const ProgramScreen = () => {
     }
   }, [loading, allUserSplits, activeSplit]);
 
-  const fetchSplits = async () => {
-    if (!user?.id) {
-      setLoading(false);
+  // Format splits from preloaded data
+  const formatAndSetSplits = (splits) => {
+    if (!splits || splits.length === 0) {
+      setAllUserSplits([]);
       return;
     }
 
-    try {
-      setLoading(true);
-      const splits = await getSplitsByUserId(user.id);
+    // Format splits to match expected structure
+    const formattedSplits = splits.map((split) => ({
+      id: split.id,
+      name: split.name,
+      totalDays: split.numDays,
+      emoji: split.emoji,
+      isActive: false, // Will be set below
+      description: split.description,
+      started: split.started,
+      isPublic: split.isPublic,
+      workoutDays: split.workoutDays,
+      days: split.workoutDays.map((day, index) => ({
+        dayIndex: index,
+        name: day.workoutName,
+        type: day.workoutType,
+        emoji: day.emoji,
+        isRest: day.isRest,
+        // Backend already parses exercises, don't parse again
+        exercises: day.exercises || []
+      }))
+    }));
 
-      // Format splits to match expected structure
-      const formattedSplits = splits.map((split) => ({
-        id: split.id,
-        name: split.name,
-        totalDays: split.numDays,
-        emoji: split.emoji,
-        isActive: false, // Will be set below
-        description: split.description,
-        started: split.started,
-        isPublic: split.isPublic,
-        workoutDays: split.workoutDays,
-        days: split.workoutDays.map((day, index) => ({
-          dayIndex: index,
-          name: day.workoutName,
-          type: day.workoutType,
-          emoji: day.emoji,
-          isRest: day.isRest,
-          // Backend already parses exercises, don't parse again
-          exercises: day.exercises || []
-        }))
-      }));
-
-      // Mark the split that matches the context as active
-      // If no match (e.g., context has mock data), mark the first split as active
-      let hasActiveMatch = false;
-      for (let split of formattedSplits) {
-        if (activeSplit?.id === split.id) {
-          split.isActive = true;
-          hasActiveMatch = true;
-          break;
-        }
+    // Mark the split that matches the context as active
+    // If no match (e.g., context has mock data), mark the first split as active
+    let hasActiveMatch = false;
+    for (let split of formattedSplits) {
+      if (activeSplit?.id === split.id) {
+        split.isActive = true;
+        hasActiveMatch = true;
+        break;
       }
-
-      // If no active split matches (mock data scenario), mark first as active
-      if (!hasActiveMatch && formattedSplits.length > 0) {
-        formattedSplits[0].isActive = true;
-
-        // Update the context to use this split
-        if (formattedSplits[0].id !== activeSplit?.id) {
-          changeActiveSplit(formattedSplits[0]);
-        }
-      }
-
-      setAllUserSplits(formattedSplits);
-    } catch (error) {
-      console.error('Failed to fetch splits:', error);
-    } finally {
-      setLoading(false);
     }
+
+    // If no active split matches (mock data scenario), mark first as active
+    if (!hasActiveMatch && formattedSplits.length > 0) {
+      formattedSplits[0].isActive = true;
+
+      // Update the context to use this split
+      if (formattedSplits[0].id !== activeSplit?.id) {
+        changeActiveSplit(formattedSplits[0]);
+      }
+    }
+
+    setAllUserSplits(formattedSplits);
   };
 
   // Filter out the active split from other splits
@@ -135,13 +146,10 @@ const ProgramScreen = () => {
   const handleEditSplit = () => {
     if (currentActiveSplit) {
       // Navigate to split creation flow with edit mode and split data
-      router.push({
-        pathname: '/split/create',
-        params: {
-          editMode: 'true',
-          splitId: currentActiveSplit.id.toString(),
-          splitData: JSON.stringify(currentActiveSplit)
-        }
+      handleNavigation('/split/create', {
+        editMode: 'true',
+        splitId: currentActiveSplit.id.toString(),
+        splitData: JSON.stringify(currentActiveSplit)
       });
     }
   };
@@ -209,29 +217,20 @@ const ProgramScreen = () => {
 
   const handleViewWorkouts = () => {
     if (currentActiveSplit) {
-      router.push({
-        pathname: '/split/view',
-        params: {
-          splitData: JSON.stringify(currentActiveSplit)
-        }
+      handleNavigation('/split/view', {
+        splitData: JSON.stringify(currentActiveSplit)
       });
     }
   };
 
   const handleCreateNewSplit = () => {
-    router.push({
-      pathname: '/split/create',
-      params: { fromProgram: 'true' }
-    });
+    handleNavigation('/split/create', { fromProgram: 'true' });
   };
 
   const handleSplitPress = (split) => {
     // Navigate to view split screen
-    router.push({
-      pathname: '/split/view',
-      params: {
-        splitData: JSON.stringify(split)
-      }
+    handleNavigation('/split/view', {
+      splitData: JSON.stringify(split)
     });
   };
 
@@ -276,7 +275,7 @@ const ProgramScreen = () => {
     setRefreshing(true);
     // Trigger sync on pull-to-refresh
     manualSync();
-    await fetchSplits();
+    await refreshSplits();
     setRefreshing(false);
   };
 

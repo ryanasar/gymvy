@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import {
   View,
   Text,
@@ -50,6 +50,9 @@ const RestDayPostModal = ({ visible, onClose, onPostCreated, splitName, splitEmo
   const [taggedUsers, setTaggedUsers] = useState([]);
   const [showTagUsersModal, setShowTagUsersModal] = useState(false);
   const [isPosting, setIsPosting] = useState(false);
+
+  // Ref-based guard to prevent race conditions between state check and setState
+  const isPostingRef = useRef(false);
 
   // Theme-aware green colors
   const greenPrimary = isDark ? '#4ADE80' : '#4CAF50';
@@ -194,7 +197,12 @@ const RestDayPostModal = ({ visible, onClose, onPostCreated, splitName, splitEmo
   };
 
   const handlePost = async () => {
+    // Use ref for immediate synchronous check to prevent race conditions
+    if (isPostingRef.current) return;
+    isPostingRef.current = true;
+
     if (!user?.id) {
+      isPostingRef.current = false;
       Alert.alert('Error', 'You must be logged in to post.');
       return;
     }
@@ -311,6 +319,7 @@ const RestDayPostModal = ({ visible, onClose, onPostCreated, splitName, splitEmo
       Alert.alert('Error', 'Failed to post rest day. Please try again.');
     } finally {
       setIsPosting(false);
+      isPostingRef.current = false;
     }
   };
 
@@ -617,7 +626,7 @@ const styles = StyleSheet.create({
   },
   selectedImage: {
     width: '100%',
-    height: 300,
+    height: 320,
     borderRadius: 12,
   },
   removeImageButton: {

@@ -1,7 +1,8 @@
 import { supabase } from '@/lib/supabase';
+import apiClient from './client';
 
 /**
- * Fetch notifications for a user
+ * Fetch notifications for a user (legacy - direct Supabase)
  */
 export const getNotifications = async (userId, limit = 50) => {
   try {
@@ -16,6 +17,32 @@ export const getNotifications = async (userId, limit = 50) => {
     return data || [];
   } catch (error) {
     return [];
+  }
+};
+
+/**
+ * Fetch notifications with actor data pre-joined (new optimized endpoint)
+ */
+export const getNotificationsWithActors = async () => {
+  try {
+    const response = await apiClient.get('/notifications');
+    return response.data || [];
+  } catch (error) {
+    console.error('Error fetching notifications with actors:', error);
+    return [];
+  }
+};
+
+/**
+ * Mark all notifications as read via backend API
+ */
+export const markAllNotificationsAsReadApi = async () => {
+  try {
+    await apiClient.put('/notifications/mark-read');
+    return true;
+  } catch (error) {
+    console.error('Error marking notifications as read:', error);
+    return false;
   }
 };
 

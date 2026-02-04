@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useRef, useCallback } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, useColorScheme } from 'react-native';
 import { Image } from 'expo-image';
 import { useAuth } from '@/lib/auth';
@@ -12,6 +12,19 @@ export default function WelcomeScreen() {
   const { user, signIn, signInWithApple, isLoading, error: authError } = useAuth();
   const { isOffline } = useNetwork();
   const router = useRouter();
+
+  // Navigation guard to prevent double-click issues
+  const isNavigatingRef = useRef(false);
+
+  // Navigation handler with double-click protection
+  const handleNavigation = useCallback((path) => {
+    if (isNavigatingRef.current) return;
+    isNavigatingRef.current = true;
+    router.push(path);
+    setTimeout(() => {
+      isNavigatingRef.current = false;
+    }, 500);
+  }, [router]);
 
   // Redirect when user becomes available after login
   React.useEffect(() => {
@@ -75,11 +88,11 @@ export default function WelcomeScreen() {
           <View style={[styles.divider, { backgroundColor: colors.border }]} />
         </View>
 
-        <TouchableOpacity style={[styles.emailButton, { borderColor: colors.primary }]} onPress={() => router.push('/signup')}>
+        <TouchableOpacity style={[styles.emailButton, { borderColor: colors.primary }]} onPress={() => handleNavigation('/signup')} disabled={isNavigatingRef.current}>
           <Text style={[styles.emailButtonText, { color: colors.primary }]}>Sign Up with Email</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity onPress={() => router.push('/login')}>
+        <TouchableOpacity onPress={() => handleNavigation('/login')} disabled={isNavigatingRef.current}>
           <Text style={[styles.loginText, { color: colors.secondaryText }]}>
             Already have an account? <Text style={[styles.loginLink, { color: colors.primary }]}>Log In</Text>
           </Text>

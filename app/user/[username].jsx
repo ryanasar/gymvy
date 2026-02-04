@@ -5,6 +5,8 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useThemeColors } from '@/hooks/useThemeColors';
 import { getUserByUsername, followUser, unfollowUser } from '@/services/api/users';
 import { getPostsByUserId } from '@/services/api/posts';
+import { getCalendarData } from '@/services/api/dailyActivity';
+import { getPublicSplitsByUserId } from '@/services/api/splits';
 import { createFollowNotification, deleteFollowNotification } from '@/services/api/notifications';
 import { cancelFollowRequestByTargetId } from '@/services/api/followRequests';
 import { sendNudge } from '@/services/api/nudges';
@@ -30,7 +32,10 @@ export default function UserProfileScreen() {
   const [selectedTab, setSelectedTab] = useState('Progress');
   const [user, setUser] = useState(null);
   const [posts, setPosts] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [calendarData, setCalendarData] = useState(null);
+  const [splitsData, setSplitsData] = useState(null);
+  const [isHeaderLoading, setIsHeaderLoading] = useState(true);
+  const [isTabDataLoading, setIsTabDataLoading] = useState(true);
   const [isFollowing, setIsFollowing] = useState(false);
   const [followStatus, setFollowStatus] = useState('none'); // 'none' | 'following' | 'requested'
   const [isFollowLoading, setIsFollowLoading] = useState(false);
@@ -49,7 +54,8 @@ export default function UserProfileScreen() {
   const loadUserData = async (showLoadingSpinner = true) => {
     try {
       if (showLoadingSpinner) {
-        setIsLoading(true);
+        setIsHeaderLoading(true);
+        setIsTabDataLoading(true);
       }
       const userData = await getUserByUsername(username);
       setUser(userData);
@@ -77,32 +83,51 @@ export default function UserProfileScreen() {
         setCanNudge(false);
       }
 
-      // Fetch posts using userId (only if not private or if following)
+      // Show header NOW - don't wait for tab data
+      if (showLoadingSpinner) {
+        setIsHeaderLoading(false);
+      }
+
+      // Fetch all tab data IN PARALLEL in background (only if not private or if following)
       if (userData?.id) {
-        const isPrivateAndNotFollowing = userData.profile?.isPrivate && userData.followStatus !== 'following';
-        if (!isPrivateAndNotFollowing) {
-          try {
-            const userPosts = await getPostsByUserId(userData.id);
-            setPosts(userPosts);
-          } catch (postsError) {
-            // If 403, account is private and we can't view
-            if (postsError?.response?.status === 403) {
-              setPosts([]);
-            } else {
-              console.error('Error fetching posts:', postsError);
-            }
-          }
+        const canViewContent = !userData.profile?.isPrivate || userData.followStatus === 'following';
+
+        if (canViewContent) {
+          // Load tab data in background (don't block header)
+          Promise.all([
+            getPostsByUserId(userData.id).catch((err) => {
+              if (err?.response?.status === 403) return [];
+              console.error('Error fetching posts:', err);
+              return [];
+            }),
+            getCalendarData(userData.id).catch((err) => {
+              console.error('Error fetching calendar data:', err);
+              return null;
+            }),
+            getPublicSplitsByUserId(userData.id).catch((err) => {
+              console.error('Error fetching splits:', err);
+              return [];
+            }),
+          ]).then(([postsResult, calendarResult, splitsResult]) => {
+            setPosts(postsResult);
+            setCalendarData(calendarResult);
+            setSplitsData(splitsResult);
+            setIsTabDataLoading(false);
+          });
         } else {
           setPosts([]);
+          setCalendarData(null);
+          setSplitsData([]);
+          setIsTabDataLoading(false);
         }
+      } else {
+        setIsTabDataLoading(false);
       }
     } catch (error) {
       console.error('Error loading user data:', error);
       Alert.alert('Error', 'Failed to load user profile');
-    } finally {
-      if (showLoadingSpinner) {
-        setIsLoading(false);
-      }
+      setIsHeaderLoading(false);
+      setIsTabDataLoading(false);
     }
   };
 
@@ -220,19 +245,19 @@ export default function UserProfileScreen() {
     return (
       <>
         <View style={selectedTab === 'Progress' ? styles.tabVisible : styles.tabHidden}>
-          <ProgressTab userId={user?.id} isViewerMode={!isOwnProfile} />
+          <ProgressTab userId={user?.id} isViewerMode={!isOwnProfile} prefetchedCalendarData={calendarData} />
         </View>
         <View style={selectedTab === 'Posts' ? styles.tabVisible : styles.tabHidden}>
-          <PostsTab posts={posts} currentUserId={currentUser?.id} onRefresh={loadUserData} />
+          <PostsTab posts={posts} isLoading={isTabDataLoading} currentUserId={currentUser?.id} onRefresh={loadUserData} />
         </View>
         <View style={selectedTab === 'Splits' ? styles.tabVisible : styles.tabHidden}>
-          <WorkoutPlansTab userId={user?.id} isOwnProfile={isOwnProfile} />
+          <WorkoutPlansTab userId={user?.id} isOwnProfile={isOwnProfile} prefetchedSplitsData={splitsData} />
         </View>
       </>
     );
   };
 
-  if (isLoading) {
+  if (isHeaderLoading) {
     return (
       <View style={[styles.loadingContainer, { backgroundColor: colors.background }]}>
         <LoadingSpinner fullScreen />

@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef, useCallback } from 'react';
 import {
   View,
   Text,
@@ -31,6 +31,19 @@ export default function OnboardingWelcome() {
   const router = useRouter();
   const { user } = useAuth();
   const colors = useThemeColors();
+
+  // Navigation guard to prevent double-click issues
+  const isNavigatingRef = useRef(false);
+
+  // Navigation handler with double-click protection
+  const handleNavigation = useCallback((path) => {
+    if (isNavigatingRef.current) return;
+    isNavigatingRef.current = true;
+    router.push(path);
+    setTimeout(() => {
+      isNavigatingRef.current = false;
+    }, 500);
+  }, [router]);
 
   // Animation values
   const iconScale = useSharedValue(0);
@@ -191,8 +204,9 @@ export default function OnboardingWelcome() {
             { backgroundColor: colors.primary },
             buttonAnimatedStyle
           ]}
-          onPress={() => router.push('/(onboarding)/profile-setup')}
+          onPress={() => handleNavigation('/(onboarding)/profile-setup')}
           activeOpacity={0.8}
+          disabled={isNavigatingRef.current}
         >
           <Text style={[styles.primaryButtonText, { color: colors.onPrimary }]}>Get Started</Text>
           <Ionicons name="arrow-forward" size={20} color={colors.onPrimary} style={styles.buttonIcon} />

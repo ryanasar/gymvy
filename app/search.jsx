@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { View, Text, StyleSheet, ScrollView, TextInput, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
@@ -16,6 +16,9 @@ export default function SearchScreen() {
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState([]);
   const [isSearching, setIsSearching] = useState(false);
+
+  // Navigation guard to prevent double-click issues
+  const isNavigatingRef = useRef(false);
 
   // Debounce search
   useEffect(() => {
@@ -39,9 +42,14 @@ export default function SearchScreen() {
     return () => clearTimeout(timeoutId);
   }, [searchQuery, user?.id]);
 
-  const handleUserPress = (username) => {
+  const handleUserPress = useCallback((username) => {
+    if (isNavigatingRef.current) return;
+    isNavigatingRef.current = true;
     router.push(`/user/${username}`);
-  };
+    setTimeout(() => {
+      isNavigatingRef.current = false;
+    }, 500);
+  }, [router]);
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>

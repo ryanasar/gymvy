@@ -1,13 +1,13 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, RefreshControl } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { useAuth } from '@/lib/auth';
 import { useWorkout } from '@/contexts/WorkoutContext';
+import { usePreload } from '@/contexts/PreloadContext';
 import { useThemeColors } from '@/hooks/useThemeColors';
 import { storage } from '@/services/storage';
 import { addBodyWeightEntry } from '@/services/storage/bodyWeightStorage';
-import { getBodyWeightEntries, createBodyWeightEntry } from '@/services/api/bodyWeight';
-import { getWorkoutSessionsByUserId } from '@/services/api/workoutSessions';
+import { createBodyWeightEntry } from '@/services/api/bodyWeight';
 import { getBestOneRMFromSets } from '@/utils/oneRMCalculator';
 import BodyWeightCard from '@/components/progress/BodyWeightCard';
 import ExerciseOneRMCard from '@/components/progress/ExerciseOneRMCard';
@@ -19,6 +19,7 @@ export default function ProgressScreen() {
   const colors = useThemeColors();
   const { user } = useAuth();
   const { exerciseDatabase } = useWorkout();
+  const { bodyWeightData: preloadedBodyWeight, workoutSessions: preloadedSessions, progressLoading, refreshProgress } = usePreload();
 
   const [bodyWeightData, setBodyWeightData] = useState([]);
   const [bigThreeData, setBigThreeData] = useState([]);
@@ -26,6 +27,7 @@ export default function ProgressScreen() {
   const [selectedOtherExercise, setSelectedOtherExercise] = useState(null);
   const [selectedExerciseData, setSelectedExerciseData] = useState(null);
   const [refreshing, setRefreshing] = useState(false);
+  const [hasProcessedData, setHasProcessedData] = useState(false);
 
   // Helper to find exercise ID by name (case-insensitive)
   const findExerciseIdByName = useCallback((name) => {
@@ -90,24 +92,17 @@ export default function ProgressScreen() {
       .sort((a, b) => a.date.localeCompare(b.date));
   }, [findExerciseIdByName]);
 
-  const loadData = useCallback(async () => {
+  // Process preloaded data when it becomes available
+  const processData = useCallback(async (bodyWeightEntries, backendSessions) => {
     try {
-      // Load body weight data from backend only (local storage deprecated)
+      // Process body weight data
       let entries = [];
-
-      if (user?.id) {
-        try {
-          const backendEntries = await getBodyWeightEntries(user.id);
-          if (backendEntries && backendEntries.length > 0) {
-            entries = backendEntries.map(be => ({
-              date: be.date.split('T')[0],
-              weight: be.weight,
-              timestamp: be.createdAt,
-            })).sort((a, b) => a.date.localeCompare(b.date));
-          }
-        } catch {
-          // Backend fetch failed
-        }
+      if (bodyWeightEntries && bodyWeightEntries.length > 0) {
+        entries = bodyWeightEntries.map(be => ({
+          date: be.date.split('T')[0],
+          weight: be.weight,
+          timestamp: be.createdAt,
+        })).sort((a, b) => a.date.localeCompare(b.date));
       }
 
       // Filter out invalid entries (weight must be reasonable: 50-500 lbs)
@@ -117,21 +112,12 @@ export default function ProgressScreen() {
       // Load exercise data if we have the exercise database
       if (Object.keys(exerciseDatabase).length > 0) {
         const completedHistory = await storage.getCompletedHistory(user?.id);
-
-        // Fetch backend workout sessions
-        let backendSessions = [];
-        if (user?.id) {
-          try {
-            backendSessions = await getWorkoutSessionsByUserId(user.id) || [];
-          } catch {
-            // Backend unavailable, use local only
-          }
-        }
+        const sessions = backendSessions || [];
 
         // Calculate 1RM data for Big 3
         const bigThreeResults = BIG_THREE.map((exerciseName) => ({
           exerciseName,
-          data: calculate1RMDataForExercise(exerciseName, completedHistory, backendSessions),
+          data: calculate1RMDataForExercise(exerciseName, completedHistory, sessions),
         }));
         setBigThreeData(bigThreeResults);
 
@@ -157,7 +143,7 @@ export default function ProgressScreen() {
         }
 
         // From backend sessions (use flat sets array)
-        for (const session of backendSessions) {
+        for (const session of sessions) {
           if (!session.sets) continue;
           for (const set of session.sets) {
             // Only include exercises with weight data
@@ -172,7 +158,7 @@ export default function ProgressScreen() {
 
         // Filter to only include exercises that have 1RM data
         const exercisesWithData = Array.from(allExerciseNames).filter(name => {
-          const data = calculate1RMDataForExercise(name, completedHistory, backendSessions);
+          const data = calculate1RMDataForExercise(name, completedHistory, sessions);
           return data && data.length > 0;
         });
 
@@ -180,45 +166,47 @@ export default function ProgressScreen() {
 
         // If we have a selected exercise, recalculate its data
         if (selectedOtherExercise) {
-          const data = calculate1RMDataForExercise(selectedOtherExercise, completedHistory, backendSessions);
+          const data = calculate1RMDataForExercise(selectedOtherExercise, completedHistory, sessions);
           setSelectedExerciseData(data);
         }
       } else {
         setBigThreeData([]);
         setOtherExercises([]);
       }
+
+      setHasProcessedData(true);
     } catch (error) {
-      console.error('[ProgressScreen] Error loading data:', error);
+      console.error('[ProgressScreen] Error processing data:', error);
     } finally {
       setRefreshing(false);
     }
   }, [user?.id, exerciseDatabase, calculate1RMDataForExercise, selectedOtherExercise]);
 
-  // Reload data when tab is focused (without showing refresh indicator)
+  // Process preloaded data when it becomes available
+  useEffect(() => {
+    if ((preloadedBodyWeight || preloadedSessions) && !progressLoading) {
+      processData(preloadedBodyWeight, preloadedSessions);
+    }
+  }, [preloadedBodyWeight, preloadedSessions, progressLoading, processData]);
+
+  // Silently refresh data on tab focus (background refresh)
   useFocusEffect(
     useCallback(() => {
-      loadData();
-    }, [loadData])
+      if (hasProcessedData) {
+        refreshProgress();
+      }
+    }, [hasProcessedData, refreshProgress])
   );
 
   // Handle selecting an exercise from the picker
   const handleSelectExercise = useCallback(async (exerciseName) => {
     setSelectedOtherExercise(exerciseName);
 
-    // Calculate 1RM data for the selected exercise
+    // Calculate 1RM data for the selected exercise using preloaded sessions
     const completedHistory = await storage.getCompletedHistory(user?.id);
-    let backendSessions = [];
-    if (user?.id) {
-      try {
-        backendSessions = await getWorkoutSessionsByUserId(user.id) || [];
-      } catch {
-        // Backend unavailable
-      }
-    }
-
-    const data = calculate1RMDataForExercise(exerciseName, completedHistory, backendSessions);
+    const data = calculate1RMDataForExercise(exerciseName, completedHistory, preloadedSessions || []);
     setSelectedExerciseData(data);
-  }, [user?.id, calculate1RMDataForExercise]);
+  }, [user?.id, calculate1RMDataForExercise, preloadedSessions]);
 
   const handleLogWeight = async (weight) => {
     // Save locally
@@ -235,9 +223,11 @@ export default function ProgressScreen() {
     loadData();
   };
 
-  const handleRefresh = () => {
+  const handleRefresh = async () => {
     setRefreshing(true);
-    loadData();
+    await refreshProgress();
+    // Re-process after refresh
+    processData(preloadedBodyWeight, preloadedSessions);
   };
 
   return (

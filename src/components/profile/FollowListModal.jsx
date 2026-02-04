@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef, useCallback } from 'react';
 import {
   Modal,
   View,
@@ -21,10 +21,19 @@ const FollowListModal = ({ visible, onClose, username, type }) => {
   const router = useRouter();
   const colors = useThemeColors();
 
+  // Navigation guard to prevent double-click issues
+  const isNavigatingRef = useRef(false);
+  // Mounted ref to prevent setState after unmount
+  const isMountedRef = useRef(true);
+
   useEffect(() => {
+    isMountedRef.current = true;
     if (visible && username) {
       loadUsers();
     }
+    return () => {
+      isMountedRef.current = false;
+    };
   }, [visible, username, type]);
 
   const loadUsers = async () => {
@@ -33,18 +42,27 @@ const FollowListModal = ({ visible, onClose, username, type }) => {
       const data = type === 'followers'
         ? await getFollowers(username)
         : await getFollowing(username);
-      setUsers(data);
+      if (isMountedRef.current) {
+        setUsers(data);
+      }
     } catch (error) {
       console.error('Error loading users:', error);
     } finally {
-      setIsLoading(false);
+      if (isMountedRef.current) {
+        setIsLoading(false);
+      }
     }
   };
 
-  const handleUserPress = (userUsername) => {
+  const handleUserPress = useCallback((userUsername) => {
+    if (isNavigatingRef.current) return;
+    isNavigatingRef.current = true;
     onClose();
     router.push(`/user/${userUsername}`);
-  };
+    setTimeout(() => {
+      isNavigatingRef.current = false;
+    }, 500);
+  }, [onClose, router]);
 
   const renderUser = ({ item }) => (
     <UserListItem

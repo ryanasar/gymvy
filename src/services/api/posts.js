@@ -64,7 +64,7 @@ export const deletePost = async (postId) => {
 
 export const likePost = async (postId, userId) => {
   try {
-    const response = await apiClient.post(`/posts/${postId}/like`, { userId });
+    const response = await apiClient.post(`/posts/${postId}/like`, { userId, postId });
     return response.data;
   } catch (error) {
     console.error('Failed to like post:', error);
@@ -106,24 +106,12 @@ export const createComment = async (postId, commentData) => {
 /**
  * Check if a workout post exists for today
  * Returns the post if found, null otherwise
+ * Uses dedicated backend endpoint for efficiency (instead of fetching all posts)
  */
 export const getTodaysWorkoutPost = async (userId) => {
   try {
-    const posts = await getPostsByUserId(userId);
-
-    // Get today's date at midnight for comparison
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-
-    // Find a workout post created today (not a rest day post)
-    const post = posts.find(p => {
-      if (!p.workoutSessionId) return false; // Must have a workout session
-      const postDate = new Date(p.createdAt);
-      postDate.setHours(0, 0, 0, 0);
-      return postDate.getTime() === today.getTime();
-    });
-
-    return post || null;
+    const response = await apiClient.get(`/posts/user/${userId}/today`);
+    return response.data;
   } catch (error) {
     console.error('Failed to check for today\'s workout post:', error);
     return null;

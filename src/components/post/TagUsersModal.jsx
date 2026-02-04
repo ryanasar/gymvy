@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import {
   Modal,
   View,
@@ -22,14 +22,20 @@ const TagUsersModal = ({ visible, onClose, selectedUsers = [], onUsersSelected, 
   const [searchResults, setSearchResults] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [localSelectedUsers, setLocalSelectedUsers] = useState(selectedUsers);
+  // Mounted ref to prevent setState after unmount
+  const isMountedRef = useRef(true);
 
   // Sync local state when modal opens
   useEffect(() => {
+    isMountedRef.current = true;
     if (visible) {
       setLocalSelectedUsers(selectedUsers);
       setSearchQuery('');
       setSearchResults([]);
     }
+    return () => {
+      isMountedRef.current = false;
+    };
   }, [visible, selectedUsers]);
 
   // Debounced search
@@ -51,12 +57,18 @@ const TagUsersModal = ({ visible, onClose, selectedUsers = [], onUsersSelected, 
       const results = await searchUsers(query, currentUserId);
       // Filter out current user from results
       const filteredResults = results.filter(user => user.id !== currentUserId);
-      setSearchResults(filteredResults);
+      if (isMountedRef.current) {
+        setSearchResults(filteredResults);
+      }
     } catch (error) {
       console.error('Error searching users:', error);
-      setSearchResults([]);
+      if (isMountedRef.current) {
+        setSearchResults([]);
+      }
     } finally {
-      setIsLoading(false);
+      if (isMountedRef.current) {
+        setIsLoading(false);
+      }
     }
   };
 

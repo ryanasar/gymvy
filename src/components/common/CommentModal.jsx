@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useCallback } from 'react';
 import {
   Modal,
   View,
@@ -43,6 +43,10 @@ const CommentModal = ({
   const lastLoadedCountRef = useRef(null);
   const isLikingCommentRef = useRef({});
   const inputRef = useRef(null);
+  // Navigation guard to prevent double-click issues
+  const isNavigatingRef = useRef(false);
+  // Mounted ref to prevent setState after unmount
+  const isMountedRef = useRef(true);
 
   const loadComments = async () => {
     // Only refresh if comment count changed or never loaded
@@ -50,21 +54,29 @@ const CommentModal = ({
     setIsLoading(true);
     try {
       const fetched = await getComments(postId, currentUserId);
-      setComments(fetched);
-      lastLoadedCountRef.current = commentCount;
+      if (isMountedRef.current) {
+        setComments(fetched);
+        lastLoadedCountRef.current = commentCount;
+      }
     } catch (error) {
       console.error('Error fetching comments:', error);
-      Alert.alert('Error', 'Failed to load comments');
+      if (isMountedRef.current) {
+        Alert.alert('Error', 'Failed to load comments');
+      }
     } finally {
-      setIsLoading(false);
+      if (isMountedRef.current) {
+        setIsLoading(false);
+      }
     }
   };
 
   const handleShow = () => {
+    isMountedRef.current = true;
     loadComments();
   };
 
   const handleClose = () => {
+    isMountedRef.current = false;
     setCommentText('');
     setReplyingTo(null);
     onClose();
@@ -90,13 +102,19 @@ const CommentModal = ({
     return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
   };
 
-  const handleAuthorPress = (username) => {
+  const handleAuthorPress = useCallback((username) => {
     if (!username) return;
+    if (isNavigatingRef.current) return;
+    isNavigatingRef.current = true;
     handleClose();
+    // Use a slightly longer delay to ensure modal closes before navigation
     setTimeout(() => {
       router.push(`/user/${username}`);
-    }, 100);
-  };
+      setTimeout(() => {
+        isNavigatingRef.current = false;
+      }, 300);
+    }, 150);
+  }, [handleClose, router]);
 
   const handleReply = (comment) => {
     const username = comment.author?.username;

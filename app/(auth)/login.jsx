@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useCallback } from 'react';
 import {
   View,
   Text,
@@ -28,6 +28,20 @@ export default function LoginScreen() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Navigation guard to prevent double-click issues
+  const isNavigatingRef = useRef(false);
+
+  // Navigation handler with double-click protection
+  const handleNavigation = useCallback((path) => {
+    if (isNavigatingRef.current) return;
+    isNavigatingRef.current = true;
+    router.push(path);
+    setTimeout(() => {
+      isNavigatingRef.current = false;
+    }, 500);
+  }, [router]);
 
   // Redirect when user becomes available after login
   React.useEffect(() => {
@@ -42,6 +56,7 @@ export default function LoginScreen() {
   }, [user, isLoading]);
 
   const handleLogin = async () => {
+    if (isSubmitting) return;
     setError('');
 
     // Check for offline status
@@ -50,6 +65,7 @@ export default function LoginScreen() {
       return;
     }
 
+    setIsSubmitting(true);
     try {
       const { data, error } = await supabase.auth.signInWithPassword({
         email: email.trim(),
@@ -64,11 +80,13 @@ export default function LoginScreen() {
     } catch (networkError) {
       console.error('Network error during login:', networkError);
       setError('Network error. Please check your connection and try again.');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
   const handleSignupNavigate = () => {
-    router.push('/signup');
+    handleNavigation('/signup');
   };
 
   return (
@@ -145,12 +163,12 @@ export default function LoginScreen() {
               onChangeText={setPassword}
             />
 
-            <TouchableOpacity onPress={() => router.push('/forgot-password')} style={styles.forgotPasswordButton}>
+            <TouchableOpacity onPress={() => handleNavigation('/forgot-password')} style={styles.forgotPasswordButton} disabled={isNavigatingRef.current}>
               <Text style={[styles.forgotPasswordText, { color: colors.primary }]}>Forgot Password?</Text>
             </TouchableOpacity>
 
-            <TouchableOpacity style={[styles.primaryButton, { backgroundColor: colors.primary }]} onPress={handleLogin}>
-              <Text style={[styles.primaryButtonText, { color: colors.onPrimary }]}>Login</Text>
+            <TouchableOpacity style={[styles.primaryButton, { backgroundColor: colors.primary }, isSubmitting && { opacity: 0.6 }]} onPress={handleLogin} disabled={isSubmitting}>
+              <Text style={[styles.primaryButtonText, { color: colors.onPrimary }]}>{isSubmitting ? 'Logging in...' : 'Login'}</Text>
             </TouchableOpacity>
 
             <TouchableOpacity onPress={handleSignupNavigate}>

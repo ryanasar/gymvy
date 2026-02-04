@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef, useCallback } from 'react';
 import {
   View,
   Text,
@@ -28,27 +28,49 @@ const NotificationsScreen = () => {
   const [followRequests, setFollowRequests] = useState({});
   const [processingRequests, setProcessingRequests] = useState({});
 
+  // Navigation guard to prevent double-click issues
+  const isNavigatingRef = useRef(false);
+
+  // Navigation handler with double-click protection
+  const handleNavigation = useCallback((path, params = null) => {
+    if (isNavigatingRef.current) return;
+    isNavigatingRef.current = true;
+    if (params) {
+      router.push({ pathname: path, params });
+    } else {
+      router.push(path);
+    }
+    setTimeout(() => {
+      isNavigatingRef.current = false;
+    }, 500);
+  }, [router]);
+
 
   // Mark all notifications as read when viewing this screen
   useEffect(() => {
     markAllAsRead();
   }, [markAllAsRead]);
 
-  // Fetch actor profiles for notifications
+  // Fetch missing actor profiles (fallback for notifications without pre-joined actor data)
   useEffect(() => {
-    const fetchActorProfiles = async () => {
-      const actorIds = [...new Set(notifications.map(n => n.actor_id))];
-      const profiles = {};
+    const fetchMissingProfiles = async () => {
+      // Only fetch for notifications that don't have actor_name from the API
+      const missingActorIds = [...new Set(
+        notifications
+          .filter(n => !n.actor_name && !actorProfiles[n.actor_id])
+          .map(n => n.actor_id)
+      )];
 
+      if (missingActorIds.length === 0) return;
+
+      const profiles = {};
       await Promise.all(
-        actorIds.map(async (actorId) => {
-          if (!actorProfiles[actorId]) {
-            try {
-              const profile = await getUserProfile(actorId);
-              profiles[actorId] = profile;
-            } catch (error) {
-              console.error('Error fetching actor profile:', error);
-            }
+        missingActorIds.map(async (actorId) => {
+          try {
+            const profile = await getUserProfile(actorId);
+            profiles[actorId] = profile;
+          } catch (error) {
+            console.error('Error fetching actor profile:', error);
           }
         })
       );
@@ -59,7 +81,7 @@ const NotificationsScreen = () => {
     };
 
     if (notifications.length > 0) {
-      fetchActorProfiles();
+      fetchMissingProfiles();
     }
   }, [notifications]);
 
@@ -207,10 +229,10 @@ const NotificationsScreen = () => {
   };
 
   const handleProfilePress = (notification) => {
-    const actorProfile = actorProfiles[notification.actor_id];
-    const username = actorProfile?.user?.username;
+    // Use actor_username from API response when available, fall back to fetched profile
+    const username = notification.actor_username || actorProfiles[notification.actor_id]?.user?.username;
     if (username) {
-      router.push(`/user/${username}`);
+      handleNavigation(`/user/${username}`);
     }
   };
 
@@ -223,19 +245,17 @@ const NotificationsScreen = () => {
 
     // For like/comment/tag/comment_like/reply notifications, go to the post
     if ((notification.type === 'like' || notification.type === 'comment' || notification.type === 'tag' || notification.type === 'comment_like' || notification.type === 'reply') && notification.post_id) {
-      router.push({
-        pathname: `/post/${notification.post_id}`,
-        params: {
-          openComments: (notification.type === 'comment' || notification.type === 'comment_like' || notification.type === 'reply') ? 'true' : 'false'
-        }
+      handleNavigation(`/post/${notification.post_id}`, {
+        openComments: (notification.type === 'comment' || notification.type === 'comment_like' || notification.type === 'reply') ? 'true' : 'false'
       });
     }
   };
 
   const renderNotification = ({ item }) => {
     const actorProfile = actorProfiles[item.actor_id];
-    const actorName = actorProfile?.user?.name || actorProfile?.user?.username || 'Someone';
-    const avatarUrl = actorProfile?.avatarUrl;
+    // Use actor data from API response when available, fall back to fetched profile
+    const actorName = item.actor_name || item.actor_username || actorProfile?.user?.name || actorProfile?.user?.username || 'Someone';
+    const avatarUrl = item.actor_avatar || actorProfile?.avatarUrl;
     const icon = getNotificationIcon(item.type);
     const isFollowRequest = item.type === 'follow_request';
     const isProcessing = processingRequests[item.actor_id];

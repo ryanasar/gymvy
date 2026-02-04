@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { AppState } from 'react-native';
 import { supabase } from '@/lib/supabase';
-import { getNotifications, markAllNotificationsAsRead } from '@/services/api/notifications';
+import { getNotificationsWithActors, markAllNotificationsAsReadApi, markAllNotificationsAsRead } from '@/services/api/notifications';
 import { useAuth } from '@/lib/auth';
 
 const NotificationContext = createContext({
@@ -20,13 +20,13 @@ export const NotificationProvider = ({ children }) => {
   // Compute unread count
   const unreadCount = notifications.filter(n => !n.is_read).length;
 
-  // Fetch notifications
+  // Fetch notifications with actor data pre-joined
   const refreshNotifications = useCallback(async () => {
     if (!user?.id) return;
 
     setIsLoading(true);
     try {
-      const data = await getNotifications(user.id);
+      const data = await getNotificationsWithActors();
       setNotifications(data);
     } catch (error) {
       // Silently fail
@@ -40,7 +40,11 @@ export const NotificationProvider = ({ children }) => {
     if (!user?.id || unreadCount === 0) return;
 
     try {
-      await markAllNotificationsAsRead(user.id);
+      // Try the new API endpoint first, fall back to direct Supabase
+      const success = await markAllNotificationsAsReadApi();
+      if (!success) {
+        await markAllNotificationsAsRead(user.id);
+      }
       // Update local state to mark all as read
       setNotifications(prev => prev.map(n => ({ ...n, is_read: true })));
     } catch (error) {

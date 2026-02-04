@@ -1,10 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { View, Text, FlatList, StyleSheet, ActivityIndicator, TouchableOpacity, RefreshControl, Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { Colors } from '@/constants/colors';
 import { useThemeColors } from '@/hooks/useThemeColors';
 import { useSync } from '@/contexts/SyncContext';
+import { usePreload } from '../../contexts/PreloadContext';
 import { getPublicSplitsByUserId, createSplit } from "@/services/api/splits";
 import { useAuth } from '@/lib/auth';
 import EmptyState from '@/components/common/EmptyState';
@@ -13,6 +14,23 @@ const SplitCard = ({ split, colors, isOwnProfile, currentUserId }) => {
   const router = useRouter();
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+
+  // Navigation guard to prevent double-click issues
+  const isNavigatingRef = useRef(false);
+
+  // Navigation handler with double-click protection
+  const handleNavigation = useCallback((path, params = null) => {
+    if (isNavigatingRef.current) return;
+    isNavigatingRef.current = true;
+    if (params) {
+      router.push({ pathname: path, params });
+    } else {
+      router.push(path);
+    }
+    setTimeout(() => {
+      isNavigatingRef.current = false;
+    }, 500);
+  }, [router]);
 
   const handleSaveSplit = async () => {
     if (!currentUserId) {
@@ -67,12 +85,9 @@ const SplitCard = ({ split, colors, isOwnProfile, currentUserId }) => {
       workoutDays: split.workoutDays
     };
 
-    router.push({
-      pathname: '/workout/workoutDetail',
-      params: {
-        workoutData: JSON.stringify(workoutData),
-        splitData: JSON.stringify(splitData)
-      }
+    handleNavigation('/workout/workoutDetail', {
+      workoutData: JSON.stringify(workoutData),
+      splitData: JSON.stringify(splitData)
     });
   };
 
@@ -160,42 +175,64 @@ const SplitCard = ({ split, colors, isOwnProfile, currentUserId }) => {
   );
 };
 
-const WorkoutPlansTab = ({ userId, isOwnProfile = true, embedded = false }) => {
+const WorkoutPlansTab = ({ userId, isOwnProfile = true, embedded = false, prefetchedSplitsData = null }) => {
   const colors = useThemeColors();
   const { user: currentUser } = useAuth();
-  const [splits, setSplits] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const { manualSync } = useSync();
+  const { splitsList, splitsLoading, refreshSplits } = usePreload();
+
+  // For own profile, use cached data from PreloadContext (filtered to public only)
+  // For other users' profiles, use prefetched data or fetch their public splits directly
+  const [otherUserSplits, setOtherUserSplits] = useState([]);
+  const [otherUserLoading, setOtherUserLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState(null);
-  const { manualSync } = useSync();
 
+  // Use prefetched splits data if available
   useEffect(() => {
-    fetchPublicSplits();
-  }, [userId]);
-
-  const fetchPublicSplits = async () => {
-    if (!userId) {
-      return;
+    if (!isOwnProfile && prefetchedSplitsData !== null) {
+      setOtherUserSplits(prefetchedSplitsData);
+      setOtherUserLoading(false);
     }
+  }, [isOwnProfile, prefetchedSplitsData]);
+
+  // Fetch other user's splits when viewing someone else's profile (only if not prefetched)
+  useEffect(() => {
+    if (!isOwnProfile && userId && prefetchedSplitsData === null) {
+      fetchOtherUserSplits();
+    }
+  }, [userId, isOwnProfile, prefetchedSplitsData]);
+
+  const fetchOtherUserSplits = async () => {
+    if (!userId) return;
 
     try {
-      setLoading(true);
+      setOtherUserLoading(true);
       const data = await getPublicSplitsByUserId(userId);
-      setSplits(data);
+      setOtherUserSplits(data);
       setError(null);
     } catch (err) {
       console.error('Error fetching public splits:', err);
       setError('Failed to load splits');
     } finally {
-      setLoading(false);
+      setOtherUserLoading(false);
     }
   };
 
+  // Determine which data and loading state to use
+  const splits = isOwnProfile
+    ? splitsList.filter(split => split.isPublic)
+    : otherUserSplits;
+  const loading = isOwnProfile ? splitsLoading : otherUserLoading;
+
   const handleRefresh = async () => {
     setRefreshing(true);
-    // Trigger sync on pull-to-refresh
     manualSync();
-    await fetchPublicSplits();
+    if (isOwnProfile) {
+      await refreshSplits();
+    } else {
+      await fetchOtherUserSplits();
+    }
     setRefreshing(false);
   };
 
