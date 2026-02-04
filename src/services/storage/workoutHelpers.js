@@ -5,6 +5,7 @@
 
 import { storage } from './StorageAdapter.js';
 import { isCardioExercise as isCardioFromDb, getCardioFields as getCardioFieldsFromDb } from '../../data/exercises/exerciseDatabase.js';
+import { trackWorkoutStarted } from '@/lib/analytics';
 
 /**
  * Generates a unique ID for a workout session
@@ -170,6 +171,9 @@ export async function startWorkout(userId, splitId, dayIndex) {
   // Save to local storage
   await storage.saveActiveWorkout(userId, workout);
 
+  // Track workout started
+  trackWorkoutStarted('split');
+
   return workout;
 }
 
@@ -301,6 +305,9 @@ export async function startFreestyleWorkout(userId, workoutName = 'Freestyle Wor
   // Save to local storage
   await storage.saveActiveWorkout(userId, workout);
 
+  // Track workout started
+  trackWorkoutStarted('new');
+
   return workout;
 }
 
@@ -376,6 +383,9 @@ export async function startSavedWorkout(userId, savedWorkoutId) {
 
   // Save to local storage
   await storage.saveActiveWorkout(userId, workout);
+
+  // Track workout started
+  trackWorkoutStarted('template');
 
   return workout;
 }

@@ -625,7 +625,7 @@ const WorkoutScreen = () => {
                 </TouchableOpacity>
 
                 {/* Saved Workouts Section */}
-                {savedWorkouts.length > 0 && (
+                {savedWorkouts.length > 0 ? (
                   <View style={styles.savedWorkoutsSection}>
                     <Text style={[styles.savedWorkoutsSectionTitle, { color: colors.text }]}>
                       Saved Workouts
@@ -634,6 +634,24 @@ const WorkoutScreen = () => {
                       workouts={savedWorkouts}
                       onSelect={(workout) => setSelectedSavedWorkout(workout)}
                     />
+                  </View>
+                ) : (
+                  <View style={styles.createSplitSection}>
+                    <View style={[styles.noSplitCard, { backgroundColor: colors.cardBackground, borderColor: colors.borderLight }]}>
+                      <Ionicons name="barbell-outline" size={48} color={colors.secondaryText} style={{ marginBottom: 16 }} />
+                      <Text style={[styles.noSplitTitle, { color: colors.text }]}>No Saved Workouts</Text>
+                      <Text style={[styles.noSplitSubtitle, { color: colors.secondaryText }]}>
+                        Create a custom workout to reuse anytime
+                      </Text>
+                      <TouchableOpacity
+                        style={[styles.createSplitButtonPrimary, { backgroundColor: colors.primary }]}
+                        onPress={() => handleNavigation('/workout/make-workout')}
+                        disabled={isNavigatingRef.current}
+                      >
+                        <Ionicons name="add" size={20} color="#FFFFFF" />
+                        <Text style={styles.createSplitButtonPrimaryText}>Create a Workout</Text>
+                      </TouchableOpacity>
+                    </View>
                   </View>
                 )}
               </>

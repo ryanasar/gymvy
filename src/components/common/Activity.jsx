@@ -5,6 +5,7 @@ import { Alert, StyleSheet, Text, TouchableOpacity, View, Pressable, Dimensions 
 import { Image } from 'expo-image';
 import { deletePost, likePost, unlikePost } from '@/services/api/posts';
 import { createLikeNotification, deleteLikeNotification } from '@/services/api/notifications';
+import { trackPostLiked, trackPostUnliked } from '@/lib/analytics';
 import { Colors } from '@/constants/colors';
 import { useThemeColors } from '@/hooks/useThemeColors';
 import { exercises } from '@/data/exercises/exerciseDatabase';
@@ -235,11 +236,13 @@ const Activity = ({ post, currentUserId, onPostUpdated, onPostDeleted, initialOp
       if (wasLiked) {
         await unlikePost(id, currentUserId);
         await deleteLikeNotification(currentUserId, id);
+        trackPostUnliked();
       } else {
         await likePost(id, currentUserId);
         if (author?.id && author.id !== currentUserId) {
           await createLikeNotification(author.id, currentUserId, id);
         }
+        trackPostLiked();
       }
       if (onPostUpdated) {
         const updatedLikes = wasLiked

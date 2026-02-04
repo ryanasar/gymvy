@@ -18,6 +18,7 @@ import {
   subscribeToNetworkChanges,
 } from '@/services/network/networkService';
 import { migrateUserStorage } from '@/services/storage';
+import { identifyUser, resetUser, trackSignInCompleted, trackSignOutCompleted } from '@/lib/analytics';
 
 WebBrowser.maybeCompleteAuthSession();
 
@@ -201,6 +202,14 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             try {
               const userData = await getOrCreateUserBySupabaseId(authUserData.supabaseID, authUserData.email);
               setUser(userData);
+
+              // Identify user for analytics
+              identifyUser(userData.id, {
+                email: authUserData.email,
+                username: userData.username,
+                createdAt: userData.createdAt,
+              });
+              trackSignInCompleted('google');
 
               // Save session securely for offline access
               const expiresAt = session.expires_at ? session.expires_at * 1000 : Date.now() + 3600000;
@@ -552,6 +561,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const signOut = async () => {
     try {
       setIsLoading(true);
+
+      // Track sign out and reset analytics user
+      trackSignOutCompleted();
+      resetUser();
 
       // Clear secure storage first (always works, even offline)
       await clearSecureSession();

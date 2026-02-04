@@ -16,6 +16,7 @@ import { startWorkout, startFreestyleWorkout, startSavedWorkout, updateWorkoutSe
 import { createSavedWorkout } from '@/services/api/savedWorkouts';
 import LiveActivity from '@/lib/modules/LiveActivity';
 import { getCustomExercises } from '@/services/api/customExercises';
+import { trackWorkoutCompleted } from '@/lib/analytics';
 
 const WorkoutSessionScreen = () => {
   const colors = useThemeColors();
@@ -1358,6 +1359,16 @@ const WorkoutSessionScreen = () => {
     if (workoutSessionId) {
       try {
         await completeWorkout(user?.id, workoutSessionId);
+
+        // Track workout completion for analytics
+        const activeWorkoutData = await getActiveWorkout(user?.id);
+        const startTime = activeWorkoutData?.startedAt || Date.now();
+        const durationSeconds = Math.floor((Date.now() - startTime) / 1000);
+        trackWorkoutCompleted({
+          durationSeconds,
+          exerciseCount: exercises.length,
+          totalSets: workoutTotalSets,
+        });
 
         // Update pending count and sync immediately to get database ID
         await updatePendingCount();

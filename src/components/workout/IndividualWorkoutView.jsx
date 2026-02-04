@@ -83,7 +83,7 @@ const IndividualWorkoutView = ({
       </TouchableOpacity>
 
       {/* Saved Workouts Section */}
-      {savedWorkouts.length > 0 && (
+      {savedWorkouts.length > 0 ? (
         <View style={styles.savedWorkoutsSection}>
           <Text style={[styles.savedWorkoutsSectionTitle, { color: colors.text }]}>
             Saved Workouts
@@ -92,6 +92,23 @@ const IndividualWorkoutView = ({
             workouts={savedWorkouts}
             onSelect={onSelectWorkout}
           />
+        </View>
+      ) : (
+        <View style={styles.createWorkoutSection}>
+          <View style={[styles.noWorkoutsCard, { backgroundColor: colors.cardBackground, borderColor: colors.borderLight }]}>
+            <Ionicons name="barbell-outline" size={48} color={colors.secondaryText} style={{ marginBottom: 16 }} />
+            <Text style={[styles.noWorkoutsTitle, { color: colors.text }]}>No Saved Workouts</Text>
+            <Text style={[styles.noWorkoutsSubtitle, { color: colors.secondaryText }]}>
+              Create a custom workout to reuse anytime
+            </Text>
+            <TouchableOpacity
+              style={[styles.createWorkoutButton, { backgroundColor: colors.primary }]}
+              onPress={() => router.push('/workout/make-workout')}
+            >
+              <Ionicons name="add" size={20} color="#FFFFFF" />
+              <Text style={styles.createWorkoutButtonText}>Create a Workout</Text>
+            </TouchableOpacity>
+          </View>
         </View>
       )}
     </View>
@@ -153,5 +170,40 @@ const styles = StyleSheet.create({
     marginBottom: 12,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
+  },
+  createWorkoutSection: {
+    marginTop: 36,
+    alignItems: 'center',
+  },
+  noWorkoutsCard: {
+    alignItems: 'center',
+    padding: 32,
+    borderRadius: 16,
+    borderWidth: 1,
+    width: '100%',
+  },
+  noWorkoutsTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    marginBottom: 8,
+  },
+  noWorkoutsSubtitle: {
+    fontSize: 14,
+    textAlign: 'center',
+    marginBottom: 24,
+    paddingHorizontal: 16,
+  },
+  createWorkoutButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderRadius: 12,
+    gap: 6,
+  },
+  createWorkoutButtonText: {
+    color: '#FFFFFF',
+    fontWeight: '600',
+    fontSize: 15,
   },
 });

@@ -39,6 +39,9 @@ export default function SignUpScreen() {
 
       if (error) {
         setError(error.message);
+      } else if (data.user && data.user.identities && data.user.identities.length === 0) {
+        // Supabase returns empty identities array when email already exists
+        setError('An account with this email already exists. Please log in instead.');
       } else {
         Alert.alert('Success', 'Check your email to confirm your account.');
         router.back();

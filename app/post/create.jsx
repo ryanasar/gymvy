@@ -26,6 +26,7 @@ import { preparePostImage } from '@/utils/imageUpload';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import TagUsersModal from '@/components/post/TagUsersModal';
 import { createTagNotification } from '@/services/api/notifications';
+import { trackPostCreated } from '@/lib/analytics';
 
 const CreatePostScreen = () => {
   const colors = useThemeColors();
@@ -306,6 +307,12 @@ const CreatePostScreen = () => {
         };
 
         const createdPost = await createPost(postData);
+
+        // Track post creation for analytics
+        trackPostCreated({
+          hasImage: !!imageUrl,
+          hasWorkout: !!databaseWorkoutSessionId,
+        });
 
         // Send tag notifications to tagged users
         if (createdPost?.id && taggedUsers.length > 0) {

@@ -7,6 +7,8 @@ import { SyncProvider } from '@/contexts/SyncContext';
 import { NotificationProvider } from '@/contexts/NotificationContext';
 import { PushNotificationProvider } from '@/contexts/PushNotificationContext';
 import { NetworkProvider } from '@/contexts/NetworkContext';
+import { AnalyticsProvider } from '@/contexts/AnalyticsContext';
+import { SubscriptionProvider } from '@/contexts/SubscriptionContext';
 import { Stack } from 'expo-router';
 import { OfflineBanner } from '@/components/common/OfflineBanner';
 import { useThemeColors } from '@/hooks/useThemeColors';
@@ -16,9 +18,11 @@ export default function RootLayout() {
 
   return (
     <GestureHandlerRootView style={{ flex: 1, backgroundColor: colors.background }}>
-      <NetworkProvider>
-        <AuthProvider>
-          <PushNotificationProvider>
+      <AnalyticsProvider>
+        <NetworkProvider>
+          <AuthProvider>
+            <SubscriptionProvider>
+              <PushNotificationProvider>
             <WorkoutProvider>
               <PreloadProvider>
                 <SyncProvider>
@@ -37,8 +41,10 @@ export default function RootLayout() {
               </PreloadProvider>
             </WorkoutProvider>
           </PushNotificationProvider>
-        </AuthProvider>
-      </NetworkProvider>
+            </SubscriptionProvider>
+          </AuthProvider>
+        </NetworkProvider>
+      </AnalyticsProvider>
     </GestureHandlerRootView>
   );
 }

@@ -94,6 +94,12 @@ export default function ProgressScreen() {
 
   // Process preloaded data when it becomes available
   const processData = useCallback(async (bodyWeightEntries, backendSessions) => {
+    // Don't process if user is signed out
+    if (!user?.id) {
+      setRefreshing(false);
+      return;
+    }
+
     try {
       // Process body weight data
       let entries = [];
@@ -200,6 +206,7 @@ export default function ProgressScreen() {
 
   // Handle selecting an exercise from the picker
   const handleSelectExercise = useCallback(async (exerciseName) => {
+    if (!user?.id) return;
     setSelectedOtherExercise(exerciseName);
 
     // Calculate 1RM data for the selected exercise using preloaded sessions
@@ -209,8 +216,10 @@ export default function ProgressScreen() {
   }, [user?.id, calculate1RMDataForExercise, preloadedSessions]);
 
   const handleLogWeight = async (weight) => {
+    if (!user?.id) return;
+
     // Save locally
-    await addBodyWeightEntry(user?.id, weight);
+    await addBodyWeightEntry(user.id, weight);
 
     // Fire-and-forget backend save
     if (user?.id) {
