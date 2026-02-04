@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Modal, ScrollView, Alert } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Modal, ScrollView, Alert, ActivityIndicator } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useThemeColors } from '@/hooks/useThemeColors';
 import ModalHeader from '@/components/ui/ModalHeader';
@@ -9,19 +9,24 @@ import IconHeader from '@/components/ui/IconHeader';
 const BeginSplitCard = ({ split, onDaySelected }) => {
   const colors = useThemeColors();
   const [showDayPicker, setShowDayPicker] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleBeginSplit = () => {
     setShowDayPicker(true);
   };
 
   const handleDaySelect = async (dayIndex) => {
+    if (isLoading) return;
+    setIsLoading(true);
     try {
       // Notify parent to set the selected day (parent handles backend update)
-      onDaySelected(dayIndex);
+      await onDaySelected(dayIndex);
       setShowDayPicker(false);
     } catch (error) {
       console.error('Failed to start split:', error);
       Alert.alert('Error', 'Failed to start split. Please try again.');
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -73,7 +78,11 @@ const BeginSplitCard = ({ split, onDaySelected }) => {
       >
         <View style={styles.modalOverlay}>
           <View style={[styles.modalContent, { backgroundColor: colors.cardBackground }]}>
-            <ModalHeader title="Choose Starting Day" onClose={() => setShowDayPicker(false)} />
+            <ModalHeader
+              title="Choose Starting Day"
+              onClose={() => !isLoading && setShowDayPicker(false)}
+              rightElement={isLoading ? <ActivityIndicator size="small" color={colors.primary} /> : null}
+            />
 
             <Text style={[styles.modalSubtitle, { color: colors.secondaryText }]}>
               Select which day you'd like to start with
@@ -87,9 +96,10 @@ const BeginSplitCard = ({ split, onDaySelected }) => {
               {split.days?.map((day, index) => (
                 <TouchableOpacity
                   key={index}
-                  style={[styles.dayCard, { backgroundColor: colors.background, borderColor: colors.borderLight }]}
+                  style={[styles.dayCard, { backgroundColor: colors.background, borderColor: colors.borderLight, opacity: isLoading ? 0.5 : 1 }]}
                   onPress={() => handleDaySelect(index)}
                   activeOpacity={0.7}
+                  disabled={isLoading}
                 >
                   <View style={styles.dayCardContent}>
                     {day.emoji && <Text style={styles.dayEmoji}>{day.emoji}</Text>}
@@ -115,9 +125,10 @@ const BeginSplitCard = ({ split, onDaySelected }) => {
               )) || split.workoutDays?.map((day, index) => (
                 <TouchableOpacity
                   key={index}
-                  style={[styles.dayCard, { backgroundColor: colors.background, borderColor: colors.borderLight }]}
+                  style={[styles.dayCard, { backgroundColor: colors.background, borderColor: colors.borderLight, opacity: isLoading ? 0.5 : 1 }]}
                   onPress={() => handleDaySelect(index)}
                   activeOpacity={0.7}
+                  disabled={isLoading}
                 >
                   <View style={styles.dayCardContent}>
                     {day.emoji && <Text style={styles.dayEmoji}>{day.emoji}</Text>}

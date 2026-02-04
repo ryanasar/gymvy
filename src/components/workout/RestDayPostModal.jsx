@@ -323,7 +323,7 @@ const RestDayPostModal = ({ visible, onClose, onPostCreated, splitName, splitEmo
           <TouchableOpacity onPress={handleCancel} style={styles.headerButton}>
             <Text style={[styles.cancelText, { color: colors.secondaryText }]}>Cancel</Text>
           </TouchableOpacity>
-          <Text style={[styles.headerTitle, { color: colors.text }]}>Log Rest Day</Text>
+          <Text style={[styles.headerTitle, { color: colors.text }]}>Post Rest Day</Text>
           <TouchableOpacity
             onPress={handlePost}
             style={[styles.headerButton, styles.postHeaderButton]}
@@ -494,7 +494,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: 16,
-    paddingTop: 60,
+    paddingTop: 16,
     paddingBottom: 16,
     borderBottomWidth: 1,
   },

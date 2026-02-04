@@ -70,6 +70,7 @@ const WorkoutScreen = () => {
 
   // Modal state
   const [showChangeDayModal, setShowChangeDayModal] = useState(false);
+  const [isDaySelecting, setIsDaySelecting] = useState(false);
 
   const isCompleted = todaysWorkoutCompleted;
   const completedSessionId = cachedSessionId;
@@ -310,8 +311,17 @@ const WorkoutScreen = () => {
 
   // Handle split that exists but hasn't been started
   const handleDaySelectedWrapper = async (dayIndex) => {
-    await handleDaySelection(user?.id, dayIndex, activeSplit, markWorkoutCompleted, refreshTodaysWorkout);
-    setShowChangeDayModal(false);
+    if (isDaySelecting) return;
+    setIsDaySelecting(true);
+    try {
+      await handleDaySelection(user?.id, dayIndex, activeSplit, markWorkoutCompleted, refreshTodaysWorkout);
+      setShowChangeDayModal(false);
+    } catch (error) {
+      console.error('Failed to select day:', error);
+      Alert.alert('Error', 'Failed to switch day. Please try again.');
+    } finally {
+      setIsDaySelecting(false);
+    }
   };
 
   const openEditWorkout = () => {
@@ -637,9 +647,10 @@ const WorkoutScreen = () => {
                 return (
                   <TouchableOpacity
                     key={index}
-                    style={[styles.dayPickerCard, { backgroundColor: colors.cardBackground, borderColor: colors.borderLight }]}
+                    style={[styles.dayPickerCard, { backgroundColor: colors.cardBackground, borderColor: colors.borderLight, opacity: isDaySelecting ? 0.5 : 1 }]}
                     onPress={() => handleDaySelectedWrapper(index)}
                     activeOpacity={0.7}
+                    disabled={isDaySelecting}
                   >
                     <View style={styles.dayPickerCardContent}>
                       {day.emoji && <Text style={styles.dayPickerEmoji}>{day.emoji}</Text>}
@@ -658,7 +669,11 @@ const WorkoutScreen = () => {
                         <Text style={[styles.restDayBadgeText, { color: colors.secondaryText }]}>Rest</Text>
                       </View>
                     )}
-                    <Ionicons name="chevron-forward" size={20} color={colors.primary} />
+                    {isDaySelecting ? (
+                      <ActivityIndicator size="small" color={colors.primary} />
+                    ) : (
+                      <Ionicons name="chevron-forward" size={20} color={colors.primary} />
+                    )}
                   </TouchableOpacity>
                 );
               })}
@@ -945,9 +960,10 @@ const WorkoutScreen = () => {
               return (
                 <TouchableOpacity
                   key={index}
-                  style={[styles.dayPickerCard, { backgroundColor: colors.cardBackground, borderColor: colors.borderLight }]}
+                  style={[styles.dayPickerCard, { backgroundColor: colors.cardBackground, borderColor: colors.borderLight, opacity: isDaySelecting ? 0.5 : 1 }]}
                   onPress={() => handleDaySelectedWrapper(index)}
                   activeOpacity={0.7}
+                  disabled={isDaySelecting}
                 >
                   <View style={styles.dayPickerCardContent}>
                     {day.emoji && <Text style={styles.dayPickerEmoji}>{day.emoji}</Text>}
@@ -966,7 +982,11 @@ const WorkoutScreen = () => {
                       <Text style={[styles.restDayBadgeText, { color: colors.secondaryText }]}>Rest</Text>
                     </View>
                   )}
-                  <Ionicons name="chevron-forward" size={20} color={colors.primary} />
+                  {isDaySelecting ? (
+                    <ActivityIndicator size="small" color={colors.primary} />
+                  ) : (
+                    <Ionicons name="chevron-forward" size={20} color={colors.primary} />
+                  )}
                 </TouchableOpacity>
               );
             })}
@@ -1368,7 +1388,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 20,
-    paddingTop: 60,
+    paddingTop: 16,
     paddingBottom: 16,
     backgroundColor: Colors.light.cardBackground,
     shadowColor: Colors.light.shadow,
