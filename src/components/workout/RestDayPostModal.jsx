@@ -14,6 +14,7 @@ import {
 } from 'react-native';
 import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
 import * as MediaLibrary from 'expo-media-library';
 import { useThemeColors } from '@/hooks/useThemeColors';
@@ -39,6 +40,7 @@ const REST_ACTIVITIES = [
 
 const RestDayPostModal = ({ visible, onClose, onPostCreated, splitName, splitEmoji, weekNumber, dayNumber, isFreeRestDay = false }) => {
   const { user } = useAuth();
+  const router = useRouter();
   const colors = useThemeColors();
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
@@ -297,12 +299,13 @@ const RestDayPostModal = ({ visible, onClose, onPostCreated, splitName, splitEmo
       // Reset form
       resetForm();
 
-      // Notify parent
+      // Notify parent (closes modal and updates state)
       if (onPostCreated) {
         onPostCreated();
       }
 
-      Alert.alert('Posted!', 'Your rest day has been shared with your friends.');
+      // Navigate to home tab to see the post
+      router.replace('/(tabs)');
     } catch (error) {
       console.error('Error posting rest day:', error);
       Alert.alert('Error', 'Failed to post rest day. Please try again.');
@@ -350,7 +353,7 @@ const RestDayPostModal = ({ visible, onClose, onPostCreated, splitName, splitEmo
                 </View>
               </View>
 
-              {splitName && (
+              {splitName && !isFreeRestDay && (
                 <>
                   <Text style={[styles.splitName, { color: colors.text }]}>
                     {splitEmoji && `${splitEmoji} `}{splitName}

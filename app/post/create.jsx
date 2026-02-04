@@ -232,7 +232,7 @@ const CreatePostScreen = () => {
         // Trigger automatic sync
         manualSync();
 
-        router.replace('/(tabs)/profile');
+        router.replace('/(tabs)');
       } else {
         // Create new post
         // Look up database ID for local workout ID
@@ -321,7 +321,7 @@ const CreatePostScreen = () => {
         // Trigger automatic sync
         manualSync();
 
-        router.replace('/(tabs)/profile');
+        router.replace('/(tabs)');
       }
     } catch (error) {
       console.error(`Error ${isEditMode ? 'updating' : 'creating'} post:`, error);

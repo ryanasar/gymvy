@@ -44,7 +44,7 @@ export default function HomeScreen() {
   // Refresh feed when tab comes into focus
   useFocusEffect(
     React.useCallback(() => {
-      if (user?.id && posts.length > 0) {
+      if (user?.id) {
         loadPosts(true);
       }
     }, [user?.id])

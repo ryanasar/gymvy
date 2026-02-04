@@ -120,6 +120,22 @@ const WorkoutScreen = () => {
     }, [todaysWorkoutCompleted, todaysWorkout])
   );
 
+  // TEMPORARY: One-time reset of free rest day - REMOVE THIS AFTER USE
+  useEffect(() => {
+    const resetFreeRestDay = async () => {
+      const hasReset = await AsyncStorage.getItem('freeRestDayOneTimeReset2');
+      if (!hasReset) {
+        await AsyncStorage.removeItem('@gymvy_free_rest_day_last_used');
+        await AsyncStorage.removeItem('freeRestDayDate');
+        await AsyncStorage.setItem('freeRestDayOneTimeReset2', 'true');
+        console.log('[Workout] Free rest day reset completed');
+        // Refresh to reflect the change
+        refreshTodaysWorkout();
+      }
+    };
+    resetFreeRestDay();
+  }, []);
+
   // Handle pull-to-refresh
   const handleRefresh = useCallback(async () => {
     setRefreshing(true);
@@ -718,7 +734,8 @@ const WorkoutScreen = () => {
               originalWorkoutName={todaysWorkout?.dayName}
               onRestLogged={() => {
                 // Mark as completed so the card doesn't keep showing
-                markWorkoutCompleted('free-rest-day-logged', true);
+                // Keep session ID as 'free-rest-day' to match the UI check on line 714
+                markWorkoutCompleted('free-rest-day', true);
               }}
               onUndoRestDay={() => {
                 Alert.alert(
