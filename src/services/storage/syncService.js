@@ -6,8 +6,7 @@
 import { storage } from './StorageAdapter.js';
 import { createWorkoutSession } from '@/services/api/workoutSessions';
 import { checkNetworkStatus as checkNetwork } from '@/services/network/networkService';
-import { createCustomExerciseOnBackend } from '@/services/api/customExercisesBackend';
-import { syncCalendarWithBackend } from './calendarStorage.js';
+import { fetchUserCustomExercises } from '@/services/api/customExercisesBackend';
 
 /**
  * Network status check
@@ -31,60 +30,127 @@ function getLocalDateFromTimestamp(timestamp) {
 }
 
 /**
- * Converts local workout format to API format
+ * Converts local workout format to new API format with flat sets array
  * @param {import('./types').WorkoutSession} workout
  * @param {string} userId
+ * @param {Object} exerciseMap - Map of exercise IDs to exercise data
+ * @param {Array} customExercises - Array of custom exercises from backend
  * @returns {object}
  */
-function convertWorkoutToApiFormat(workout, userId) {
-  // Filter out exercises that don't have a name or have no sets
-  const validExercises = workout.exercises
-    .filter(exercise => {
-      const hasName = exercise.exerciseName || exercise.exerciseId;
-      const hasSets = exercise.sets && exercise.sets.length > 0;
+function convertWorkoutToApiFormat(workout, userId, exerciseMap, customExercises) {
+  // Debug: Log raw workout data
+  console.log('[Sync] Converting workout:', {
+    id: workout.id,
+    exerciseCount: workout.exercises?.length || 0,
+    exercises: workout.exercises?.map(e => ({
+      exerciseId: e.exerciseId,
+      exerciseName: e.exerciseName,
+      setCount: e.sets?.length || 0
+    }))
+  });
 
-      if (!hasName || !hasSets) {
-        console.warn('[Sync] Filtering out invalid exercise:', {
-          exerciseId: exercise.exerciseId,
-          exerciseName: exercise.exerciseName,
-          setCount: exercise.sets?.length || 0
-        });
-        return false;
-      }
-      return true;
-    })
-    .map((exercise) => ({
-      name: exercise.exerciseName || exercise.exerciseId,
-      templateId: null,
+  // Check if exercises array exists
+  if (!workout.exercises || !Array.isArray(workout.exercises)) {
+    console.error('[Sync] Workout has no exercises array:', workout.id);
+    return {
+      userId: parseInt(userId),
+      splitId: null,
+      dayName: 'Workout',
+      weekNumber: null,
+      dayNumber: null,
       notes: null,
-      exerciseType: exercise.exerciseType || null, // "strength" | "cardio"
-      sets: exercise.sets.map(set => ({
-        setNumber: set.setIndex + 1,
+      completedAt: undefined,
+      localDate: null,
+      sets: []
+    };
+  }
+
+  const allSets = [];
+  let exerciseOrderIndex = 0;
+
+  // Create a lookup map for custom exercises by ID (both string ID and backendId)
+  const customExerciseMap = {};
+  customExercises.forEach(ce => {
+    customExerciseMap[String(ce.id)] = ce;
+    if (ce.backendId) customExerciseMap[String(ce.backendId)] = ce;
+  });
+
+  // Process each exercise and flatten into sets
+  const validExercises = workout.exercises.filter(exercise => {
+    const hasName = exercise.exerciseName || exercise.exerciseId;
+    const hasSets = exercise.sets && exercise.sets.length > 0;
+
+    if (!hasName || !hasSets) {
+      console.warn('[Sync] Filtering out invalid exercise:', {
+        exerciseId: exercise.exerciseId,
+        exerciseName: exercise.exerciseName,
+        setCount: exercise.sets?.length || 0
+      });
+      return false;
+    }
+    return true;
+  });
+
+  validExercises.forEach(exercise => {
+    const exerciseId = String(exercise.exerciseId);
+    const dbExercise = exerciseMap[exerciseId];
+
+    // Check if this is a custom exercise
+    const customEx = customExerciseMap[exerciseId];
+    const isCustom = !!customEx || exercise.isCustom || false;
+
+    // Determine localExerciseId (from exerciseDatabase.js) or customExerciseId (backend ID)
+    const localExerciseId = isCustom ? null : (parseInt(exerciseId) || null);
+    const customExerciseId = isCustom ? (customEx?.id || parseInt(exerciseId) || null) : null;
+
+    // Get exercise name and type
+    const exerciseName = exercise.exerciseName || dbExercise?.name || customEx?.name || exerciseId;
+    const exerciseType = exercise.exerciseType || dbExercise?.exerciseType || customEx?.exerciseType || null;
+
+    // Convert each set
+    exercise.sets.forEach(set => {
+      allSets.push({
+        setNumber: (set.setIndex ?? set.setNumber ?? 0) + 1,
+        localExerciseId,
+        isCustomExercise: isCustom,
+        customExerciseId,
+        exerciseName,
+        exerciseType,
+        orderIndex: exerciseOrderIndex,
         // Strength fields
-        weight: set.weight || null,
-        reps: set.reps || null,
+        weight: set.weight ?? null,
+        reps: set.reps ?? null,
+        rpe: set.rpe ?? null,
+        restSeconds: set.restSeconds ?? null,
         // Cardio fields
-        duration: set.duration || null,
-        incline: set.incline || null,
-        speed: set.speed || null,
-        completed: set.completed
-      }))
-    }));
+        durationMinutes: set.duration ?? set.durationMinutes ?? null,
+        incline: set.incline ?? null,
+        speed: set.speed ?? null,
+        completed: set.completed || false
+      });
+    });
+
+    exerciseOrderIndex++;
+  });
+
+  // Determine dayName: "Freestyle Workout" for freestyle, day name for splits
+  const dayName = workout.source === 'freestyle'
+    ? 'Freestyle Workout'
+    : (workout.dayName || workout.workoutName || 'Workout');
 
   // Get the local date from the completedAt timestamp
-  // This ensures the backend creates the DailyActivity on the correct date in user's timezone
   const localDate = workout.completedAt ? getLocalDateFromTimestamp(workout.completedAt) : null;
 
   return {
-    userId: userId,
-    splitId: workout.splitId || null,
-    dayName: workout.dayName || workout.workoutName || 'Workout',
-    weekNumber: null,
-    dayNumber: workout.dayIndex + 1,
-    notes: null,
-    completedAt: workout.completedAt,
-    localDate: localDate, // Pass local date to ensure correct timezone handling
-    exercises: validExercises
+    userId: parseInt(userId),
+    splitId: workout.splitId ? parseInt(workout.splitId) : null,
+    dayName,
+    weekNumber: workout.weekNumber ?? null,
+    dayNumber: workout.dayIndex != null ? workout.dayIndex + 1 : null,
+    notes: workout.notes ?? null,
+    completedAt: workout.completedAt ? new Date(workout.completedAt).toISOString() : undefined,
+    localDate,
+    sets: allSets
   };
 }
 
@@ -92,61 +158,56 @@ function convertWorkoutToApiFormat(workout, userId) {
  * Syncs a single workout to the backend
  * @param {string|number} userId - User ID for scoped storage
  * @param {import('./types').WorkoutSession} workout
- * @returns {Promise<{success: boolean, error?: any, shouldRetry?: boolean}>}
+ * @returns {Promise<{success: boolean, error?: any, shouldRetry?: boolean, result?: any}>}
  */
-async function syncWorkout(userId, workout) {
+export async function syncWorkout(userId, workout) {
   try {
-    // Load exercise database to get exercise names (bundled + custom)
+    // Load exercise database to get exercise names (bundled)
     const exercises = await storage.getExercises();
-    const customExercises = await storage.getCustomExercises(userId);
+
+    console.log('[Sync] Exercise database loaded:', exercises.length, 'exercises');
 
     if (!exercises || exercises.length === 0) {
       console.warn('[Sync] Exercise database is empty! Cannot enrich workout with names.');
     }
 
+    // Build exercise map from local database
     const exerciseMap = {};
     exercises.forEach(ex => {
-      exerciseMap[ex.id] = ex;
+      exerciseMap[String(ex.id)] = ex;
     });
+
+    // Fetch custom exercises from backend (no local cache)
+    let customExercises = [];
+    try {
+      const isOnline = await checkNetworkStatus();
+      if (isOnline) {
+        customExercises = await fetchUserCustomExercises(userId);
+      }
+    } catch (err) {
+      console.warn('[Sync] Failed to fetch custom exercises:', err.message);
+    }
+
+    // Add custom exercises to map
     customExercises.forEach(ex => {
-      exerciseMap[ex.id] = { ...ex, isCustom: true };
-      if (ex.backendId) exerciseMap[String(ex.backendId)] = { ...ex, isCustom: true };
+      exerciseMap[String(ex.id)] = { ...ex, isCustom: true };
     });
 
-    // Enrich workout with exercise names and types
-    const enrichedWorkout = {
-      ...workout,
-      exercises: workout.exercises.map(ex => {
-        const dbExercise = exerciseMap[ex.exerciseId];
-        const exerciseName = dbExercise?.name || ex.exerciseId;
-        // Get exerciseType from DB or from the exercise itself
-        const exerciseType = ex.exerciseType || dbExercise?.exerciseType || null;
+    // Convert to new API format with flat sets array
+    const apiData = convertWorkoutToApiFormat(workout, userId, exerciseMap, customExercises);
 
-        // Log if exercise ID is not found in database
-        if (!dbExercise && ex.exerciseId) {
-          console.warn('[Sync] Exercise not found in database:', {
-            exerciseId: ex.exerciseId,
-            availableExercises: exercises.length,
-            fallbackName: exerciseName
-          });
-        }
+    console.log('[Sync] API data prepared:', {
+      dayName: apiData.dayName,
+      setsCount: apiData.sets?.length || 0,
+      sets: apiData.sets?.slice(0, 2) // Log first 2 sets for debugging
+    });
 
-        return {
-          ...ex,
-          exerciseName,
-          exerciseType
-        };
-      })
-    };
-
-    const apiData = convertWorkoutToApiFormat(enrichedWorkout, userId);
-
-    // Don't sync workouts with no valid exercises
-    if (apiData.exercises.length === 0) {
-      console.warn('[Sync] Skipping workout with no valid exercises:', workout.id);
+    // Don't sync workouts with no valid sets
+    if (!apiData.sets || apiData.sets.length === 0) {
+      console.warn('[Sync] Skipping workout with no valid sets:', workout.id);
       return {
         success: false,
-        error: new Error('Workout has no valid exercises'),
+        error: new Error('Workout has no valid sets'),
         shouldRetry: false
       };
     }
@@ -176,70 +237,34 @@ async function syncWorkout(userId, workout) {
 }
 
 /**
- * Syncs pending custom exercises to the backend
- * @param {number} userId
- * @returns {Promise<{synced: number, failed: number}>}
- */
-export async function syncPendingCustomExercises(userId) {
-  if (!userId) return { synced: 0, failed: 0 };
-
-  const isOnline = await checkNetworkStatus();
-  if (!isOnline) return { synced: 0, failed: 0 };
-
-  try {
-    const exercises = await storage.getCustomExercises(userId);
-    const pending = exercises.filter(e => e.pendingSync);
-
-    if (pending.length === 0) return { synced: 0, failed: 0 };
-
-    let synced = 0;
-    let failed = 0;
-
-    for (const ex of pending) {
-      try {
-        const backendEx = await createCustomExerciseOnBackend({
-          userId,
-          name: ex.name,
-          category: ex.category,
-          primaryMuscles: ex.primaryMuscles || [],
-          secondaryMuscles: ex.secondaryMuscles || [],
-          equipment: ex.equipment,
-          difficulty: ex.difficulty,
-        });
-        await storage.markCustomExerciseSynced(userId, ex.id, backendEx.id);
-        synced++;
-      } catch (err) {
-        console.warn('[Sync] Failed to sync custom exercise:', ex.name, err.message);
-        failed++;
-      }
-    }
-
-    return { synced, failed };
-  } catch (error) {
-    console.error('[Sync] Error syncing custom exercises:', error);
-    return { synced: 0, failed: 0 };
-  }
-}
-
-/**
  * Syncs all pending workouts to the backend
  * @param {string} userId
  * @returns {Promise<{synced: number, failed: number, errors: any[]}>}
  */
 export async function syncPendingWorkouts(userId) {
+  console.log('[Sync] syncPendingWorkouts called with userId:', userId, 'type:', typeof userId);
+
   if (!userId) {
+    console.log('[Sync] Early return: no userId');
     return { synced: 0, failed: 0, errors: [] };
   }
+
+  // Normalize userId to string for consistent storage key generation
+  const normalizedUserId = String(userId);
 
   // Check network status first
   const isOnline = await checkNetworkStatus();
+  console.log('[Sync] Network status:', isOnline);
   if (!isOnline) {
+    console.log('[Sync] Early return: offline');
     return { synced: 0, failed: 0, errors: [] };
   }
 
-  const pendingWorkouts = await storage.getPendingWorkouts(userId);
+  const pendingWorkouts = await storage.getPendingWorkouts(normalizedUserId);
+  console.log('[Sync] Pending workouts count:', pendingWorkouts.length);
 
   if (pendingWorkouts.length === 0) {
+    console.log('[Sync] Early return: no pending workouts');
     return { synced: 0, failed: 0, errors: [] };
   }
 
@@ -247,20 +272,24 @@ export async function syncPendingWorkouts(userId) {
   let failed = 0;
   const errors = [];
 
+  console.log('[Sync] Starting to process', pendingWorkouts.length, 'pending workouts');
+
   for (const workout of pendingWorkouts) {
     // Skip rest days - they're already posted via RestDayPostModal
     if (workout.type === 'rest_day' || workout.id?.startsWith('rest-')) {
       console.log('[Sync] Skipping rest day, marking as synced:', workout.id);
-      await storage.markWorkoutSynced(userId, workout.id);
+      await storage.markWorkoutSynced(normalizedUserId, workout.id);
       synced++;
       continue;
     }
 
-    const result = await syncWorkout(userId, workout);
+    console.log('[Sync] Syncing workout:', workout.id);
+    const result = await syncWorkout(normalizedUserId, workout);
 
     if (result.success) {
+      console.log('[Sync] Workout synced successfully:', workout.id);
       // Mark as synced and remove from pending queue
-      await storage.markWorkoutSynced(userId, workout.id);
+      await storage.markWorkoutSynced(normalizedUserId, workout.id);
       synced++;
     } else {
       // If this is a server error (5xx) that shouldn't be retried,
@@ -284,20 +313,16 @@ export async function syncPendingWorkouts(userId) {
 
 /**
  * Attempts to sync in the background (non-blocking)
- * Syncs custom exercises, workouts, and calendar data
+ * Syncs pending workouts to the backend
+ * Note: Custom exercises are now backend-only (no local sync)
+ * Note: Calendar is now backend-only (no local sync)
  * @param {string} userId
  * @returns {Promise<void>}
  */
 export async function backgroundSync(userId) {
   try {
-    // Sync custom exercises first (workouts may reference them)
-    await syncPendingCustomExercises(userId);
-
     // Sync pending workouts
     await syncPendingWorkouts(userId);
-
-    // Sync calendar data with backend (bidirectional)
-    await syncCalendarWithBackend(userId);
   } catch (error) {
     // Don't throw - background sync should fail silently
     console.error('[Sync] Background sync error:', error);

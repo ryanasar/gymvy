@@ -165,6 +165,7 @@ export async function migrateUserStorage(userId) {
 
   try {
     // Define legacy keys and their new user-scoped counterparts
+    // Note: CUSTOM_EXERCISES and CALENDAR are now backend-only, no longer migrated
     const keyMappings = [
       { legacy: LEGACY_KEYS.ACTIVE_SPLIT, storage: STORAGE_KEYS.ACTIVE_SPLIT },
       { legacy: LEGACY_KEYS.ACTIVE_WORKOUT, storage: STORAGE_KEYS.ACTIVE_WORKOUT },
@@ -172,9 +173,7 @@ export async function migrateUserStorage(userId) {
       { legacy: LEGACY_KEYS.COMPLETED_WORKOUTS, storage: STORAGE_KEYS.COMPLETED_WORKOUTS },
       { legacy: LEGACY_KEYS.LAST_SYNC, storage: STORAGE_KEYS.LAST_SYNC },
       { legacy: LEGACY_KEYS.SAVED_WORKOUTS, storage: STORAGE_KEYS.SAVED_WORKOUTS },
-      { legacy: LEGACY_KEYS.CUSTOM_EXERCISES, storage: STORAGE_KEYS.CUSTOM_EXERCISES },
       { legacy: LEGACY_KEYS.BODY_WEIGHT_LOG, storage: STORAGE_KEYS.BODY_WEIGHT_LOG },
-      { legacy: LEGACY_KEYS.CALENDAR, storage: STORAGE_KEYS.CALENDAR },
     ];
 
     for (const { legacy, storage: storageKey } of keyMappings) {

@@ -101,10 +101,39 @@ const Activity = ({ post, currentUserId, onPostUpdated, onPostDeleted, initialOp
     dayName: workoutSession.dayName || workoutSession.workoutName || split?.name || 'Workout',
     weekNumber: workoutSession.weekNumber,
     dayNumber: workoutSession.dayNumber,
-    exercises: workoutSession.exercises?.map(ex => ({
-      name: ex.exerciseName || ex.name,
-      sets: ex.sets || []
-    })) || []
+    exercises: (() => {
+      // Try new schema first: workoutSession.sets (direct relation)
+      const sets = workoutSession.sets;
+      if (sets && sets.length > 0) {
+        // Group sets by orderIndex to reconstruct exercise list
+        const exerciseMap = new Map();
+        sets.forEach(set => {
+          const key = set.orderIndex;
+          if (!exerciseMap.has(key)) {
+            exerciseMap.set(key, {
+              name: set.exerciseName,
+              exerciseType: set.exerciseType,
+              sets: []
+            });
+          }
+          exerciseMap.get(key).sets.push({
+            setNumber: set.setNumber,
+            weight: set.weight,
+            reps: set.reps,
+            completed: set.completed,
+            durationMinutes: set.durationMinutes,
+            incline: set.incline,
+            speed: set.speed
+          });
+        });
+        return Array.from(exerciseMap.values());
+      }
+      // Fallback to old schema: workoutSession.exercises (deprecated)
+      return workoutSession.exercises?.map(ex => ({
+        name: ex.exerciseName || ex.name,
+        sets: ex.sets || []
+      })) || [];
+    })()
   } : null;
 
   const totalSets = workoutData?.exercises?.reduce((acc, ex) => {

@@ -51,6 +51,7 @@ export function buildWorkoutFromSplit(split, dayIndex) {
 
     return {
       exerciseId: exerciseId,
+      exerciseName: splitExercise.name || splitExercise.exerciseName || null,
       exerciseType: isCardio ? 'cardio' : 'strength',
       cardioFields: splitExercise.cardioFields,
       restSeconds: restSeconds,
@@ -343,6 +344,7 @@ export async function startSavedWorkout(userId, savedWorkoutId) {
 
     return {
       exerciseId: exerciseId,
+      exerciseName: savedExercise.name || savedExercise.exerciseName || null,
       exerciseType: isCardio ? 'cardio' : 'strength',
       cardioFields: savedExercise.cardioFields,
       restSeconds: restSeconds,

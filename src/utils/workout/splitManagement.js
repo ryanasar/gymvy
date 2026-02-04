@@ -2,6 +2,7 @@ import { Alert } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { storage, unmarkTodayCompleted } from '@/services/storage';
 import { updateSplit } from "@/services/api/splits";
+import { markRestDay } from '@/services/api/dailyActivity';
 
 export const handleDaySelection = async (userId, dayIndex, activeSplit, markWorkoutCompleted, refreshTodaysWorkout) => {
   try {
@@ -34,6 +35,25 @@ export const handleDaySelection = async (userId, dayIndex, activeSplit, markWork
     // If split is already started, preserve the current cycle
     if (!activeSplit?.started) {
       await AsyncStorage.setItem('currentWeek', '1');
+    }
+
+    // Check if selected day is a rest day and sync to backend
+    const days = activeSplit?.days || activeSplit?.workoutDays || [];
+    const selectedDay = days[dayIndex];
+    if (selectedDay?.isRest) {
+      const now = new Date();
+      const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+      try {
+        await markRestDay(userId, todayStr, {
+          activityType: 'planned_rest',
+          isPlanned: true,
+          splitId: activeSplit?.id || null,
+          dayNumber: dayIndex + 1,
+          plannedWorkoutName: selectedDay.name || selectedDay.dayName || 'Rest Day',
+        });
+      } catch {
+        // Silent fail - rest day sync is non-critical
+      }
     }
 
     // Refresh to show the selected workout

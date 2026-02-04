@@ -196,7 +196,7 @@ const CelebrationAnimation = ({ onAnimationComplete }) => {
   });
 
   return (
-    <View style={styles.container} pointerEvents="none">
+    <View style={styles.container} pointerEvents="auto">
       <Animated.View
         style={[
           styles.centerContainer,

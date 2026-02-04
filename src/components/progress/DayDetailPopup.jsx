@@ -1,6 +1,7 @@
-import React, { useEffect, useRef } from 'react';
-import { View, Text, StyleSheet, TouchableWithoutFeedback, Animated, Dimensions, Modal } from 'react-native';
+import React, { useEffect, useRef, useState } from 'react';
+import { View, Text, StyleSheet, TouchableWithoutFeedback, Animated, Dimensions, Modal, ActivityIndicator } from 'react-native';
 import { useThemeColors } from '@/hooks/useThemeColors';
+import { getWorkoutSessionById } from '@/services/api/workoutSessions';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -8,6 +9,10 @@ const DayDetailPopup = ({ visible, dayData, position, onClose }) => {
   const colors = useThemeColors();
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const scaleAnim = useRef(new Animated.Value(0.95)).current;
+
+  // State for fetched session details
+  const [sessionDetails, setSessionDetails] = useState(null);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     if (visible) {
@@ -27,29 +32,72 @@ const DayDetailPopup = ({ visible, dayData, position, onClose }) => {
     } else {
       fadeAnim.setValue(0);
       scaleAnim.setValue(0.95);
+      // Reset session details when closing
+      setSessionDetails(null);
     }
   }, [visible]);
+
+  // Fetch full workout session when popup opens for a workout day with sessionId
+  useEffect(() => {
+    if (visible && dayData?.workoutSessionId && !dayData.isRestDay && !dayData.isFreeRestDay) {
+      setLoading(true);
+      getWorkoutSessionById(dayData.workoutSessionId)
+        .then(session => {
+          setSessionDetails(session);
+        })
+        .catch(err => {
+          console.error('[DayDetailPopup] Failed to fetch session:', err);
+        })
+        .finally(() => {
+          setLoading(false);
+        });
+    }
+  }, [visible, dayData?.workoutSessionId, dayData?.isRestDay, dayData?.isFreeRestDay]);
 
   if (!visible || !dayData) return null;
 
   const isRestDay = dayData.isRestDay;
   const isFreeRestDay = dayData.isFreeRestDay;
 
-  // Format muscle groups
-  const muscleGroupsText = dayData.muscleGroups?.length > 0
-    ? dayData.muscleGroups.join(', ')
-    : null;
+  // Use sessionDetails if available, otherwise fall back to dayData
+  const displayData = sessionDetails || dayData;
+
+  // Calculate muscle groups from session sets if we have detailed data
+  let muscleGroupsText = null;
+  if (sessionDetails?.sets) {
+    // Group sets by exercise to get unique exercise names
+    const uniqueExercises = [...new Set(sessionDetails.sets.map(s => s.exerciseName))];
+    if (uniqueExercises.length > 0) {
+      // Show first 3 exercise names as preview
+      muscleGroupsText = uniqueExercises.slice(0, 3).join(', ');
+      if (uniqueExercises.length > 3) {
+        muscleGroupsText += ` +${uniqueExercises.length - 3} more`;
+      }
+    }
+  } else if (dayData.muscleGroups?.length > 0) {
+    muscleGroupsText = dayData.muscleGroups.join(', ');
+  }
+
+  // Calculate stats from session if available
+  let totalExercises = displayData.totalExercises;
+  let totalSets = displayData.totalSets;
+
+  if (sessionDetails?.sets) {
+    const exerciseSet = new Set(sessionDetails.sets.map(s => s.exerciseName));
+    totalExercises = exerciseSet.size;
+    totalSets = sessionDetails.sets.length;
+  }
 
   // Format stats line
   const statsItems = [];
-  if (dayData.durationMinutes) {
-    statsItems.push(`${dayData.durationMinutes} min`);
+  if (displayData.durationMinutes) {
+    statsItems.push(`${displayData.durationMinutes} min`);
   }
-  if (dayData.totalExercises) {
-    statsItems.push(`${dayData.totalExercises} exercises`);
+  if (totalExercises) {
+    statsItems.push(`${totalExercises} exercises`);
   }
-  if (dayData.totalSets) {
-    statsItems.push(`${dayData.totalSets} sets`);
+  if (totalSets) {
+    statsItems.push(`${totalSets} sets`);
   }
   const statsText = statsItems.join(' • ');
 
@@ -111,15 +159,23 @@ const DayDetailPopup = ({ visible, dayData, position, onClose }) => {
 
               {!isRestDay && !isFreeRestDay && (
                 <>
-                  {muscleGroupsText && (
-                    <Text style={[styles.muscleGroups, { color: colors.secondaryText }]} numberOfLines={1}>
-                      {muscleGroupsText}
-                    </Text>
-                  )}
-                  {statsText && (
-                    <Text style={[styles.stats, { color: colors.secondaryText }]}>
-                      {statsText}
-                    </Text>
+                  {loading ? (
+                    <View style={styles.loadingContainer}>
+                      <ActivityIndicator size="small" color={colors.secondaryText} />
+                    </View>
+                  ) : (
+                    <>
+                      {muscleGroupsText && (
+                        <Text style={[styles.muscleGroups, { color: colors.secondaryText }]} numberOfLines={2}>
+                          {muscleGroupsText}
+                        </Text>
+                      )}
+                      {statsText && (
+                        <Text style={[styles.stats, { color: colors.secondaryText }]}>
+                          {statsText}
+                        </Text>
+                      )}
+                    </>
                   )}
                 </>
               )}
@@ -178,5 +234,9 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     marginTop: 4,
     opacity: 0.7,
+  },
+  loadingContainer: {
+    paddingVertical: 8,
+    alignItems: 'center',
   },
 });

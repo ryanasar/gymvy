@@ -452,28 +452,41 @@ const WorkoutScreen = () => {
                   params: { editWorkoutId: workout.id }
                 })}
                 onMarkComplete={async (workout) => {
-                  // Create a workout session so the post has exercise data
-                  const workoutSessionId = await createCompletedWorkoutSession({
-                    workoutName: workout.name,
-                    exercises: workout.exercises || [],
-                    source: 'saved',
-                    savedWorkoutId: workout.id?.toString(),
-                  });
-                  const workoutData = {
-                    source: 'saved',
-                    workoutSessionId,
-                    savedWorkoutId: workout.id,
-                    workoutName: workout.name,
-                    exercises: workout.exercises?.map(ex => ({
-                      name: ex.name,
-                      sets: ex.sets || 0,
-                      reps: ex.reps || 0,
-                    })) || [],
-                    completedAt: Date.now(),
-                  };
-                  await markIndividualWorkoutCompleted(workoutData);
+                  // Show celebration immediately (optimistic UI)
                   setSelectedSavedWorkout(null);
                   setShowCelebration(true);
+
+                  // Run all async operations in background
+                  (async () => {
+                    try {
+                      const workoutSessionId = await createCompletedWorkoutSession(user?.id, {
+                        workoutName: workout.name,
+                        exercises: workout.exercises || [],
+                        source: 'saved',
+                        savedWorkoutId: workout.id?.toString(),
+                      });
+                      const workoutData = {
+                        source: 'saved',
+                        workoutSessionId,
+                        savedWorkoutId: workout.id,
+                        workoutName: workout.name,
+                        exercises: workout.exercises?.map(ex => ({
+                          name: ex.name,
+                          sets: ex.sets || 0,
+                          reps: ex.reps || 0,
+                        })) || [],
+                        completedAt: Date.now(),
+                      };
+                      await markIndividualWorkoutCompleted(workoutData);
+                      await manualSync();
+
+                      // Calculate streak
+                      const streak = await calculateStreakFromLocal(user?.id);
+                      setCurrentStreak(streak);
+                    } catch (error) {
+                      console.error('[Workout Tab] Error marking workout complete:', error);
+                    }
+                  })();
                 }}
               />
             ) : (
@@ -810,7 +823,7 @@ const WorkoutScreen = () => {
               onFreeRestDayPress={() => {
                 Alert.alert(
                   'Take Free Rest Day?',
-                  'This will use your free rest day for the week. Your current workout will be waiting tomorrow.',
+                  'You are only allowed one free rest day per week. This will use yours for this week. Your current workout will be waiting tomorrow.',
                   [
                     { text: 'Cancel', style: 'cancel' },
                     {
@@ -849,28 +862,41 @@ const WorkoutScreen = () => {
             onSelectWorkout={(workout) => setSelectedSavedWorkout(workout)}
             onBackFromWorkout={() => setSelectedSavedWorkout(null)}
             onMarkComplete={async (workout) => {
-              // Create a workout session so the post has exercise data
-              const workoutSessionId = await createCompletedWorkoutSession({
-                workoutName: workout.name,
-                exercises: workout.exercises || [],
-                source: 'saved',
-                savedWorkoutId: workout.id?.toString(),
-              });
-              const workoutData = {
-                source: 'saved',
-                workoutSessionId,
-                savedWorkoutId: workout.id,
-                workoutName: workout.name,
-                exercises: workout.exercises?.map(ex => ({
-                  name: ex.name,
-                  sets: ex.sets || 0,
-                  reps: ex.reps || 0,
-                })) || [],
-                completedAt: Date.now(),
-              };
-              await markIndividualWorkoutCompleted(workoutData);
+              // Show celebration immediately (optimistic UI)
               setSelectedSavedWorkout(null);
               setShowCelebration(true);
+
+              // Run all async operations in background
+              (async () => {
+                try {
+                  const workoutSessionId = await createCompletedWorkoutSession(user?.id, {
+                    workoutName: workout.name,
+                    exercises: workout.exercises || [],
+                    source: 'saved',
+                    savedWorkoutId: workout.id?.toString(),
+                  });
+                  const workoutData = {
+                    source: 'saved',
+                    workoutSessionId,
+                    savedWorkoutId: workout.id,
+                    workoutName: workout.name,
+                    exercises: workout.exercises?.map(ex => ({
+                      name: ex.name,
+                      sets: ex.sets || 0,
+                      reps: ex.reps || 0,
+                    })) || [],
+                    completedAt: Date.now(),
+                  };
+                  await markIndividualWorkoutCompleted(workoutData);
+                  await manualSync();
+
+                  // Calculate streak
+                  const streak = await calculateStreakFromLocal(user?.id);
+                  setCurrentStreak(streak);
+                } catch (error) {
+                  console.error('[Workout Tab] Error marking workout complete:', error);
+                }
+              })();
             }}
           />
         )}

@@ -1,11 +1,10 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
-import { initializeApp, storage, migrateUserStorage, syncCalendarWithBackend } from '@/services/storage';
+import { initializeApp, storage, migrateUserStorage } from '@/services/storage';
 import { useAuth } from '@/lib/auth';
 import { getSplitsByUserId } from "@/services/api/splits";
 import { getCustomExercises } from '@/services/api/customExercises';
 import { checkNetworkStatus } from '@/services/network/networkService';
-import { syncPendingCustomExercises } from '@/services/storage/syncService';
 
 const WorkoutContext = createContext();
 
@@ -113,16 +112,12 @@ export const WorkoutProvider = ({ children }) => {
         // Initialize the storage layer with userId
         const appState = await initializeApp(userId);
 
-        // Load exercise database for mapping IDs to names (bundled + custom)
+        // Load exercise database for mapping IDs to names (bundled only initially)
+        // Custom exercises are fetched from backend later
         const exercises = await storage.getExercises();
-        const customExercises = userId ? await storage.getCustomExercises(userId) : [];
         const exerciseMap = {};
         exercises.forEach(ex => {
           exerciseMap[ex.id] = ex;
-        });
-        customExercises.forEach(ex => {
-          exerciseMap[ex.id] = { ...ex, isCustom: true };
-          if (ex.backendId) exerciseMap[String(ex.backendId)] = { ...ex, isCustom: true };
         });
         setExerciseDatabase(exerciseMap);
 
@@ -344,60 +339,32 @@ export const WorkoutProvider = ({ children }) => {
     initializeWorkoutContext();
   }, [user?.id]);
 
-  // Sync custom exercises on startup: push pending, fetch from backend, migrate if needed
+  // Fetch custom exercises from backend on startup
   useEffect(() => {
     if (!isInitialized || !user?.id) return;
 
-    const syncCustomExercisesOnStartup = async () => {
+    const fetchCustomExercisesOnStartup = async () => {
       try {
         const isOnline = await checkNetworkStatus();
         if (!isOnline) return;
 
-        // Sync any pending custom exercises to backend first
-        await syncPendingCustomExercises(user.id);
+        // Fetch from backend (no local cache)
+        const customExercises = await getCustomExercises(user.id);
 
-        // One-time migration: push all existing local custom exercises to backend
-        const migrationKey = `@gymvy/custom_exercises_migrated:${user.id}`;
-        const migrated = await AsyncStorage.getItem(migrationKey);
-        if (!migrated) {
-          const localExercises = await storage.getCustomExercises(user.id);
-          const pendingExercises = localExercises.filter(e => e.pendingSync || !e.backendId);
-          if (pendingExercises.length > 0) {
-            const { createCustomExerciseOnBackend } = await import('@/services/api/customExercisesBackend');
-            for (const ex of pendingExercises) {
-              try {
-                const backendEx = await createCustomExerciseOnBackend({
-                  userId: user.id,
-                  name: ex.name,
-                  category: ex.category,
-                  primaryMuscles: ex.primaryMuscles || [],
-                  secondaryMuscles: ex.secondaryMuscles || [],
-                  equipment: ex.equipment,
-                  difficulty: ex.difficulty,
-                });
-                await storage.markCustomExerciseSynced(user.id, ex.id, backendEx.id);
-              } catch (err) {
-                console.warn('[WorkoutContext] Failed to migrate custom exercise:', ex.name, err.message);
-              }
-            }
-          }
-          await AsyncStorage.setItem(migrationKey, 'true');
-        }
-
-        // Sync calendar data with backend
-        await syncCalendarWithBackend(user.id);
-
-        // Fetch from backend and refresh local cache
-        await getCustomExercises(user.id);
-
-        // Refresh exercise database with updated custom exercises
-        await refreshExerciseDatabase();
+        // Add custom exercises to the exercise database
+        setExerciseDatabase(prev => {
+          const updated = { ...prev };
+          customExercises.forEach(ex => {
+            updated[String(ex.id)] = { ...ex, isCustom: true };
+          });
+          return updated;
+        });
       } catch (error) {
-        console.error('[WorkoutContext] Custom exercise sync failed:', error);
+        console.error('[WorkoutContext] Custom exercise fetch failed:', error);
       }
     };
 
-    syncCustomExercisesOnStartup();
+    fetchCustomExercisesOnStartup();
   }, [isInitialized, user?.id]);
 
   // Fetch splits from backend if none found locally after init
@@ -848,19 +815,8 @@ export const WorkoutProvider = ({ children }) => {
         const storedWorkoutJson = await AsyncStorage.getItem('completedIndividualWorkout');
         const storedWorkout = storedWorkoutJson ? JSON.parse(storedWorkoutJson) : null;
 
-        // Delete the workoutSession from backend if it exists
-        if (storedWorkout?.workoutSessionId) {
-          try {
-            const { deleteWorkoutSession } = await import('@/services/api/workoutSessions');
-            await deleteWorkoutSession(storedWorkout.workoutSessionId);
-            console.log('[WorkoutContext] Deleted individual workout session from backend:', storedWorkout.workoutSessionId);
-          } catch (error) {
-            // 404 is fine - might already be deleted
-            if (error.response?.status !== 404) {
-              console.error('[WorkoutContext] Error deleting workout session:', error);
-            }
-          }
-        }
+        // Note: We intentionally don't delete the workout session from backend
+        // This prevents errors if user posted about workout, and orphaned sessions are harmless
 
         // Clear state
         setIndividualWorkoutCompleted(false);
@@ -914,19 +870,27 @@ export const WorkoutProvider = ({ children }) => {
     return getTodaysWorkout();
   }, [getTodaysWorkout]);
 
-  // Refresh exercise database (bundled + custom) from local storage
+  // Refresh exercise database (bundled + custom from backend)
   const refreshExerciseDatabase = useCallback(async () => {
     try {
       const exercises = await storage.getExercises();
-      const customExercises = user?.id ? await storage.getCustomExercises(user.id) : [];
       const exerciseMap = {};
       exercises.forEach(ex => {
         exerciseMap[ex.id] = ex;
       });
-      customExercises.forEach(ex => {
-        exerciseMap[ex.id] = { ...ex, isCustom: true };
-        if (ex.backendId) exerciseMap[String(ex.backendId)] = { ...ex, isCustom: true };
-      });
+
+      // Fetch custom exercises from backend (no local cache)
+      if (user?.id) {
+        try {
+          const customExercises = await getCustomExercises(user.id);
+          customExercises.forEach(ex => {
+            exerciseMap[String(ex.id)] = { ...ex, isCustom: true };
+          });
+        } catch (err) {
+          console.warn('[WorkoutContext] Failed to fetch custom exercises:', err.message);
+        }
+      }
+
       setExerciseDatabase(exerciseMap);
     } catch (error) {
       console.error('[WorkoutContext] Failed to refresh exercise database:', error);

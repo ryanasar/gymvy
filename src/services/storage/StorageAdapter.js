@@ -100,9 +100,14 @@ export class AsyncStorageAdapter {
    * @returns {Promise<void>}
    */
   async completeWorkout(userId, workoutId) {
+    console.log('[StorageAdapter] completeWorkout called:', { userId, workoutId, userIdType: typeof userId });
+
+    // Normalize userId to string for consistent storage key generation
+    const normalizedUserId = String(userId);
+
     try {
       // Get active workout
-      const activeWorkout = await this.getActiveWorkout(userId);
+      const activeWorkout = await this.getActiveWorkout(normalizedUserId);
 
       if (!activeWorkout || activeWorkout.id !== workoutId) {
         console.warn('[StorageAdapter] No matching active workout found');
@@ -114,13 +119,19 @@ export class AsyncStorageAdapter {
       activeWorkout.pendingSync = true;
 
       // Add to pending workouts for sync
-      await this.addToPendingWorkouts(userId, activeWorkout);
+      await this.addToPendingWorkouts(normalizedUserId, activeWorkout);
+
+      // Log the new pending count for debugging
+      const pendingCount = (await this.getPendingWorkouts(normalizedUserId)).length;
+      console.log('[StorageAdapter] Added to pending workouts, new count:', pendingCount);
 
       // Add to completed workouts history (persists after sync)
-      await this.addToCompletedHistory(userId, activeWorkout);
+      await this.addToCompletedHistory(normalizedUserId, activeWorkout);
 
       // Clear active workout
-      await this.clearActiveWorkout(userId);
+      await this.clearActiveWorkout(normalizedUserId);
+
+      console.log('[StorageAdapter] Workout completed successfully:', workoutId);
     } catch (error) {
       console.error('[StorageAdapter] Failed to complete workout:', error);
       throw error;
@@ -135,8 +146,11 @@ export class AsyncStorageAdapter {
    * @returns {Promise<import('./types').WorkoutSession[]>}
    */
   async getPendingWorkouts(userId) {
+    // Normalize userId to string for consistent storage key generation
+    const normalizedUserId = String(userId);
+
     try {
-      const key = getUserStorageKey(STORAGE_KEYS.PENDING_WORKOUTS, userId);
+      const key = getUserStorageKey(STORAGE_KEYS.PENDING_WORKOUTS, normalizedUserId);
       const data = await AsyncStorage.getItem(key);
       return data ? JSON.parse(data) : [];
     } catch (error) {
@@ -152,10 +166,13 @@ export class AsyncStorageAdapter {
    * @returns {Promise<void>}
    */
   async addToPendingWorkouts(userId, workout) {
+    // Normalize userId to string for consistent storage key generation
+    const normalizedUserId = String(userId);
+
     try {
-      const pending = await this.getPendingWorkouts(userId);
+      const pending = await this.getPendingWorkouts(normalizedUserId);
       pending.push(workout);
-      const key = getUserStorageKey(STORAGE_KEYS.PENDING_WORKOUTS, userId);
+      const key = getUserStorageKey(STORAGE_KEYS.PENDING_WORKOUTS, normalizedUserId);
       await AsyncStorage.setItem(key, JSON.stringify(pending));
     } catch (error) {
       console.error('[StorageAdapter] Failed to add to pending workouts:', error);
@@ -170,10 +187,13 @@ export class AsyncStorageAdapter {
    * @returns {Promise<void>}
    */
   async markWorkoutSynced(userId, workoutId) {
+    // Normalize userId to string for consistent storage key generation
+    const normalizedUserId = String(userId);
+
     try {
-      const pending = await this.getPendingWorkouts(userId);
+      const pending = await this.getPendingWorkouts(normalizedUserId);
       const filtered = pending.filter(w => w.id !== workoutId);
-      const key = getUserStorageKey(STORAGE_KEYS.PENDING_WORKOUTS, userId);
+      const key = getUserStorageKey(STORAGE_KEYS.PENDING_WORKOUTS, normalizedUserId);
       await AsyncStorage.setItem(key, JSON.stringify(filtered));
     } catch (error) {
       console.error('[StorageAdapter] Failed to mark workout synced:', error);
@@ -519,225 +539,6 @@ export class AsyncStorageAdapter {
       }
     } catch (error) {
       console.error('[StorageAdapter] Failed to mark saved workout synced:', error);
-      throw error;
-    }
-  }
-
-  // ==================== Custom Exercise Operations ====================
-
-  /**
-   * Get all custom exercises from local storage
-   * @param {string|number} userId - User ID for scoped storage
-   * @returns {Promise<import('./types').CustomExercise[]>}
-   */
-  async getCustomExercises(userId) {
-    try {
-      const key = getUserStorageKey(STORAGE_KEYS.CUSTOM_EXERCISES, userId);
-      const data = await AsyncStorage.getItem(key);
-      return data ? JSON.parse(data) : [];
-    } catch (error) {
-      console.error('[StorageAdapter] Failed to get custom exercises:', error);
-      return [];
-    }
-  }
-
-  /**
-   * Get a single custom exercise by ID
-   * @param {string|number} userId - User ID for scoped storage
-   * @param {string} exerciseId - Local exercise ID
-   * @returns {Promise<import('./types').CustomExercise | null>}
-   */
-  async getCustomExercise(userId, exerciseId) {
-    try {
-      const exercises = await this.getCustomExercises(userId);
-      return exercises.find(e => e.id === exerciseId) || null;
-    } catch (error) {
-      console.error('[StorageAdapter] Failed to get custom exercise:', error);
-      return null;
-    }
-  }
-
-  /**
-   * Create a new custom exercise in local storage
-   * @param {string|number} userId - User ID for scoped storage
-   * @param {import('./types').CustomExercise} exercise
-   * @returns {Promise<import('./types').CustomExercise>}
-   */
-  async createCustomExercise(userId, exercise) {
-    try {
-      const exercises = await this.getCustomExercises(userId);
-
-      // Generate local ID with custom_ prefix
-      const newExercise = {
-        ...exercise,
-        id: exercise.id || `custom_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-        createdAt: exercise.createdAt || Date.now(),
-        updatedAt: Date.now(),
-        pendingSync: exercise.pendingSync !== undefined ? exercise.pendingSync : true,
-      };
-
-      exercises.push(newExercise);
-      const key = getUserStorageKey(STORAGE_KEYS.CUSTOM_EXERCISES, userId);
-      await AsyncStorage.setItem(key, JSON.stringify(exercises));
-
-      return newExercise;
-    } catch (error) {
-      console.error('[StorageAdapter] Failed to create custom exercise:', error);
-      throw error;
-    }
-  }
-
-  /**
-   * Update a custom exercise in local storage
-   * @param {string|number} userId - User ID for scoped storage
-   * @param {string} exerciseId - Local exercise ID
-   * @param {Partial<import('./types').CustomExercise>} updates
-   * @returns {Promise<import('./types').CustomExercise | null>}
-   */
-  async updateCustomExercise(userId, exerciseId, updates) {
-    try {
-      const exercises = await this.getCustomExercises(userId);
-      const index = exercises.findIndex(e => e.id === exerciseId);
-
-      if (index === -1) {
-        console.warn('[StorageAdapter] Custom exercise not found:', exerciseId);
-        return null;
-      }
-
-      exercises[index] = {
-        ...exercises[index],
-        ...updates,
-        updatedAt: Date.now(),
-        pendingSync: true,
-      };
-
-      const key = getUserStorageKey(STORAGE_KEYS.CUSTOM_EXERCISES, userId);
-      await AsyncStorage.setItem(key, JSON.stringify(exercises));
-      return exercises[index];
-    } catch (error) {
-      console.error('[StorageAdapter] Failed to update custom exercise:', error);
-      throw error;
-    }
-  }
-
-  /**
-   * Delete a custom exercise from local storage
-   * @param {string|number} userId - User ID for scoped storage
-   * @param {string} exerciseId - Local exercise ID
-   * @returns {Promise<void>}
-   */
-  async deleteCustomExercise(userId, exerciseId) {
-    try {
-      const exercises = await this.getCustomExercises(userId);
-      const filtered = exercises.filter(e => e.id !== exerciseId);
-      const key = getUserStorageKey(STORAGE_KEYS.CUSTOM_EXERCISES, userId);
-      await AsyncStorage.setItem(key, JSON.stringify(filtered));
-    } catch (error) {
-      console.error('[StorageAdapter] Failed to delete custom exercise:', error);
-      throw error;
-    }
-  }
-
-  /**
-   * Replace local custom exercises cache with backend data.
-   * Preserves local exercises with pendingSync that don't yet exist on backend.
-   * @param {string|number} userId - User ID for scoped storage
-   * @param {Array} backendExercises - Exercises from backend
-   * @returns {Promise<void>}
-   */
-  async replaceCustomExercises(userId, backendExercises) {
-    try {
-      const localExercises = await this.getCustomExercises(userId);
-
-      // Keep any local exercises that are pending sync (not yet on backend)
-      const pendingLocal = localExercises.filter(e => e.pendingSync);
-
-      // Convert backend exercises to local format
-      const synced = backendExercises.map(e => ({
-        id: String(e.id),
-        name: e.name,
-        category: e.category || null,
-        primaryMuscles: e.primaryMuscles || [],
-        secondaryMuscles: e.secondaryMuscles || [],
-        equipment: e.equipment || null,
-        difficulty: e.difficulty || null,
-        createdAt: new Date(e.createdAt).getTime(),
-        updatedAt: new Date(e.updatedAt).getTime(),
-        backendId: e.id,
-        pendingSync: false,
-      }));
-
-      // Merge: synced from backend + pending local (avoid duplicates by backendId)
-      const syncedIds = new Set(synced.map(e => e.backendId));
-      const uniquePending = pendingLocal.filter(e => !e.backendId || !syncedIds.has(e.backendId));
-      const merged = [...synced, ...uniquePending];
-
-      const key = getUserStorageKey(STORAGE_KEYS.CUSTOM_EXERCISES, userId);
-      await AsyncStorage.setItem(key, JSON.stringify(merged));
-    } catch (error) {
-      console.error('[StorageAdapter] Failed to replace custom exercises:', error);
-      throw error;
-    }
-  }
-
-  /**
-   * Upsert a single custom exercise into local cache (e.g., after backend fetch)
-   * @param {string|number} userId - User ID for scoped storage
-   * @param {Object} exercise - Exercise from backend
-   * @returns {Promise<void>}
-   */
-  async cacheCustomExercise(userId, exercise) {
-    try {
-      const exercises = await this.getCustomExercises(userId);
-      const id = String(exercise.id);
-
-      // Remove existing entry with same id or backendId
-      const filtered = exercises.filter(e =>
-        e.id !== id && String(e.backendId) !== id
-      );
-
-      filtered.push({
-        id,
-        name: exercise.name,
-        category: exercise.category || null,
-        primaryMuscles: exercise.primaryMuscles || [],
-        secondaryMuscles: exercise.secondaryMuscles || [],
-        equipment: exercise.equipment || null,
-        difficulty: exercise.difficulty || null,
-        createdAt: exercise.createdAt ? new Date(exercise.createdAt).getTime() : Date.now(),
-        updatedAt: exercise.updatedAt ? new Date(exercise.updatedAt).getTime() : Date.now(),
-        backendId: exercise.id,
-        pendingSync: false,
-      });
-
-      const key = getUserStorageKey(STORAGE_KEYS.CUSTOM_EXERCISES, userId);
-      await AsyncStorage.setItem(key, JSON.stringify(filtered));
-    } catch (error) {
-      console.error('[StorageAdapter] Failed to cache custom exercise:', error);
-      throw error;
-    }
-  }
-
-  /**
-   * Mark a custom exercise as synced with backend
-   * @param {string|number} userId - User ID for scoped storage
-   * @param {string} localId - Local exercise ID
-   * @param {number} backendId - Backend exercise ID
-   * @returns {Promise<void>}
-   */
-  async markCustomExerciseSynced(userId, localId, backendId) {
-    try {
-      const exercises = await this.getCustomExercises(userId);
-      const index = exercises.findIndex(e => e.id === localId);
-
-      if (index !== -1) {
-        exercises[index].pendingSync = false;
-        exercises[index].backendId = backendId;
-        const key = getUserStorageKey(STORAGE_KEYS.CUSTOM_EXERCISES, userId);
-        await AsyncStorage.setItem(key, JSON.stringify(exercises));
-      }
-    } catch (error) {
-      console.error('[StorageAdapter] Failed to mark custom exercise synced:', error);
       throw error;
     }
   }

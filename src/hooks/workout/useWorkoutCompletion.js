@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Alert } from 'react-native';
 import { storage, calculateStreakFromLocal } from '@/services/storage';
+import { syncPendingWorkouts } from '@/services/storage/syncService';
 
 export const useWorkoutCompletion = ({
   userId,
@@ -88,6 +89,12 @@ export const useWorkoutCompletion = ({
           }
 
           await updatePendingCount();
+
+          // Fire sync in background (don't await - let animation play while syncing)
+          syncPendingWorkouts(userId).catch(syncError => {
+            console.warn('[Workout Completion] Background sync failed, will retry later:', syncError.message);
+          });
+
           return workout.id;
         }
       } catch (error) {

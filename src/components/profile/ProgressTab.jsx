@@ -7,7 +7,7 @@ import { getCalendarData } from '@/services/api/dailyActivity';
 import { useThemeColors } from '@/hooks/useThemeColors';
 import { useWorkout } from '@/contexts/WorkoutContext';
 import { useAuth } from '@/lib/auth';
-import { getCalendarDataForDisplay, backfillCalendarFromBackend } from '@/services/storage/calendarStorage';
+import { getCalendarDataForDisplay } from '@/services/storage/calendarStorage';
 import WorkoutCalendar from '@/components/progress/WorkoutCalendar';
 
 const ProgressTab = ({ userId, onRefresh, embedded = false }) => {
@@ -197,29 +197,11 @@ const ProgressTab = ({ userId, onRefresh, embedded = false }) => {
         return;
       }
 
-      // For OWN profile: Use local storage + backend backfill (existing behavior)
-      // Load calendar data from local storage first (instant)
-      const localCalendarData = await getCalendarDataForDisplay(userId);
-      setWorkoutsByDay(localCalendarData);
-
-      // Only fetch from backend on initial load
-      if (includeBackend && !hasBackfilled.current) {
-        try {
-          const sessions = await getWorkoutSessionsByUserId(userId);
-
-          if (sessions && Array.isArray(sessions)) {
-            // Backfill calendar with backend data (doesn't overwrite today)
-            await backfillCalendarFromBackend(userId, sessions);
-            hasBackfilled.current = true;
-
-            // Reload calendar data after backfill
-            const updatedCalendarData = await getCalendarDataForDisplay(userId);
-            setWorkoutsByDay(updatedCalendarData);
-          }
-        } catch (backendError) {
-          // Continue with local data only
-        }
-      }
+      // For OWN profile: Fetch calendar data from backend (no local storage)
+      // Calendar is now backend-only via DailyActivity table
+      const calendarData = await getCalendarDataForDisplay(userId);
+      setWorkoutsByDay(calendarData);
+      hasBackfilled.current = true;
 
     } catch (error) {
       // Set empty data on error

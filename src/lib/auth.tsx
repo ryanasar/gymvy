@@ -17,7 +17,7 @@ import {
   checkNetworkStatus,
   subscribeToNetworkChanges,
 } from '@/services/network/networkService';
-import { migrateUserStorage, syncCalendarWithBackend } from '@/services/storage';
+import { migrateUserStorage } from '@/services/storage';
 
 WebBrowser.maybeCompleteAuthSession();
 
@@ -280,13 +280,13 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             });
             setIsTokenExpired(false);
 
-            // Run storage migration and calendar sync for newly logged in user
+            // Run storage migration for newly logged in user
+            // Calendar is now backend-only, no sync needed
             if (userData.id) {
               try {
                 await migrateUserStorage(userData.id);
-                await syncCalendarWithBackend(userData.id);
               } catch (migrationError) {
-                console.warn('[Auth] Storage migration/sync failed:', migrationError);
+                console.warn('[Auth] Storage migration failed:', migrationError);
               }
             }
           } catch (error) {

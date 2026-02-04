@@ -112,6 +112,8 @@ const WorkoutCalendar = ({ workoutsByDay = [], todaysWorkout = null }) => {
         dayOfWeek: date.getDay(),
         isToday,
         isFuture,
+        // Include workoutSessionId for fetching full details in popup
+        workoutSessionId: workoutDay?.workoutSessionId || null,
         // Include workout details from the data source or todaysWorkout
         workoutName,
         muscleGroups,

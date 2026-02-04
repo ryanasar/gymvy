@@ -38,22 +38,18 @@ export {
 // Sync service
 export {
   syncPendingWorkouts,
-  syncPendingCustomExercises,
   backgroundSync,
   getSyncStatus,
   checkNetworkStatus,
 } from './syncService.js';
 
-// Calendar storage
+// Calendar storage (backend-only)
 export {
   getCalendarData,
   markTodayCompleted,
   unmarkTodayCompleted,
   isTodayCompleted,
   getCalendarDataForDisplay,
-  backfillCalendarFromBackend,
-  syncCalendarWithBackend,
-  clearCalendarData,
 } from './calendarStorage.js';
 
 // Body weight storage

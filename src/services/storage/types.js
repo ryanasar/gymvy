@@ -103,9 +103,9 @@ export const STORAGE_KEYS = {
   LAST_SYNC: '@gymvy/last_sync',
   WORKOUT_ID_MAP: '@gymvy/workout_id_map',
   SAVED_WORKOUTS: '@gymvy/saved_workouts',
-  CUSTOM_EXERCISES: '@gymvy/custom_exercises',
   BODY_WEIGHT_LOG: '@gymvy/body_weight_log',
-  CALENDAR: '@gymvy_workout_calendar',
+  // CUSTOM_EXERCISES - REMOVED: custom exercises are now backend-only
+  // CALENDAR - REMOVED: calendar is now backend-only (DailyActivity table)
 };
 
 // Shared keys - NOT user-specific (same for all users on device)
@@ -136,7 +136,7 @@ export const LEGACY_KEYS = {
   COMPLETED_WORKOUTS: '@gymvy/completed_workouts',
   LAST_SYNC: '@gymvy/last_sync',
   SAVED_WORKOUTS: '@gymvy/saved_workouts',
-  CUSTOM_EXERCISES: '@gymvy/custom_exercises',
   BODY_WEIGHT_LOG: '@gymvy/body_weight_log',
-  CALENDAR: '@gymvy_workout_calendar',
+  // CUSTOM_EXERCISES - REMOVED: custom exercises are now backend-only
+  // CALENDAR - REMOVED: calendar is now backend-only
 };

@@ -245,7 +245,7 @@ const CreatePostScreen = () => {
             databaseWorkoutSessionId = parsedId;
           } else {
             // It's a local ID, look up the database ID
-            databaseWorkoutSessionId = await storage.getWorkoutDatabaseId(workoutSessionId);
+            databaseWorkoutSessionId = await storage.getWorkoutDatabaseId(user.id, workoutSessionId);
 
             if (!databaseWorkoutSessionId) {
               console.log('[CreatePost] Workout not synced yet, waiting for sync...');
@@ -258,7 +258,7 @@ const CreatePostScreen = () => {
               }
 
               // Check if ID is now available after sync
-              databaseWorkoutSessionId = await storage.getWorkoutDatabaseId(workoutSessionId);
+              databaseWorkoutSessionId = await storage.getWorkoutDatabaseId(user.id, workoutSessionId);
 
               // If still not available, poll briefly as a fallback
               if (!databaseWorkoutSessionId) {
@@ -268,7 +268,7 @@ const CreatePostScreen = () => {
 
                 while (Date.now() - startTime < maxWaitMs) {
                   await new Promise(r => setTimeout(r, pollIntervalMs));
-                  databaseWorkoutSessionId = await storage.getWorkoutDatabaseId(workoutSessionId);
+                  databaseWorkoutSessionId = await storage.getWorkoutDatabaseId(user.id, workoutSessionId);
                   if (databaseWorkoutSessionId) break;
                 }
               }
@@ -288,7 +288,7 @@ const CreatePostScreen = () => {
         const postData = {
           authorId: user.id,
           title: workoutData?.dayName || 'Workout Post',
-          description: description.trim() || null,
+          description: description.trim() || '',
           imageUrl: imageUrl || null,
           published: true,
           workoutSessionId: databaseWorkoutSessionId,

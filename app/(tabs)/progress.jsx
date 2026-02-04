@@ -66,14 +66,15 @@ export default function ProgressScreen() {
       }
     }
 
-    // Backend sessions (match by exercise name)
+    // Backend sessions (use flat sets array)
     for (const session of backendSessions) {
-      if (!session.exercises || !session.completedAt) continue;
-      const match = session.exercises.find(
-        e => e.exerciseName?.toLowerCase() === exerciseNameLower
+      if (!session.sets || !session.completedAt) continue;
+      // Filter sets for this exercise that have weight entered
+      const exerciseSets = session.sets.filter(
+        s => s.exerciseName?.toLowerCase() === exerciseNameLower && s.weight > 0
       );
-      if (match?.sets) {
-        const bestOneRM = getBestOneRMFromSets(match.sets);
+      if (exerciseSets.length > 0) {
+        const bestOneRM = getBestOneRMFromSets(exerciseSets);
         if (bestOneRM > 0) {
           const d = new Date(session.completedAt);
           const dateStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
@@ -155,14 +156,15 @@ export default function ProgressScreen() {
           }
         }
 
-        // From backend sessions
+        // From backend sessions (use flat sets array)
         for (const session of backendSessions) {
-          if (!session.exercises) continue;
-          for (const ex of session.exercises) {
-            if (ex.exerciseName) {
+          if (!session.sets) continue;
+          for (const set of session.sets) {
+            // Only include exercises with weight data
+            if (set.exerciseName && set.weight > 0) {
               // Skip Big 3
-              if (!bigThreeLower.has(ex.exerciseName.toLowerCase())) {
-                allExerciseNames.add(ex.exerciseName);
+              if (!bigThreeLower.has(set.exerciseName.toLowerCase())) {
+                allExerciseNames.add(set.exerciseName);
               }
             }
           }
