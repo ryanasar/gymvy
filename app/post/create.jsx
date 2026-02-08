@@ -55,8 +55,16 @@ const CreatePostScreen = () => {
 
   const workoutSessionId = params.workoutSessionId;
   const splitId = params.splitId;
+  // Legacy params (kept for backward compat if navigated from old code paths)
   const streak = params.streak ? parseInt(params.streak) : null;
   const isSplitCompleted = params.isSplitCompleted === 'true';
+  // New badges param
+  let badges = null;
+  try {
+    badges = params.badges ? JSON.parse(params.badges) : null;
+  } catch (e) {
+    console.error('[CreatePost] Failed to parse badges:', e);
+  }
   const initialDescription = params.description || '';
   const initialImageUrl = params.imageUrl || null;
 
@@ -300,8 +308,7 @@ const CreatePostScreen = () => {
           published: true,
           workoutSessionId: databaseWorkoutSessionId,
           splitId: splitId ? parseInt(splitId) : null,
-          streak: streak > 1 ? streak : null,
-          isSplitCompleted: isSplitCompleted || false,
+          badges: badges || null,
           taggedUserIds: taggedUsers.map(u => u.id),
           activityType: 'workout',
         };

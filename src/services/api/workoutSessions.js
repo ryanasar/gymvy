@@ -133,6 +133,11 @@ export const getUserWorkoutStats = async (userId) => {
   }
 };
 
+export const getExercisePRs = async (userId) => {
+  const response = await apiClient.get(`/workout-sessions/user/${userId}/exercise-prs`);
+  return response.data;
+};
+
 export default function WorkoutSessionsApiPage() {
   return null;
 }

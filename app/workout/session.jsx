@@ -13,6 +13,7 @@ import ExerciseCard from '@/components/exercises/ExerciseCard';
 import { useSync } from '@/contexts/SyncContext';
 import { useAuth } from '@/lib/auth';
 import { startWorkout, startFreestyleWorkout, startSavedWorkout, updateWorkoutSet, completeWorkout, cancelWorkout, getActiveWorkout, calculateStreakFromLocal, storage } from '@/services/storage';
+import { detectPRs, getLocalPRStore, saveLocalPRStore } from '@/services/storage/prTracking';
 import { createSavedWorkout } from '@/services/api/savedWorkouts';
 import LiveActivity from '@/lib/modules/LiveActivity';
 import { getCustomExercises } from '@/services/api/customExercises';
@@ -1355,6 +1356,22 @@ const WorkoutSessionScreen = () => {
       completedAt: Date.now(),
     };
 
+    // Detect PRs locally before sync
+    if (user?.id) {
+      try {
+        const prStore = await getLocalPRStore(user.id);
+        const prResult = detectPRs(exercises, prStore);
+        if (prResult.newPRs.length > 0 || Object.keys(prResult.updatedStore).length > Object.keys(prStore).length) {
+          await saveLocalPRStore(user.id, prResult.updatedStore);
+        }
+        if (prResult.newPRs.length > 0) {
+          completedWorkoutData.newPRs = prResult.newPRs;
+        }
+      } catch (e) {
+        console.error('[Session] Error detecting local PRs:', e);
+      }
+    }
+
     // Mark workout as complete in storage (moves to pending sync)
     if (workoutSessionId) {
       try {
@@ -1511,7 +1528,7 @@ const WorkoutSessionScreen = () => {
   );
 
   // Helper to complete the finish flow
-  const finishWorkoutCompletion = () => {
+  const finishWorkoutCompletion = async () => {
     // Collect workout data for individual workouts
     // Calculate total sets for the workout
     let workoutTotalSets = 0;
@@ -1537,6 +1554,30 @@ const WorkoutSessionScreen = () => {
       })),
       completedAt: Date.now(),
     };
+
+    // Detect PRs locally
+    if (user?.id) {
+      try {
+        const prStore = await getLocalPRStore(user.id);
+        const prResult = detectPRs(exercises, prStore);
+        if (prResult.newPRs.length > 0 || Object.keys(prResult.updatedStore).length > Object.keys(prStore).length) {
+          await saveLocalPRStore(user.id, prResult.updatedStore);
+        }
+        if (prResult.newPRs.length > 0) {
+          completedWorkoutData.newPRs = prResult.newPRs;
+        }
+      } catch (e) {
+        console.error('[Session] Error detecting local PRs:', e);
+      }
+    }
+
+    // Attach database ID from sync
+    if (workoutSessionId && user?.id) {
+      const databaseId = await storage.getWorkoutDatabaseId(user.id, workoutSessionId);
+      if (databaseId) {
+        completedWorkoutData.databaseWorkoutSessionId = databaseId;
+      }
+    }
 
     router.replace({
       pathname: '/(tabs)/workout',

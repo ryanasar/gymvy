@@ -59,5 +59,8 @@ export {
   clearBodyWeightLog,
 } from './bodyWeightStorage.js';
 
+// PR tracking
+export { detectPRs, getLocalPRStore, saveLocalPRStore, fetchAndSeedPRs } from './prTracking.js';
+
 // Types and utilities
 export { STORAGE_KEYS, SHARED_KEYS, LEGACY_KEYS, getUserStorageKey } from './types.js';

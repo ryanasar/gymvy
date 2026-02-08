@@ -8,6 +8,7 @@ import { createLikeNotification, deleteLikeNotification } from '@/services/api/n
 import { trackPostLiked, trackPostUnliked } from '@/lib/analytics';
 import { Colors } from '@/constants/colors';
 import { useThemeColors } from '@/hooks/useThemeColors';
+import { BADGE_CONFIG } from '@/constants/badges';
 import { exercises } from '@/data/exercises/exerciseDatabase';
 import Avatar from '@/components/ui/Avatar';
 import Badge from '@/components/ui/Badge';
@@ -432,16 +433,26 @@ const Activity = ({ post, currentUserId, onPostUpdated, onPostDeleted, initialOp
 
       {/* Metadata Section */}
       <View style={[styles.metadataSection, !imageUrl && styles.metadataSectionNoImage]}>
-        {(streak > 1 || isSplitCompleted) && (
-          <View style={styles.topBadgesRow}>
-            {streak && streak > 1 && (
-              <Badge label={`🔥 ${streak}-day streak`} color={colors.warning} />
-            )}
-            {isSplitCompleted && (
-              <Badge label="🎉 Split Completed" color="#8B5CF6" />
-            )}
-          </View>
-        )}
+        {(() => {
+          // Use badges array if available, otherwise fall back to legacy columns
+          const badgeList = post.badges || (() => {
+            const fallback = [];
+            if (streak && streak > 1) fallback.push({ type: 'streak', value: streak });
+            if (isSplitCompleted) fallback.push({ type: 'split_completed' });
+            return fallback;
+          })();
+          return badgeList.length > 0 ? (
+            <View style={styles.topBadgesRow}>
+              {badgeList.map((badge, idx) => {
+                const config = BADGE_CONFIG[badge.type];
+                if (!config) return null;
+                return (
+                  <Badge key={idx} label={config.getLabel(badge)} color={config.color} />
+                );
+              })}
+            </View>
+          ) : null;
+        })()}
 
         {taggedUsers && taggedUsers.length > 0 && (
           <View style={styles.taggedBadgesContainer}>

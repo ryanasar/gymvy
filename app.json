@@ -1,8 +1,8 @@
 {
   "expo": {
     "name": "Gymvy",
-    "slug": "gymvy",
-    "version": "1.7.0",
+    "slug": "gymapp",
+    "version": "1.7.1",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "gymvy",
@@ -10,7 +10,7 @@
     "newArchEnabled": true,
     "jsEngine": "jsc",
     "ios": {
-      "bundleIdentifier": "com.ryanasar.gymvy",
+      "bundleIdentifier": "com.ryanasar.gymapp",
       "supportsTablet": false,
       "infoPlist": {
         "NSCameraUsageDescription": "This app requires access to your camera to take photos for your workout posts.",
@@ -65,7 +65,8 @@
           "icon": "./assets/images/notification-icon.png",
           "color": "#ffffff"
         }
-      ]
+      ],
+      "expo-apple-authentication"
     ],
     "experiments": {
       "typedRoutes": true

@@ -18,6 +18,7 @@ import {
   checkNetworkStatus,
   subscribeToNetworkChanges,
 } from '@/services/network/networkService';
+import { fetchAndSeedPRs } from '@/services/storage/prTracking';
 import { migrateUserStorage } from '@/services/storage';
 import { identifyUser, resetUser, trackSignInCompleted, trackSignOutCompleted } from '@/lib/analytics';
 
@@ -434,6 +435,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             workoutPlans: workoutPlansData,
           });
         }
+
+        // Seed local PR store from backend (non-blocking)
+        fetchAndSeedPRs(user.id).catch(e => console.warn('[Auth] PR seeding failed:', e));
       }).catch((error) => {
         console.error('[Auth] Error fetching user data:', error);
       });

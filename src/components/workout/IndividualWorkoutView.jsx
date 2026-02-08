@@ -7,6 +7,7 @@ import SavedWorkoutPicker from './SavedWorkoutPicker';
 import SavedWorkoutDetailCard from './SavedWorkoutDetailCard';
 import { Colors } from '@/constants/colors';
 import { useThemeColors } from '@/hooks/useThemeColors';
+import { buildBadges } from '@/constants/badges';
 
 const IndividualWorkoutView = ({
   individualWorkoutCompleted,
@@ -36,12 +37,16 @@ const IndividualWorkoutView = ({
               exercises: completedIndividualWorkout.exercises || [],
               source: completedIndividualWorkout.source || 'freestyle',
             };
+            const badges = buildBadges({
+              streak: currentStreak || 0,
+              prExercises: completedIndividualWorkout.newPRs || [],
+            });
             router.push({
               pathname: '/post/create',
               params: {
                 workoutData: JSON.stringify(workoutDataForPost),
                 workoutSessionId: completedIndividualWorkout.workoutSessionId?.toString() || '',
-                streak: (currentStreak || 0).toString(),
+                badges: badges ? JSON.stringify(badges) : '',
               },
             });
           }}

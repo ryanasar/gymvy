@@ -1,5 +1,5 @@
 {
-  "name": "gymapp",
+  "name": "gymvy",
   "main": "expo-router/entry",
   "version": "1.0.0",
   "scripts": {
@@ -23,6 +23,7 @@
     "base64-arraybuffer": "^1.0.2",
     "dotenv": "^17.2.0",
     "expo": "~53.0.25",
+    "expo-apple-authentication": "~7.2.4",
     "expo-auth-session": "~6.2.1",
     "expo-blur": "~14.1.5",
     "expo-constants": "~17.1.8",

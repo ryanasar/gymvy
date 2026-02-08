@@ -24,6 +24,7 @@ import { markRestDay } from '@/services/api/dailyActivity';
 import { useAuth } from '@/lib/auth';
 import { storage, calculateStreakFromLocal, markTodayCompleted } from '@/services/storage';
 import { preparePostImage } from '@/utils/imageUpload';
+import { buildBadges } from '@/constants/badges';
 import TagUsersModal from '@/components/post/TagUsersModal';
 import { createTagNotification } from '@/services/api/notifications';
 
@@ -254,12 +255,14 @@ const RestDayPostModal = ({ visible, onClose, onPostCreated, splitName, splitEmo
         ? `${finalDescription}\n\n${activitiesText}`
         : activitiesText;
 
+      const badges = buildBadges({ streak });
+
       const postData = {
         authorId: user.id,
         description: finalDescription || null,
         imageUrl: imageUrl,
         published: true,
-        streak: streak > 1 ? streak : null,
+        badges: badges || null,
         taggedUserIds: taggedUsers.map(u => u.id),
         activityType: isFreeRestDay ? 'free_rest' : 'planned_rest',
       };

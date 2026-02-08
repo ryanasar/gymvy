@@ -4,6 +4,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { Colors } from '@/constants/colors';
 import { useThemeColors } from '@/hooks/useThemeColors';
+import { buildBadges } from '@/constants/badges';
 import OptionsMenu from '@/components/ui/OptionsMenu';
 import ExerciseList from '@/components/ui/ExerciseList';
 
@@ -223,6 +224,12 @@ const SplitWorkoutCard = ({
                   // Use database ID if available (from sync), otherwise fall back to local session ID
                   const sessionIdForPost = completedWorkoutData?.databaseWorkoutSessionId || completedSessionId;
 
+                  const badges = buildBadges({
+                    streak: currentStreak,
+                    isSplitCompleted,
+                    prExercises: completedWorkoutData?.newPRs || [],
+                  });
+
                   // Use displayWorkout (actual session data if available) for the post
                   router.push({
                     pathname: '/post/create',
@@ -230,8 +237,7 @@ const SplitWorkoutCard = ({
                       workoutData: JSON.stringify(displayWorkout),
                       workoutSessionId: sessionIdForPost?.toString() || '',
                       splitId: activeSplit?.id?.toString() || '',
-                      streak: currentStreak.toString(),
-                      isSplitCompleted: isSplitCompleted.toString(),
+                      badges: badges ? JSON.stringify(badges) : '',
                     },
                   });
                 }}
