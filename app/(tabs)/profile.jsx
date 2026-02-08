@@ -4,6 +4,7 @@ import { useRouter } from 'expo-router';
 import { useFocusEffect } from '@react-navigation/native';
 import { useAuth } from '@/lib/auth';
 import { useWorkout } from '@/contexts/WorkoutContext';
+import { usePreload } from '@/contexts/PreloadContext';
 import { useSync } from '@/contexts/SyncContext';
 import ActivitiesTab from '@/components/profile/PostsTab';
 import ProfileHeader from '@/components/profile/ProfileHeader';
@@ -22,10 +23,11 @@ const ProfileScreen = () => {
   const [modalType, setModalType] = useState('followers');
   const [editModalVisible, setEditModalVisible] = useState(false);
   const [progressKey, setProgressKey] = useState(0);
-  const [refreshing, setRefreshing] = useState(false);
   const { user, profile, posts, signOut, refreshPosts, refreshProfile } = useAuth();
   const { lastWorkoutCompleted } = useWorkout();
+  const { refreshCalendar, refreshSplits } = usePreload();
   const { manualSync } = useSync();
+  const [refreshing, setRefreshing] = useState(false);
 
   // Force ProgressTab to refresh when workout completion changes
   useEffect(() => {
@@ -43,21 +45,22 @@ const ProfileScreen = () => {
     }, [user?.id])
   );
 
-  const handleRefresh = async () => {
+  const handleRefresh = useCallback(async () => {
     setRefreshing(true);
-    manualSync();
     try {
       await Promise.all([
-        refreshProfile?.(),
-        refreshPosts?.()
+        refreshProfile(),
+        refreshPosts(),
+        refreshCalendar(),
+        refreshSplits(),
+        manualSync(),
       ]);
-      setProgressKey(prev => prev + 1);
-    } catch (error) {
-      console.error('Error refreshing profile:', error);
+    } catch (e) {
+      // ignore
     } finally {
       setRefreshing(false);
     }
-  };
+  }, [refreshProfile, refreshPosts, refreshCalendar, refreshSplits, manualSync]);
 
   if (!user) {
     return (
@@ -108,56 +111,17 @@ const ProfileScreen = () => {
     }
   };
 
-  // Render the selected tab content
-  const renderSelectedTab = () => {
-    switch (selectedTab) {
-      case 'Progress':
-        return (
-          <ProgressTab
-            key={progressKey}
-            userId={user.id}
-            onRefresh={handleRefresh}
-            embedded
-          />
-        );
-      case 'Posts':
-        return (
-          <ActivitiesTab
-            posts={posts}
-            currentUserId={user.id}
-            onRefresh={refreshPosts}
-            embedded
-          />
-        );
-      case 'Splits':
-        return (
-          <WorkoutPlansTab
-            userId={user.id}
-            embedded
-          />
-        );
-      default:
-        return null;
-    }
-  };
-
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
-      {/* Header */}
+      {/* Fixed "Profile" title header */}
       <View style={[styles.headerContainer, { backgroundColor: colors.cardBackground, shadowColor: colors.shadow }]}>
         <Text style={[styles.title, { color: colors.text }]}>Profile</Text>
       </View>
 
       <ScrollView
-        style={styles.scrollView}
-        contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={false}
+        style={{ flex: 1 }}
         refreshControl={
-          <RefreshControl
-            refreshing={refreshing}
-            onRefresh={handleRefresh}
-            tintColor={colors.primary}
-          />
+          <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} tintColor={colors.text} />
         }
       >
         <ProfileHeader
@@ -179,7 +143,6 @@ const ProfileScreen = () => {
           onEditPress={handleOpenEditModal}
         />
 
-        {/* Tabs */}
         <TabBar
           tabs={[
             { key: 'Progress', label: 'Progress' },
@@ -191,10 +154,15 @@ const ProfileScreen = () => {
           style={{ backgroundColor: colors.cardBackground, shadowColor: colors.shadow, shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.05, shadowRadius: 2, elevation: 1 }}
         />
 
-        {/* Tab Content */}
-        <View style={styles.tabContent}>
-          {renderSelectedTab()}
-        </View>
+        {selectedTab === 'Progress' && (
+          <ProgressTab userId={user.id} key={progressKey} embedded />
+        )}
+        {selectedTab === 'Posts' && (
+          <ActivitiesTab posts={posts} currentUserId={user.id} onRefresh={refreshPosts} embedded />
+        )}
+        {selectedTab === 'Splits' && (
+          <WorkoutPlansTab userId={user.id} embedded />
+        )}
       </ScrollView>
 
       {/* Follow List Modal */}
@@ -239,15 +207,5 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 28,
     fontWeight: '700',
-  },
-  scrollView: {
-    flex: 1,
-  },
-  scrollContent: {
-    flexGrow: 1,
-  },
-  tabContent: {
-    flex: 1,
-    minHeight: 400,
   },
 });

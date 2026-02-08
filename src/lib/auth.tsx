@@ -3,6 +3,7 @@ import * as WebBrowser from "expo-web-browser";
 import * as Linking from "expo-linking";
 import { supabase } from "@/lib/supabase";
 import { getOrCreateUserBySupabaseId, getUserProfile, getUserWorkoutPlans, getUserPosts } from "@/services/api/users";
+import { setAccessToken } from "@/services/api/client";
 import { getWorkoutsByUserId } from "@/services/api/workouts";
 import { AuthError } from "expo-auth-session/build/Errors";
 import { router } from 'expo-router';
@@ -103,6 +104,52 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [isTokenExpired, setIsTokenExpired] = React.useState(false);
   const [isOfflineSession, setIsOfflineSession] = React.useState(false);
 
+  // Handle incoming deep links (e.g. email verification redirect)
+  React.useEffect(() => {
+    const handleDeepLink = async (event: { url: string }) => {
+      const url = event.url;
+      if (!url) return;
+
+      let tokenPart = '';
+      if (url.includes('#')) {
+        tokenPart = url.split('#')[1];
+      } else if (url.includes('?')) {
+        tokenPart = url.split('?')[1];
+      }
+
+      if (!tokenPart) return;
+
+      const params = new URLSearchParams(tokenPart);
+      const accessToken = params.get('access_token');
+      const refreshToken = params.get('refresh_token');
+
+      if (accessToken && refreshToken) {
+        console.log('[Auth] Deep link received with tokens, setting session');
+        try {
+          const { error } = await supabase.auth.setSession({
+            access_token: accessToken,
+            refresh_token: refreshToken,
+          });
+          if (error) {
+            console.error('[Auth] Error setting session from deep link:', error);
+          }
+        } catch (e) {
+          console.error('[Auth] Error handling deep link:', e);
+        }
+      }
+    };
+
+    // Handle URL that opened the app (cold start)
+    Linking.getInitialURL().then((url) => {
+      if (url) handleDeepLink({ url });
+    });
+
+    // Handle URLs while the app is already open
+    const subscription = Linking.addEventListener('url', handleDeepLink);
+
+    return () => subscription.remove();
+  }, []);
+
   // Subscribe to network changes
   React.useEffect(() => {
     const unsubscribe = subscribeToNetworkChanges((online) => {
@@ -179,7 +226,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
     // Listen for auth state changes (only works when online)
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
-      console.log('[Auth] Auth state changed:', _event);
+      // Update the API client's cached token synchronously (avoids getSession deadlock)
+      setAccessToken(session?.access_token || null);
 
       if (session?.user) {
         const authUserData: AuthUser = {
@@ -196,6 +244,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         setAuthUser(authUserData);
         setIsOfflineSession(false);
 
+        // Navigate to reset-password screen on PASSWORD_RECOVERY
+        if (_event === 'PASSWORD_RECOVERY') {
+          router.replace('/(auth)/reset-password');
+          return;
+        }
+
         // Fetch user data on SIGNED_IN or USER_UPDATED
         if (_event === 'SIGNED_IN' || _event === 'USER_UPDATED') {
           if (authUserData.supabaseID) {
@@ -209,7 +263,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                 username: userData.username,
                 createdAt: userData.createdAt,
               });
-              trackSignInCompleted('google');
+              const provider = (session.user.app_metadata?.provider || 'email') as 'google' | 'apple' | 'email';
+              trackSignInCompleted(provider);
 
               // Save session securely for offline access
               const expiresAt = session.expires_at ? session.expires_at * 1000 : Date.now() + 3600000;
@@ -252,6 +307,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const initializeOnlineSession = async () => {
     try {
       const { data: { session }, error } = await supabase.auth.getSession();
+      setAccessToken(session?.access_token || null);
 
       if (error) {
         console.error('[Auth] Error getting session:', error);
@@ -562,6 +618,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     try {
       setIsLoading(true);
 
+      // Clear the API client's cached token immediately
+      setAccessToken(null);
+
       // Track sign out and reset analytics user
       trackSignOutCompleted();
       resetUser();
@@ -594,8 +653,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       setIsOfflineSession(false);
       setIsTokenExpired(false);
 
-      // Navigate to login screen
-      router.replace('/(auth)/welcome');
+      // Navigate to login screen (deferred to let React finish state updates)
+      setTimeout(() => {
+        router.replace('/(auth)/welcome');
+      }, 0);
 
     } catch (e) {
       console.error('[Auth] Error during sign out:', e);
@@ -609,6 +670,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       setError(null);
       setIsOfflineSession(false);
       setIsTokenExpired(false);
+      setTimeout(() => {
+        router.replace('/(auth)/welcome');
+      }, 0);
     } finally {
       setIsLoading(false);
     }

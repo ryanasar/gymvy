@@ -218,18 +218,10 @@ const WorkoutScreen = () => {
       }
       completionProcessedRef.current = true;
 
-      // Calculate streak when returning from completed workout
-      try {
-        const streak = await calculateStreakFromLocal(user?.id);
-        setCurrentStreak(streak);
-      } catch (error) {
-        console.error('[Workout Tab] Error calculating streak after session:', error);
-      }
-
       // Handle individual workout completion (freestyle or saved)
       const source = params.source;
       if (source === 'freestyle' || source === 'saved') {
-        // Parse the workout data and mark as completed
+        // Parse the workout data and mark as completed FIRST
         if (params.workoutData) {
           try {
             const workoutData = JSON.parse(params.workoutData);
@@ -240,6 +232,14 @@ const WorkoutScreen = () => {
         }
         // Switch to Individual tab to show the completed card
         setWorkoutMode('individual');
+      }
+
+      // Calculate streak AFTER calendar is updated (so current workout is counted)
+      try {
+        const streak = await calculateStreakFromLocal(user?.id, 'workout');
+        setCurrentStreak(streak);
+      } catch (error) {
+        console.error('[Workout Tab] Error calculating streak after session:', error);
       }
 
       // Show celebration animation when returning from completed workout
@@ -544,6 +544,7 @@ const WorkoutScreen = () => {
                     handleNavigation('/post/create', {
                       workoutData: JSON.stringify(workoutDataForPost),
                       workoutSessionId: completedIndividualWorkout.workoutSessionId?.toString() || '',
+                      streak: currentStreak.toString(),
                     });
                   }}
                   onUncomplete={async () => {
@@ -590,11 +591,11 @@ const WorkoutScreen = () => {
                         })) || [],
                         completedAt: Date.now(),
                       };
-                      await markIndividualWorkoutCompleted(workoutData);
                       await manualSync();
+                      await markIndividualWorkoutCompleted(workoutData);
 
                       // Calculate streak
-                      const streak = await calculateStreakFromLocal(user?.id);
+                      const streak = await calculateStreakFromLocal(user?.id, 'workout');
                       setCurrentStreak(streak);
                     } catch (error) {
                       console.error('[Workout Tab] Error marking workout complete:', error);
@@ -825,7 +826,7 @@ const WorkoutScreen = () => {
       // Show celebration when marking complete
       setShowCelebration(true);
       try {
-        const streak = await calculateStreakFromLocal(user?.id);
+        const streak = await calculateStreakFromLocal(user?.id, 'workout');
         setCurrentStreak(streak);
       } catch (error) {
         console.error('[Workout Tab] Error calculating streak:', error);
@@ -917,6 +918,7 @@ const WorkoutScreen = () => {
             completedIndividualWorkout={completedIndividualWorkout}
             savedWorkouts={savedWorkouts}
             selectedSavedWorkout={selectedSavedWorkout}
+            currentStreak={currentStreak}
             onUncomplete={async () => {
               // If it was a saved workout, go back to the saved workout detail view
               if (completedIndividualWorkout?.source === 'saved' && completedIndividualWorkout?.savedWorkoutId) {
@@ -956,11 +958,11 @@ const WorkoutScreen = () => {
                     })) || [],
                     completedAt: Date.now(),
                   };
-                  await markIndividualWorkoutCompleted(workoutData);
                   await manualSync();
+                  await markIndividualWorkoutCompleted(workoutData);
 
                   // Calculate streak
-                  const streak = await calculateStreakFromLocal(user?.id);
+                  const streak = await calculateStreakFromLocal(user?.id, 'workout');
                   setCurrentStreak(streak);
                 } catch (error) {
                   console.error('[Workout Tab] Error marking workout complete:', error);

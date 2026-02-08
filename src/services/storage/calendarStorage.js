@@ -6,6 +6,7 @@
 
 import { getCalendarData as getBackendCalendarData, deleteDailyActivityByDate } from '@/services/api/dailyActivity';
 import { checkNetworkStatus } from '@/services/network/networkService';
+import { storage } from './StorageAdapter.js';
 
 /**
  * Get today's date string in YYYY-MM-DD format (local timezone)
@@ -73,6 +74,9 @@ export async function unmarkTodayCompleted(userId) {
   try {
     const today = getTodayDateString();
 
+    // Remove pending rest day entries for today to prevent sync from re-creating
+    await storage.removePendingRestDaysByDate(userId, today);
+
     const isOnline = await checkNetworkStatus();
     if (!isOnline) {
       throw new Error('Uncompleting requires an internet connection');
@@ -135,8 +139,8 @@ export async function getCalendarDataForDisplay(userId) {
       totalExercises: data.totalExercises || null,
       totalSets: data.totalSets || null,
       durationMinutes: data.durationMinutes || null,
-      splitName: data.splitName || null,
-      splitEmoji: data.splitEmoji || null,
+      splitName: data.splitName || data.split?.name || null,
+      splitEmoji: data.splitEmoji || data.split?.emoji || null,
     }));
   } catch (error) {
     console.error('[CalendarStorage] Error getting calendar data for display:', error);

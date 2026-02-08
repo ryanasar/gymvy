@@ -46,7 +46,6 @@ export default function LoginScreen() {
   // Redirect when user becomes available after login
   React.useEffect(() => {
     if (user && !isLoading) {
-      // User is authenticated and data is loaded
       if (user.hasCompletedOnboarding) {
         router.replace('/(tabs)/workout');
       } else {
@@ -67,13 +66,12 @@ export default function LoginScreen() {
 
     setIsSubmitting(true);
     try {
-      const { data, error } = await supabase.auth.signInWithPassword({
+      const { error } = await supabase.auth.signInWithPassword({
         email: email.trim(),
         password
       });
 
       if (error) {
-        console.error('Supabase auth error:', error);
         setError(error.message || 'Failed to sign in');
       }
       // No need to manually navigate - auth state change will handle it

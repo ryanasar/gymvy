@@ -1,4 +1,12 @@
 /**
+ * Parse a YYYY-MM-DD string as a local date (avoids UTC midnight shift)
+ */
+const parseLocalDate = (dateStr) => {
+  const [y, m, d] = dateStr.split('-').map(Number);
+  return new Date(y, m - 1, d);
+};
+
+/**
  * Get the date cutoff for a given time range
  * @param {string} range - "3m", "6m", "1y", or "All"
  * @returns {Date|null} - Date cutoff or null for "All"
@@ -33,7 +41,7 @@ export const filterDataByRange = (data, range) => {
   if (!cutoff) return data;
 
   return data.filter(item => {
-    const itemDate = new Date(item.date);
+    const itemDate = parseLocalDate(item.date);
     return itemDate >= cutoff;
   });
 };
@@ -60,7 +68,7 @@ export const calculateChange = (data) => {
 export const formatLastLogged = (dateStr) => {
   if (!dateStr) return '';
 
-  const date = new Date(dateStr);
+  const date = parseLocalDate(dateStr);
   const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
   return `${months[date.getMonth()]} ${date.getDate()}`;

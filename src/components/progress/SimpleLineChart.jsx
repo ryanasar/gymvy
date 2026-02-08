@@ -103,8 +103,10 @@ const SimpleLineChart = ({ data, lineColor, colors, chartHeight = 180 }) => {
     // Parse first and last dates
     const firstDateStr = data[0].date;
     const lastDateStr = data[data.length - 1].date;
-    const firstDate = new Date(firstDateStr);
-    const lastDate = new Date(lastDateStr);
+    const [fy, fm, fd] = firstDateStr.split('-').map(Number);
+    const firstDate = new Date(fy, fm - 1, fd);
+    const [ly, lm, ld] = lastDateStr.split('-').map(Number);
+    const lastDate = new Date(ly, lm - 1, ld);
     const totalDays = Math.max(1, (lastDate - firstDate) / (1000 * 60 * 60 * 24));
 
     // Always use 3 labels: start, middle, end
@@ -223,7 +225,7 @@ const SimpleLineChart = ({ data, lineColor, colors, chartHeight = 180 }) => {
       {/* X-axis date labels */}
       <View style={styles.xAxisRow}>
         <View style={styles.xAxisSpacer} />
-        <View style={styles.xAxisLabels}>
+        <View style={[styles.xAxisLabels, dateLabels.length === 1 && { justifyContent: 'center' }]}>
           {dateLabels.map((label, i) => (
             <Text
               key={i}
@@ -231,7 +233,7 @@ const SimpleLineChart = ({ data, lineColor, colors, chartHeight = 180 }) => {
                 styles.xAxisLabel,
                 {
                   color: colors.secondaryText,
-                  textAlign: i === 0 ? 'left' : i === dateLabels.length - 1 ? 'right' : 'center',
+                  textAlign: dateLabels.length === 1 ? 'center' : (i === 0 ? 'left' : i === dateLabels.length - 1 ? 'right' : 'center'),
                 },
               ]}
             >

@@ -80,20 +80,23 @@ export const useWorkoutCompletion = ({
 
           await storage.saveActiveWorkout(userId, workout);
           await localCompleteWorkout(userId, workout.id);
-          await markWorkoutCompleted(workout.id, isRestDay);
 
           try {
-            await calculateStreakFromLocal(userId);
+            await calculateStreakFromLocal(userId, isRestDay ? 'rest' : 'workout');
           } catch (error) {
             console.error('[Workout Completion] Error calculating streak:', error);
           }
 
           await updatePendingCount();
 
-          // Fire sync in background (don't await - let animation play while syncing)
-          syncPendingWorkouts(userId).catch(syncError => {
-            console.warn('[Workout Completion] Background sync failed, will retry later:', syncError.message);
-          });
+          // Sync BEFORE marking completed so calendar refresh sees up-to-date backend data
+          try {
+            await syncPendingWorkouts(userId);
+          } catch (syncError) {
+            console.warn('[Workout Completion] Sync failed, will retry later:', syncError.message);
+          }
+
+          await markWorkoutCompleted(workout.id, isRestDay);
 
           return workout.id;
         }

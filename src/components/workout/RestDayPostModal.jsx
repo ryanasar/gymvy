@@ -243,7 +243,7 @@ const RestDayPostModal = ({ visible, onClose, onPostCreated, splitName, splitEmo
         .filter(Boolean);
 
       // Calculate current streak
-      const streak = await calculateStreakFromLocal(user.id);
+      const streak = await calculateStreakFromLocal(user.id, 'rest');
 
       // Format the description to include activities if selected
       let finalDescription = caption || '';
@@ -275,11 +275,19 @@ const RestDayPostModal = ({ visible, onClose, onPostCreated, splitName, splitEmo
         );
       }
 
-      // Save rest day completion locally
+      // Save rest day completion locally (include DailyActivity fields for sync retry)
       await storage.saveRestDayCompletion(user.id, {
         date: new Date().toISOString(),
         activities: activityLabels,
         caption: caption,
+        // DailyActivity fields for sync retry
+        activityType: isFreeRestDay ? 'free_rest' : 'planned_rest',
+        isPlanned: !isFreeRestDay,
+        restReason: caption || null,
+        recoveryActivities: activityLabels,
+        splitId: null,
+        weekNumber: weekNumber,
+        dayNumber: dayNumber,
       });
 
       // Mark today as a rest day in the calendar (doesn't increase streak)

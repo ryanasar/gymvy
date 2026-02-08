@@ -5,6 +5,7 @@
 
 import { storage } from './StorageAdapter.js';
 import { createWorkoutSession } from '@/services/api/workoutSessions';
+import { markRestDay } from '@/services/api/dailyActivity';
 import { checkNetworkStatus as checkNetwork } from '@/services/network/networkService';
 import { fetchUserCustomExercises } from '@/services/api/customExercisesBackend';
 
@@ -275,11 +276,31 @@ export async function syncPendingWorkouts(userId) {
   console.log('[Sync] Starting to process', pendingWorkouts.length, 'pending workouts');
 
   for (const workout of pendingWorkouts) {
-    // Skip rest days - they're already posted via RestDayPostModal
+    // Sync rest days to DailyActivity table
     if (workout.type === 'rest_day' || workout.id?.startsWith('rest-')) {
-      console.log('[Sync] Skipping rest day, marking as synced:', workout.id);
-      await storage.markWorkoutSynced(normalizedUserId, workout.id);
-      synced++;
+      try {
+        const restDate = workout.date
+          ? getLocalDateFromTimestamp(new Date(workout.date).getTime())
+          : getLocalDateFromTimestamp(Date.now());
+
+        await markRestDay(normalizedUserId, restDate, {
+          activityType: workout.activityType || 'planned_rest',
+          isPlanned: workout.isPlanned ?? true,
+          restReason: workout.restReason || workout.caption || null,
+          recoveryActivities: workout.recoveryActivities || workout.activities || [],
+          splitId: workout.splitId || null,
+          weekNumber: workout.weekNumber || null,
+          dayNumber: workout.dayNumber || null,
+        });
+
+        console.log('[Sync] Rest day synced successfully:', workout.id);
+        await storage.markWorkoutSynced(normalizedUserId, workout.id);
+        synced++;
+      } catch (err) {
+        console.error('[Sync] Failed to sync rest day:', workout.id, err.message);
+        failed++;
+        errors.push({ workoutId: workout.id, error: err });
+      }
       continue;
     }
 

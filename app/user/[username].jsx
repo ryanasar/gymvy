@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Alert } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Alert, ScrollView, RefreshControl } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useThemeColors } from '@/hooks/useThemeColors';
@@ -44,6 +44,7 @@ export default function UserProfileScreen() {
   const [canNudge, setCanNudge] = useState(false);
   const [nudgeModalVisible, setNudgeModalVisible] = useState(false);
   const [isNudgeLoading, setIsNudgeLoading] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
 
   const isOwnProfile = currentUser?.username === username;
 
@@ -128,6 +129,17 @@ export default function UserProfileScreen() {
       Alert.alert('Error', 'Failed to load user profile');
       setIsHeaderLoading(false);
       setIsTabDataLoading(false);
+    }
+  };
+
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    try {
+      await loadUserData(false);
+    } catch (e) {
+      // ignore
+    } finally {
+      setRefreshing(false);
     }
   };
 
@@ -235,26 +247,21 @@ export default function UserProfileScreen() {
   // Check if this is a private account that we can't view
   const isPrivateAndNotFollowing = user?.profile?.isPrivate && followStatus !== 'following' && !isOwnProfile;
 
-  // Render all tabs but only show the selected one to prevent unmounting/remounting
-  const renderAllTabs = () => {
-    // If private and not following, show placeholder for all tabs
+  const renderSelectedTab = () => {
     if (isPrivateAndNotFollowing) {
       return <PrivateProfilePlaceholder />;
     }
 
-    return (
-      <>
-        <View style={selectedTab === 'Progress' ? styles.tabVisible : styles.tabHidden}>
-          <ProgressTab userId={user?.id} isViewerMode={!isOwnProfile} prefetchedCalendarData={calendarData} />
-        </View>
-        <View style={selectedTab === 'Posts' ? styles.tabVisible : styles.tabHidden}>
-          <PostsTab posts={posts} isLoading={isTabDataLoading} currentUserId={currentUser?.id} onRefresh={loadUserData} />
-        </View>
-        <View style={selectedTab === 'Splits' ? styles.tabVisible : styles.tabHidden}>
-          <WorkoutPlansTab userId={user?.id} isOwnProfile={isOwnProfile} prefetchedSplitsData={splitsData} />
-        </View>
-      </>
-    );
+    if (selectedTab === 'Progress') {
+      return <ProgressTab userId={user?.id} prefetchedCalendarData={calendarData} embedded />;
+    }
+    if (selectedTab === 'Posts') {
+      return <PostsTab posts={posts} isLoading={isTabDataLoading} currentUserId={currentUser?.id} onRefresh={loadUserData} embedded />;
+    }
+    if (selectedTab === 'Splits') {
+      return <WorkoutPlansTab userId={user?.id} isOwnProfile={isOwnProfile} prefetchedSplitsData={splitsData} embedded />;
+    }
+    return null;
   };
 
   if (isHeaderLoading) {
@@ -287,44 +294,47 @@ export default function UserProfileScreen() {
         <View style={styles.headerPlaceholder} />
       </View>
 
-      <ProfileHeader
-        profile={user.profile}
-        username={user.username}
-        name={user.name}
-        bio={user.profile?.bio}
-        avatarUrl={user.profile?.avatarUrl}
-        followedBy={user.followerCount}
-        following={user.followingCount}
-        workouts={posts?.length || 0}
-        isOwnProfile={isOwnProfile}
-        isFollowing={isFollowing}
-        followStatus={followStatus}
-        isPrivate={user.profile?.isPrivate}
-        isVerified={user.profile?.isVerified}
-        onFollowToggle={handleFollowToggle}
-        isFollowLoading={isFollowLoading}
-        onFollowersPress={handleOpenFollowersModal}
-        onFollowingPress={handleOpenFollowingModal}
-        onNudgePress={handleOpenNudgeModal}
-        canNudge={canNudge}
-      />
+      <ScrollView
+        style={{ flex: 1 }}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} tintColor={colors.text} />
+        }
+      >
+        <ProfileHeader
+          profile={user.profile}
+          username={user.username}
+          name={user.name}
+          bio={user.profile?.bio}
+          avatarUrl={user.profile?.avatarUrl}
+          followedBy={user.followerCount}
+          following={user.followingCount}
+          workouts={posts?.length || 0}
+          isOwnProfile={isOwnProfile}
+          isFollowing={isFollowing}
+          followStatus={followStatus}
+          isPrivate={user.profile?.isPrivate}
+          isVerified={user.profile?.isVerified}
+          onFollowToggle={handleFollowToggle}
+          isFollowLoading={isFollowLoading}
+          onFollowersPress={handleOpenFollowersModal}
+          onFollowingPress={handleOpenFollowingModal}
+          onNudgePress={handleOpenNudgeModal}
+          canNudge={canNudge}
+        />
 
-      {/* Tabs */}
-      <TabBar
-        tabs={[
-          { key: 'Progress', label: 'Progress' },
-          { key: 'Posts', label: 'Posts' },
-          { key: 'Splits', label: 'Splits' },
-        ]}
-        activeTab={selectedTab}
-        onTabPress={setSelectedTab}
-        style={{ backgroundColor: colors.cardBackground, shadowColor: colors.shadow, shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.05, shadowRadius: 2, elevation: 1 }}
-      />
+        <TabBar
+          tabs={[
+            { key: 'Progress', label: 'Progress' },
+            { key: 'Posts', label: 'Posts' },
+            { key: 'Splits', label: 'Splits' },
+          ]}
+          activeTab={selectedTab}
+          onTabPress={setSelectedTab}
+          style={{ backgroundColor: colors.cardBackground, shadowColor: colors.shadow, shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.05, shadowRadius: 2, elevation: 1 }}
+        />
 
-      {/* Tab Content */}
-      <View style={[styles.tabContentContainer, { backgroundColor: colors.background }]}>
-        {renderAllTabs()}
-      </View>
+        {renderSelectedTab()}
+      </ScrollView>
 
       {/* Follow List Modal */}
       <FollowListModal
@@ -381,25 +391,5 @@ const styles = StyleSheet.create({
   },
   headerPlaceholder: {
     width: 40,
-  },
-  tabContentContainer: {
-    flex: 1,
-    position: 'relative',
-  },
-  tabVisible: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-  },
-  tabHidden: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    opacity: 0,
-    pointerEvents: 'none',
   },
 });

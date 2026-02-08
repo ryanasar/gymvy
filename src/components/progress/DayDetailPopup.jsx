@@ -14,8 +14,34 @@ const DayDetailPopup = ({ visible, dayData, position, onClose }) => {
   const [sessionDetails, setSessionDetails] = useState(null);
   const [loading, setLoading] = useState(false);
 
+  // Track if we're in the middle of closing animation to prevent re-triggers
+  const [isClosing, setIsClosing] = useState(false);
+
+  // Handle close with fade-out animation
+  const handleClose = () => {
+    if (isClosing) return; // Prevent multiple close triggers
+
+    setIsClosing(true);
+
+    Animated.parallel([
+      Animated.timing(fadeAnim, {
+        toValue: 0,
+        duration: 150,
+        useNativeDriver: true,
+      }),
+      Animated.timing(scaleAnim, {
+        toValue: 0.95,
+        duration: 150,
+        useNativeDriver: true,
+      }),
+    ]).start(() => {
+      onClose();
+      setIsClosing(false);
+    });
+  };
+
   useEffect(() => {
-    if (visible) {
+    if (visible && !isClosing) {
       Animated.parallel([
         Animated.timing(fadeAnim, {
           toValue: 1,
@@ -29,7 +55,7 @@ const DayDetailPopup = ({ visible, dayData, position, onClose }) => {
           useNativeDriver: true,
         }),
       ]).start();
-    } else {
+    } else if (!visible) {
       fadeAnim.setValue(0);
       scaleAnim.setValue(0.95);
       // Reset session details when closing
@@ -123,9 +149,9 @@ const DayDetailPopup = ({ visible, dayData, position, onClose }) => {
       transparent
       visible={visible}
       animationType="none"
-      onRequestClose={onClose}
+      onRequestClose={handleClose}
     >
-      <TouchableWithoutFeedback onPress={onClose}>
+      <TouchableWithoutFeedback onPress={handleClose}>
         <Animated.View style={[styles.overlay, { opacity: fadeAnim }]}>
           <TouchableWithoutFeedback>
             <Animated.View

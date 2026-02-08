@@ -2,22 +2,24 @@ import axios from 'axios';
 import { BACKEND_API_URL } from '@/constants/config';
 import { supabase } from '@/lib/supabase';
 
+// Module-level token cache — updated synchronously by auth.tsx
+let _cachedAccessToken = null;
+
+export const setAccessToken = (token) => {
+  _cachedAccessToken = token;
+};
+
 // Create axios instance with base URL
 const apiClient = axios.create({
   baseURL: BACKEND_API_URL,
   timeout: 10000,
 });
 
-// Request interceptor to attach auth token
+// Request interceptor — synchronous, reads cached token (no async getSession)
 apiClient.interceptors.request.use(
-  async (config) => {
-    try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session?.access_token) {
-        config.headers.Authorization = `Bearer ${session.access_token}`;
-      }
-    } catch (error) {
-      console.error('[ApiClient] Error getting session:', error);
+  (config) => {
+    if (_cachedAccessToken) {
+      config.headers.Authorization = `Bearer ${_cachedAccessToken}`;
     }
     return config;
   },
@@ -33,7 +35,8 @@ apiClient.interceptors.response.use(
       try {
         const { data: { session }, error: refreshError } = await supabase.auth.refreshSession();
         if (session && !refreshError) {
-          // Retry the original request with new token
+          // Update cached token and retry the original request
+          _cachedAccessToken = session.access_token;
           error.config.headers.Authorization = `Bearer ${session.access_token}`;
           return apiClient.request(error.config);
         }

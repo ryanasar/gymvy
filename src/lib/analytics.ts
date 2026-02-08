@@ -41,15 +41,15 @@ export const trackAppBackgrounded = () => {
 // Answer: "How are users signing up/in?"
 // ============================================
 
-export const trackSignUpStarted = (method: 'google' | 'apple') => {
+export const trackSignUpStarted = (method: 'google' | 'apple' | 'email') => {
   track('signup_started', { method });
 };
 
-export const trackSignUpCompleted = (method: 'google' | 'apple') => {
+export const trackSignUpCompleted = (method: 'google' | 'apple' | 'email') => {
   track('signup_completed', { method });
 };
 
-export const trackSignInCompleted = (method: 'google' | 'apple') => {
+export const trackSignInCompleted = (method: 'google' | 'apple' | 'email') => {
   track('signin_completed', { method });
 };
 

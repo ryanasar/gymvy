@@ -1,16 +1,16 @@
 {
   "expo": {
     "name": "Gymvy",
-    "slug": "gymapp",
+    "slug": "gymvy",
     "version": "1.7.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "gymapp",
+    "scheme": "gymvy",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "jsEngine": "jsc",
     "ios": {
-      "bundleIdentifier": "com.ryanasar.gymapp",
+      "bundleIdentifier": "com.ryanasar.gymvy",
       "supportsTablet": false,
       "infoPlist": {
         "NSCameraUsageDescription": "This app requires access to your camera to take photos for your workout posts.",
@@ -32,13 +32,14 @@
         "android.permission.RECORD_AUDIO",
         "android.permission.POST_NOTIFICATIONS"
       ],
-      "package": "com.ryanasar.gymapp"
+      "package": "com.ryanasar.gymvy"
     },
     "web": {
       "bundler": "metro",
       "output": "static"
     },
     "plugins": [
+      "expo-dev-client",
       "expo-router",
       [
         "expo-splash-screen",

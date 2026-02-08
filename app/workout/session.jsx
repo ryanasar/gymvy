@@ -1375,7 +1375,7 @@ const WorkoutSessionScreen = () => {
         await manualSync();
 
         // Get the database ID after sync completes
-        const databaseId = await storage.getWorkoutDatabaseId(workoutSessionId);
+        const databaseId = await storage.getWorkoutDatabaseId(user?.id, workoutSessionId);
         if (databaseId) {
           completedWorkoutData.databaseWorkoutSessionId = databaseId;
         }
@@ -1400,7 +1400,7 @@ const WorkoutSessionScreen = () => {
           };
 
           // Pass the actual completed workout data (4th param) for display on workout tab
-          markWorkoutCompleted(workoutSessionId, false, workoutDetails, completedWorkoutData);
+          await markWorkoutCompleted(workoutSessionId, false, workoutDetails, completedWorkoutData);
         }
       } catch (error) {
         console.error('[Session] Error completing workout in storage:', error);

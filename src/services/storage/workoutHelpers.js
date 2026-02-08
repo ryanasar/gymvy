@@ -472,22 +472,27 @@ export async function createCompletedWorkoutSession(userId, { workoutName, exerc
  * @param {string|number} userId - User ID for scoped storage
  * @returns {Promise<number>}
  */
-export async function calculateStreakFromLocal(userId) {
+export async function calculateStreakFromLocal(userId, todayActivityType = null) {
   try {
     // Import calendar storage functions
     const { getCalendarData } = await import('./calendarStorage.js');
     const calendarData = await getCalendarData(userId);
-
-    if (Object.keys(calendarData).length === 0) return 0;
 
     // Get today's date string in local timezone (same format as calendarStorage)
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
 
+    // If caller tells us today's activity type and it's not in backend data yet, inject it
+    if (todayActivityType && !calendarData[todayStr]) {
+      calendarData[todayStr] = { activityType: todayActivityType };
+    }
+
+    if (Object.keys(calendarData).length === 0) return 0;
+
     // Sort all dates in descending order (most recent first)
     const sortedDates = Object.keys(calendarData)
-      .filter(dateStr => calendarData[dateStr].completed)
+      .filter(dateStr => calendarData[dateStr].activityType)
       .sort((a, b) => new Date(b) - new Date(a));
 
     if (sortedDates.length === 0) return 0;
@@ -518,7 +523,7 @@ export async function calculateStreakFromLocal(userId) {
       }
 
       // Only count workout days (not rest days) toward streak
-      if (!calendarData[dateStr].isRestDay) {
+      if (calendarData[dateStr].activityType === 'workout') {
         streakCount++;
       }
 

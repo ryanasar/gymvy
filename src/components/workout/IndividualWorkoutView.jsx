@@ -13,6 +13,7 @@ const IndividualWorkoutView = ({
   completedIndividualWorkout,
   savedWorkouts,
   selectedSavedWorkout,
+  currentStreak,
   onUncomplete,
   onEditWorkout,
   onSelectWorkout,
@@ -40,6 +41,7 @@ const IndividualWorkoutView = ({
               params: {
                 workoutData: JSON.stringify(workoutDataForPost),
                 workoutSessionId: completedIndividualWorkout.workoutSessionId?.toString() || '',
+                streak: (currentStreak || 0).toString(),
               },
             });
           }}

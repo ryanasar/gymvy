@@ -259,9 +259,11 @@ const WorkoutCalendar = ({ workoutsByDay = [], todaysWorkout = null }) => {
 
     // Measure the position of the pressed day cell
     event.target.measureInWindow((x, y, width, height) => {
-      // Position popup above the day cell
+      // Position popup so arrow points directly at the cell
+      // Arrow is 8px tall, so popup bottom + 8 = arrow tip
+      // We want arrow tip to be ~2px above cell top
       setPopupPosition({
-        top: y - 80, // Above the cell with some padding
+        top: y - 72, // Positions arrow tip close to the cell
         left: Math.max(20, Math.min(x - 60, 200)), // Centered on cell, clamped to screen
       });
       setSelectedDay(day);

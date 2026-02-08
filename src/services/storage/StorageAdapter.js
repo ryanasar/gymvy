@@ -53,6 +53,7 @@ export class AsyncStorageAdapter {
    */
   async getActiveWorkout(userId) {
     try {
+      if (!userId) return null;
       const key = getUserStorageKey(STORAGE_KEYS.ACTIVE_WORKOUT, userId);
       const data = await AsyncStorage.getItem(key);
       return data ? JSON.parse(data) : null;
@@ -565,6 +566,37 @@ export class AsyncStorageAdapter {
     } catch (error) {
       console.error('[StorageAdapter] Failed to save rest day completion:', error);
       throw error;
+    }
+  }
+
+  /**
+   * Remove pending rest day entries for a specific date
+   * Used when undoing a rest day or switching from rest to workout day
+   * @param {string|number} userId - User ID for scoped storage
+   * @param {string} dateStr - Date string in YYYY-MM-DD format
+   * @returns {Promise<number>} Number of entries removed
+   */
+  async removePendingRestDaysByDate(userId, dateStr) {
+    const normalizedUserId = String(userId);
+    try {
+      const pending = await this.getPendingWorkouts(normalizedUserId);
+      const filtered = pending.filter(item => {
+        if (item.type !== 'rest_day' && !item.id?.startsWith('rest-')) return true;
+        if (item.date) {
+          const d = new Date(item.date);
+          const itemDateStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+          return itemDateStr !== dateStr;
+        }
+        return true;
+      });
+      const key = getUserStorageKey(STORAGE_KEYS.PENDING_WORKOUTS, normalizedUserId);
+      await AsyncStorage.setItem(key, JSON.stringify(filtered));
+      const removed = pending.length - filtered.length;
+      if (removed > 0) console.log(`[StorageAdapter] Removed ${removed} pending rest day(s) for ${dateStr}`);
+      return removed;
+    } catch (error) {
+      console.error('[StorageAdapter] Failed to remove pending rest days:', error);
+      return 0;
     }
   }
 
