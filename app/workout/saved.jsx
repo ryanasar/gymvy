@@ -349,10 +349,11 @@ const CreateSavedWorkoutScreen = () => {
           keyExtractor={(item, index) => `exercise-${item.id || item.name}-${index}`}
           onDragEnd={handleReorderExercises}
           renderItem={renderExerciseItem}
-          ListHeaderComponent={renderHeader}
-          ListEmptyComponent={renderEmpty}
+          ListHeaderComponent={renderHeader()}
+          ListEmptyComponent={renderEmpty()}
           contentContainerStyle={styles.listContent}
           showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
         />
       </KeyboardAvoidingView>
 

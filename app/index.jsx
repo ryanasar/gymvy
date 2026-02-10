@@ -10,7 +10,7 @@ export default function Index() {
     return (
       <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#FFFFFF' }}>
         <Image
-          source={require('../assets/images/icon.png')}
+          source={require('../assets/images/logo-transparent.png')}
           style={{ width: 200, height: 200, marginBottom: 20 }}
           contentFit="contain"
           transition={200}

@@ -224,19 +224,17 @@ export default function ProgressScreen() {
     // Fire-and-forget backend save
     if (user?.id) {
       const today = new Date();
-      const dateStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
-      createBodyWeightEntry(user.id, weight, dateStr).catch(() => {});
+      createBodyWeightEntry(user.id, weight, today.toISOString()).catch(() => {});
     }
 
     // Reload data
-    loadData();
+    refreshProgress();
   };
 
   const handleRefresh = async () => {
     setRefreshing(true);
     await refreshProgress();
-    // Re-process after refresh
-    processData(preloadedBodyWeight, preloadedSessions);
+    // useEffect handles re-processing with fresh data, which calls setRefreshing(false)
   };
 
   return (

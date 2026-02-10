@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
@@ -74,15 +74,15 @@ const MakeWorkoutScreen = () => {
     setSelectedExercises([...selectedExercises, newExercise]);
   };
 
-  const removeExercise = (id) => {
-    setSelectedExercises(selectedExercises.filter(ex => ex.id !== id));
-  };
+  const removeExercise = useCallback((id) => {
+    setSelectedExercises(prev => prev.filter(ex => ex.id !== id));
+  }, []);
 
-  const updateExercise = (id, field, value) => {
-    setSelectedExercises(selectedExercises.map(ex =>
+  const updateExercise = useCallback((id, field, value) => {
+    setSelectedExercises(prev => prev.map(ex =>
       ex.id === id ? { ...ex, [field]: value } : ex
     ));
-  };
+  }, []);
 
   const handleCreateWorkout = async () => {
     if (!workoutName.trim()) {
@@ -142,7 +142,7 @@ const MakeWorkoutScreen = () => {
     }
   };
 
-  const renderExerciseItem = ({ item }) => {
+  const renderExerciseItem = useCallback(({ item }) => {
     const isCardio = isCardioExercise(item);
     const cardioFields = item.cardioFields || ['duration', 'incline'];
 
@@ -246,7 +246,7 @@ const MakeWorkoutScreen = () => {
         </View>
       </View>
     );
-  };
+  }, [removeExercise, updateExercise]);
 
   if (loading) {
     return (
@@ -266,7 +266,7 @@ const MakeWorkoutScreen = () => {
         <Text style={styles.title}>Create Workout</Text>
       </View>
 
-      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+      <ScrollView style={styles.content} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Workout Details</Text>
 
@@ -309,6 +309,7 @@ const MakeWorkoutScreen = () => {
               keyExtractor={(item) => item.id.toString()}
               renderItem={renderExerciseItem}
               scrollEnabled={false}
+              keyboardShouldPersistTaps="handled"
             />
           )}
         </View>

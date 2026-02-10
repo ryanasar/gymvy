@@ -720,11 +720,12 @@ const EditDayStep = ({
         keyExtractor={(item, index) => item.uniqueKey || `exercise-${item.id || item.name}-${index}`}
         onDragEnd={handleReorderExercises}
         renderItem={renderExerciseItem}
-        ListHeaderComponent={renderHeader}
+        ListHeaderComponent={renderHeader()}
         ListFooterComponent={null}
-        ListEmptyComponent={renderEmptyList}
+        ListEmptyComponent={renderEmptyList()}
         contentContainerStyle={styles.contentContainer}
         showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
       />
 
       {/* Exercise Picker Modal */}

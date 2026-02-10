@@ -160,7 +160,7 @@ const DayBuilder = ({ splitData, updateSplitData }) => {
 
       </View>
 
-      <ScrollView style={styles.content} showsVerticalScrollIndicator={false} scrollEnabled={!currentDay.isRest}>
+      <ScrollView style={styles.content} showsVerticalScrollIndicator={false} scrollEnabled={!currentDay.isRest} keyboardShouldPersistTaps="handled">
         <View style={styles.dayContent}>
           {/* Day Type Toggle */}
           <View style={styles.dayTypeToggleContainer}>
