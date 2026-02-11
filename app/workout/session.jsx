@@ -66,6 +66,9 @@ const WorkoutSessionScreen = () => {
   // Completion state - prevents interaction during finish animation
   const [isCompleting, setIsCompleting] = useState(false);
 
+  // Cache detected PRs so finishWorkoutCompletion doesn't re-detect (store already updated)
+  const detectedPRsRef = useRef([]);
+
   // Helper to detect if an exercise is cardio
   const isCardioExercise = (exercise) => {
     if (!exercise) return false;
@@ -244,6 +247,7 @@ const WorkoutSessionScreen = () => {
               return {
                 name: exerciseData?.name || `Exercise ${exercise.exerciseId}`,
                 id: exercise.exerciseId,
+                exerciseType: exerciseData?.exerciseType || null,
                 completedSets: completed,
                 totalSets: exercise.sets.length,
                 restSeconds: exercise.restSeconds || 0,
@@ -335,6 +339,7 @@ const WorkoutSessionScreen = () => {
             return {
               name: exerciseData?.name || `Exercise ${exercise.exerciseId}`,
               id: exercise.exerciseId,
+              exerciseType: exerciseData?.exerciseType || null,
               completedSets: 0,
               totalSets: exercise.sets.length,
               restSeconds: exercise.restSeconds || 0,
@@ -395,6 +400,7 @@ const WorkoutSessionScreen = () => {
             return {
               name: exerciseData?.name || `Exercise ${exercise.exerciseId}`,
               id: exercise.exerciseId,
+              exerciseType: exerciseData?.exerciseType || null,
               completedSets: 0,
               totalSets: exercise.sets.length,
               restSeconds: workoutExercise?.restSeconds || exercise.restSeconds || 0,
@@ -918,6 +924,7 @@ const WorkoutSessionScreen = () => {
       updated[currentExerciseIndex] = {
         name: newExercise.name,
         id: newExercise.id,
+        exerciseType: newExercise.exerciseType || null,
         completedSets: currentEx.completedSets,
         totalSets: currentEx.totalSets,
         sessionSets: preservedSets
@@ -1366,6 +1373,7 @@ const WorkoutSessionScreen = () => {
         }
         if (prResult.newPRs.length > 0) {
           completedWorkoutData.newPRs = prResult.newPRs;
+          detectedPRsRef.current = prResult.newPRs;
         }
       } catch (e) {
         console.error('[Session] Error detecting local PRs:', e);
@@ -1555,20 +1563,9 @@ const WorkoutSessionScreen = () => {
       completedAt: Date.now(),
     };
 
-    // Detect PRs locally
-    if (user?.id) {
-      try {
-        const prStore = await getLocalPRStore(user.id);
-        const prResult = detectPRs(exercises, prStore);
-        if (prResult.newPRs.length > 0 || Object.keys(prResult.updatedStore).length > Object.keys(prStore).length) {
-          await saveLocalPRStore(user.id, prResult.updatedStore);
-        }
-        if (prResult.newPRs.length > 0) {
-          completedWorkoutData.newPRs = prResult.newPRs;
-        }
-      } catch (e) {
-        console.error('[Session] Error detecting local PRs:', e);
-      }
+    // Use cached PRs from handleWorkoutComplete (re-detecting would find 0 since store is already updated)
+    if (detectedPRsRef.current.length > 0) {
+      completedWorkoutData.newPRs = detectedPRsRef.current;
     }
 
     // Attach database ID from sync

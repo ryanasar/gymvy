@@ -12,6 +12,7 @@ import { getBestOneRMFromSets } from '@/utils/oneRMCalculator';
 import BodyWeightCard from '@/components/progress/BodyWeightCard';
 import ExerciseOneRMCard from '@/components/progress/ExerciseOneRMCard';
 import ExercisePickerDropdown from '@/components/progress/ExercisePickerDropdown';
+import { StreakRestoreModal } from '@/components/streak/StreakRestoreModal';
 
 const BIG_THREE = ['Bench Press', 'Squat', 'Deadlift'];
 
@@ -239,6 +240,8 @@ export default function ProgressScreen() {
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
+      <StreakRestoreModal visible={true} onClose={() => {}} />
+
       {/* Header */}
       <View style={[styles.headerContainer, { backgroundColor: colors.cardBackground, shadowColor: colors.shadow }]}>
         <Text style={[styles.title, { color: colors.text }]}>Progress</Text>

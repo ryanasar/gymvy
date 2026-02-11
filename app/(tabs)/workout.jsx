@@ -29,6 +29,7 @@ import { getSavedWorkouts } from '@/services/api/savedWorkouts';
 import { useWorkoutCompletion } from '@/hooks/workout/useWorkoutCompletion';
 import { calculateWorkoutCardCollapse } from '@/utils/workout/workoutCalculations';
 import { handleDaySelection } from '@/utils/workout/splitManagement';
+import { buildBadges } from '@/constants/badges';
 
 const WORKOUT_TABS = [
   { key: 'split', label: 'My Split' },
@@ -541,10 +542,14 @@ const WorkoutScreen = () => {
                       exercises: completedIndividualWorkout.exercises || [],
                       source: completedIndividualWorkout.source || 'freestyle',
                     };
+                    const badges = buildBadges({
+                      streak: currentStreak,
+                      prExercises: completedIndividualWorkout.newPRs || [],
+                    });
                     handleNavigation('/post/create', {
                       workoutData: JSON.stringify(workoutDataForPost),
                       workoutSessionId: completedIndividualWorkout.workoutSessionId?.toString() || '',
-                      streak: currentStreak.toString(),
+                      badges: badges ? JSON.stringify(badges) : '',
                     });
                   }}
                   onUncomplete={async () => {
@@ -566,11 +571,9 @@ const WorkoutScreen = () => {
                 onBack={() => setSelectedSavedWorkout(null)}
                 onEdit={(workout) => handleNavigation('/workout/make-workout', { editWorkoutId: workout.id })}
                 onMarkComplete={async (workout) => {
-                  // Show celebration immediately (optimistic UI)
                   setSelectedSavedWorkout(null);
-                  setShowCelebration(true);
 
-                  // Run all async operations in background
+                  // Run all async operations, then show celebration after streak is ready
                   (async () => {
                     try {
                       const workoutSessionId = await createCompletedWorkoutSession(user?.id, {
@@ -594,9 +597,10 @@ const WorkoutScreen = () => {
                       await manualSync();
                       await markIndividualWorkoutCompleted(workoutData);
 
-                      // Calculate streak
+                      // Calculate streak before showing celebration
                       const streak = await calculateStreakFromLocal(user?.id, 'workout');
                       setCurrentStreak(streak);
+                      setShowCelebration(true);
                     } catch (error) {
                       console.error('[Workout Tab] Error marking workout complete:', error);
                     }
@@ -823,14 +827,14 @@ const WorkoutScreen = () => {
   const handleToggleCompletionWrapper = async () => {
     const workoutId = await handleToggleCompletion(isCompleted);
     if (workoutId && !isCompleted) {
-      // Show celebration when marking complete
-      setShowCelebration(true);
+      // Calculate streak before showing celebration so badge data is ready
       try {
         const streak = await calculateStreakFromLocal(user?.id, 'workout');
         setCurrentStreak(streak);
       } catch (error) {
         console.error('[Workout Tab] Error calculating streak:', error);
       }
+      setShowCelebration(true);
     } else if (!workoutId && isCompleted) {
       // Recalculate streak when un-completing
       try {
@@ -933,11 +937,9 @@ const WorkoutScreen = () => {
             onSelectWorkout={(workout) => setSelectedSavedWorkout(workout)}
             onBackFromWorkout={() => setSelectedSavedWorkout(null)}
             onMarkComplete={async (workout) => {
-              // Show celebration immediately (optimistic UI)
               setSelectedSavedWorkout(null);
-              setShowCelebration(true);
 
-              // Run all async operations in background
+              // Run all async operations, then show celebration after streak is ready
               (async () => {
                 try {
                   const workoutSessionId = await createCompletedWorkoutSession(user?.id, {
@@ -961,14 +963,15 @@ const WorkoutScreen = () => {
                   await manualSync();
                   await markIndividualWorkoutCompleted(workoutData);
 
-                  // Calculate streak
+                  // Calculate streak before showing celebration
                   const streak = await calculateStreakFromLocal(user?.id, 'workout');
                   setCurrentStreak(streak);
+                  setShowCelebration(true);
                 } catch (error) {
                   console.error('[Workout Tab] Error marking workout complete:', error);
                 }
               })();
-            }}
+            }
           />
         )}
       </ScrollView>

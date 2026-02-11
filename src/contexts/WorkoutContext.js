@@ -5,6 +5,7 @@ import { useAuth } from '@/lib/auth';
 import { getSplitsByUserId } from "@/services/api/splits";
 import { getCustomExercises } from '@/services/api/customExercises';
 import { checkNetworkStatus } from '@/services/network/networkService';
+import { markRestDay } from '@/services/api/dailyActivity';
 
 const WorkoutContext = createContext();
 
@@ -256,35 +257,42 @@ export const WorkoutProvider = ({ children }) => {
           }
 
           if (dateToCheck && dateToCheck < today) {
-            // Check if the workout on the last check date was completed
             const wasLastDayCompleted = savedCompletionDate === dateToCheck;
-
-            // Check if a free rest day was used — skip advancement if so
             const freeRestDayDate = await AsyncStorage.getItem('freeRestDayDate');
             const wasFreeRestDay = freeRestDayDate === dateToCheck;
+            const elapsed = daysBetween(dateToCheck, today);
 
-            // Check if the current day in the split is a rest day
-            const currentDayData = appState.split.days?.[currentDayValue % appState.split.totalDays];
-            const isCurrentDayRest = currentDayData?.isRest === true;
+            const result = computeAdvancedDay(
+              currentDayValue, currentWeekValue, appState.split,
+              elapsed, wasLastDayCompleted, wasFreeRestDay, dateToCheck
+            );
 
-            // Only advance if the last day was completed or was a rest day
-            // BUT skip advancement if it was a free rest day
-            if ((wasLastDayCompleted && !wasFreeRestDay) || isCurrentDayRest) {
-              const nextDayIndex = (currentDayValue + 1) % appState.split.totalDays;
-              currentDayValue = nextDayIndex;
-
-              if (nextDayIndex === 0) {
-                currentWeekValue = currentWeekValue + 1;
-              }
-
+            if (result.didAdvance) {
+              currentDayValue = result.dayIndex;
+              currentWeekValue = result.week;
               setCurrentDayIndex(currentDayValue);
               setCurrentWeek(currentWeekValue);
               await AsyncStorage.setItem('currentDayIndex', currentDayValue.toString());
               await AsyncStorage.setItem('currentWeek', currentWeekValue.toString());
             }
-            // else: workout wasn't completed and wasn't a rest day — stay on same day
 
-            // Clear freeRestDayDate after processing
+            // Record skipped rest days to backend (fire-and-forget)
+            if (result.skippedRestDays.length > 0 && user?.id) {
+              for (const restDay of result.skippedRestDays) {
+                try {
+                  await markRestDay(user.id, restDay.date, {
+                    activityType: 'planned_rest',
+                    isPlanned: true,
+                    splitId: appState.split.id,
+                    dayNumber: restDay.dayIndex + 1,
+                    plannedWorkoutName: restDay.dayName,
+                  });
+                } catch (e) {
+                  // Non-critical — don't block advancement
+                }
+              }
+            }
+
             if (freeRestDayDate) {
               await AsyncStorage.removeItem('freeRestDayDate');
             }
@@ -425,6 +433,83 @@ export const WorkoutProvider = ({ children }) => {
     return `${year}-${month}-${day}`;
   };
 
+  // Compute calendar days between two YYYY-MM-DD strings
+  const daysBetween = (dateStrA, dateStrB) => {
+    const [yA, mA, dA] = dateStrA.split('-').map(Number);
+    const [yB, mB, dB] = dateStrB.split('-').map(Number);
+    const a = new Date(yA, mA - 1, dA);
+    const b = new Date(yB, mB - 1, dB);
+    return Math.round((b - a) / (1000 * 60 * 60 * 24));
+  };
+
+  // Add N days to a YYYY-MM-DD string and return the resulting YYYY-MM-DD string
+  const addDaysToDateString = (dateStr, n) => {
+    const [y, m, d] = dateStr.split('-').map(Number);
+    const date = new Date(y, m - 1, d);
+    date.setDate(date.getDate() + n);
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
+
+  // Shared advancement logic: advance through elapsed days, auto-skipping rest days
+  // Returns { dayIndex, week, didAdvance, skippedRestDays }
+  const computeAdvancedDay = (startDayIndex, startWeek, split, elapsedDays, wasCompleted, wasFreeRestDay, lastCheckDate) => {
+    const totalDays = split.totalDays;
+    let dayIndex = startDayIndex;
+    let week = startWeek;
+    let didAdvance = false;
+    const skippedRestDays = [];
+
+    // Cap iterations to prevent infinite loops
+    const maxIterations = Math.min(elapsedDays, totalDays);
+
+    for (let i = 0; i < maxIterations; i++) {
+      const currentDayData = split.days?.[dayIndex % totalDays];
+      const isCurrentDayRest = currentDayData?.isRest === true;
+
+      if (i === 0) {
+        // First iteration: advance if last day was completed (and not free rest) OR current day is rest
+        if ((wasCompleted && !wasFreeRestDay) || isCurrentDayRest) {
+          // If it's a rest day we're advancing past, record it
+          if (isCurrentDayRest) {
+            skippedRestDays.push({
+              date: addDaysToDateString(lastCheckDate, i + 1),
+              dayIndex: dayIndex % totalDays,
+              dayName: currentDayData?.name || 'Rest Day',
+            });
+          }
+          const nextDayIndex = (dayIndex + 1) % totalDays;
+          if (nextDayIndex === 0) week = week + 1;
+          dayIndex = nextDayIndex;
+          didAdvance = true;
+        } else {
+          // Workout wasn't completed and wasn't a rest day — stop
+          break;
+        }
+      } else {
+        // Subsequent iterations: only auto-advance through rest days
+        const nextDayData = split.days?.[dayIndex % totalDays];
+        if (nextDayData?.isRest === true) {
+          skippedRestDays.push({
+            date: addDaysToDateString(lastCheckDate, i + 1),
+            dayIndex: dayIndex % totalDays,
+            dayName: nextDayData?.name || 'Rest Day',
+          });
+          const nextDayIndex = (dayIndex + 1) % totalDays;
+          if (nextDayIndex === 0) week = week + 1;
+          dayIndex = nextDayIndex;
+        } else {
+          // Hit a workout day — stop advancing
+          break;
+        }
+      }
+    }
+
+    return { dayIndex, week, didAdvance, skippedRestDays };
+  };
+
   // Check for date changes while app is open
   useEffect(() => {
     if (!isInitialized || !activeSplit) return;
@@ -436,12 +521,10 @@ export const WorkoutProvider = ({ children }) => {
         const today = getLocalDateString();
 
         if (savedLastCheckDate && savedLastCheckDate < today) {
-          // Check if the workout on the last check date was completed
           const wasLastDayCompleted = savedCompletionDate === savedLastCheckDate;
-
-          // Check if a free rest day was used — skip advancement if so
           const freeRestDayDate = await AsyncStorage.getItem('freeRestDayDate');
           const wasFreeRestDay = freeRestDayDate === savedLastCheckDate;
+          const elapsed = daysBetween(savedLastCheckDate, today);
 
           // Read current progress from storage to avoid stale state
           const savedDayIdx = await AsyncStorage.getItem('currentDayIndex');
@@ -449,27 +532,35 @@ export const WorkoutProvider = ({ children }) => {
           let tempDayIndex = savedDayIdx ? parseInt(savedDayIdx) : currentDayIndex;
           let tempWeek = savedWeekVal ? parseInt(savedWeekVal) : currentWeek;
 
-          // Check if the current day is a rest day
-          const currentDayData = activeSplit.days?.[tempDayIndex % activeSplit.totalDays];
-          const isCurrentDayRest = currentDayData?.isRest === true;
+          const result = computeAdvancedDay(
+            tempDayIndex, tempWeek, activeSplit,
+            elapsed, wasLastDayCompleted, wasFreeRestDay, savedLastCheckDate
+          );
 
-          // Only advance if the last day was completed or was a rest day
-          // BUT skip advancement if it was a free rest day
-          if ((wasLastDayCompleted && !wasFreeRestDay) || isCurrentDayRest) {
-            const nextDayIndex = (tempDayIndex + 1) % activeSplit.totalDays;
-            tempDayIndex = nextDayIndex;
-
-            if (nextDayIndex === 0) {
-              tempWeek = tempWeek + 1;
-            }
-
-            setCurrentDayIndex(tempDayIndex);
-            setCurrentWeek(tempWeek);
-            await AsyncStorage.setItem('currentDayIndex', tempDayIndex.toString());
-            await AsyncStorage.setItem('currentWeek', tempWeek.toString());
+          if (result.didAdvance) {
+            setCurrentDayIndex(result.dayIndex);
+            setCurrentWeek(result.week);
+            await AsyncStorage.setItem('currentDayIndex', result.dayIndex.toString());
+            await AsyncStorage.setItem('currentWeek', result.week.toString());
           }
 
-          // Clear freeRestDayDate after processing
+          // Record skipped rest days to backend (fire-and-forget)
+          if (result.skippedRestDays.length > 0 && user?.id) {
+            for (const restDay of result.skippedRestDays) {
+              try {
+                await markRestDay(user.id, restDay.date, {
+                  activityType: 'planned_rest',
+                  isPlanned: true,
+                  splitId: activeSplit.id,
+                  dayNumber: restDay.dayIndex + 1,
+                  plannedWorkoutName: restDay.dayName,
+                });
+              } catch (e) {
+                // Non-critical — don't block advancement
+              }
+            }
+          }
+
           if (freeRestDayDate) {
             await AsyncStorage.removeItem('freeRestDayDate');
           }
