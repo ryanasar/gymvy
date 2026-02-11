@@ -971,7 +971,7 @@ const WorkoutScreen = () => {
                   console.error('[Workout Tab] Error marking workout complete:', error);
                 }
               })();
-            }
+            }}
           />
         )}
       </ScrollView>

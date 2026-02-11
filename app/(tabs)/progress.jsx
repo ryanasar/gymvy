@@ -240,7 +240,7 @@ export default function ProgressScreen() {
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
-      <StreakRestoreModal visible={true} onClose={() => {}} />
+      {/* <StreakRestoreModal visible={true} onClose={() => {}} /> */}
 
       {/* Header */}
       <View style={[styles.headerContainer, { backgroundColor: colors.cardBackground, shadowColor: colors.shadow }]}>

@@ -785,16 +785,23 @@ export const WorkoutProvider = ({ children }) => {
 
     try {
       if (workoutSessionId) {
-        await AsyncStorage.setItem('lastCompletionDate', today);
-        await AsyncStorage.setItem('lastCheckDate', today);
-        await AsyncStorage.setItem('completedSessionId', workoutSessionId.toString());
+        // Parallelize independent AsyncStorage writes
+        const writes = [
+          AsyncStorage.setItem('lastCompletionDate', today),
+          AsyncStorage.setItem('lastCheckDate', today),
+          AsyncStorage.setItem('completedSessionId', workoutSessionId.toString()),
+        ];
 
         // Store the actual completed workout data (exercises performed, not template)
         if (completedWorkoutData) {
           setCompletedSplitWorkout(completedWorkoutData);
-          await AsyncStorage.setItem('completedSplitWorkout', JSON.stringify(completedWorkoutData));
-          await AsyncStorage.setItem('completedSplitWorkoutDate', today);
+          writes.push(
+            AsyncStorage.setItem('completedSplitWorkout', JSON.stringify(completedWorkoutData)),
+            AsyncStorage.setItem('completedSplitWorkoutDate', today),
+          );
         }
+
+        await Promise.all(writes);
 
         // Mark today as completed in calendar with workout details
         if (user?.id) {
@@ -906,8 +913,47 @@ export const WorkoutProvider = ({ children }) => {
         const storedWorkoutJson = await AsyncStorage.getItem('completedIndividualWorkout');
         const storedWorkout = storedWorkoutJson ? JSON.parse(storedWorkoutJson) : null;
 
-        // Note: We intentionally don't delete the workout session from backend
-        // This prevents errors if user posted about workout, and orphaned sessions are harmless
+        // Delete workout session from backend and revert PRs
+        if (user?.id && storedWorkout?.workoutSessionId) {
+          const localId = storedWorkout.workoutSessionId;
+          const databaseId = await storage.getWorkoutDatabaseId(user.id, localId);
+
+          if (databaseId) {
+            try {
+              const { deleteWorkoutSession } = await import('@/services/api/workoutSessions');
+              const result = await deleteWorkoutSession(databaseId);
+
+              // Update local PR store with recalculated PRs
+              if (result?.updatedPRs) {
+                const { getLocalPRStore, saveLocalPRStore } = await import('@/services/storage/prTracking');
+                const prStore = await getLocalPRStore(user.id);
+                for (const [exercise, value] of Object.entries(result.updatedPRs)) {
+                  if (value === null) {
+                    delete prStore[exercise];
+                  } else {
+                    prStore[exercise] = { bestE1RM: value };
+                  }
+                }
+                await saveLocalPRStore(user.id, prStore);
+              }
+            } catch (error) {
+              if (error.response?.status !== 404) {
+                console.error('[WorkoutContext] Error deleting workout from backend:', error);
+              }
+            }
+            await storage.deleteWorkoutDatabaseId(user.id, localId);
+          } else {
+            // No backend ID — re-seed local PR store from backend to fix local-only inflation
+            try {
+              const { fetchAndSeedPRs, saveLocalPRStore } = await import('@/services/storage/prTracking');
+              // Clear local store so fetchAndSeedPRs will re-seed from backend
+              await saveLocalPRStore(user.id, {});
+              await fetchAndSeedPRs(user.id);
+            } catch (error) {
+              console.error('[WorkoutContext] Error re-seeding PRs from backend:', error);
+            }
+          }
+        }
 
         // Clear state
         setIndividualWorkoutCompleted(false);

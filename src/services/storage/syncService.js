@@ -159,40 +159,50 @@ function convertWorkoutToApiFormat(workout, userId, exerciseMap, customExercises
  * Syncs a single workout to the backend
  * @param {string|number} userId - User ID for scoped storage
  * @param {import('./types').WorkoutSession} workout
+ * @param {Object} [preloaded] - Optional preloaded data to avoid redundant fetches
+ * @param {Object} [preloaded.exerciseMap] - Pre-built exercise map
+ * @param {Array} [preloaded.customExercises] - Pre-fetched custom exercises
  * @returns {Promise<{success: boolean, error?: any, shouldRetry?: boolean, result?: any}>}
  */
-export async function syncWorkout(userId, workout) {
+export async function syncWorkout(userId, workout, preloaded) {
   try {
-    // Load exercise database to get exercise names (bundled)
-    const exercises = await storage.getExercises();
+    let exerciseMap;
+    let customExercises;
 
-    console.log('[Sync] Exercise database loaded:', exercises.length, 'exercises');
+    if (preloaded?.exerciseMap && preloaded?.customExercises) {
+      // Use preloaded data from syncPendingWorkouts batch
+      exerciseMap = preloaded.exerciseMap;
+      customExercises = preloaded.customExercises;
+    } else {
+      // Standalone call — load fresh
+      const exercises = await storage.getExercises();
 
-    if (!exercises || exercises.length === 0) {
-      console.warn('[Sync] Exercise database is empty! Cannot enrich workout with names.');
-    }
+      console.log('[Sync] Exercise database loaded:', exercises.length, 'exercises');
 
-    // Build exercise map from local database
-    const exerciseMap = {};
-    exercises.forEach(ex => {
-      exerciseMap[String(ex.id)] = ex;
-    });
-
-    // Fetch custom exercises from backend (no local cache)
-    let customExercises = [];
-    try {
-      const isOnline = await checkNetworkStatus();
-      if (isOnline) {
-        customExercises = await fetchUserCustomExercises(userId);
+      if (!exercises || exercises.length === 0) {
+        console.warn('[Sync] Exercise database is empty! Cannot enrich workout with names.');
       }
-    } catch (err) {
-      console.warn('[Sync] Failed to fetch custom exercises:', err.message);
-    }
 
-    // Add custom exercises to map
-    customExercises.forEach(ex => {
-      exerciseMap[String(ex.id)] = { ...ex, isCustom: true };
-    });
+      exerciseMap = {};
+      exercises.forEach(ex => {
+        exerciseMap[String(ex.id)] = ex;
+      });
+
+      customExercises = [];
+      try {
+        const isOnline = await checkNetworkStatus();
+        if (isOnline) {
+          customExercises = await fetchUserCustomExercises(userId);
+        }
+      } catch (err) {
+        console.warn('[Sync] Failed to fetch custom exercises:', err.message);
+      }
+
+      // Add custom exercises to map
+      customExercises.forEach(ex => {
+        exerciseMap[String(ex.id)] = { ...ex, isCustom: true };
+      });
+    }
 
     // Convert to new API format with flat sets array
     const apiData = convertWorkoutToApiFormat(workout, userId, exerciseMap, customExercises);
@@ -273,6 +283,35 @@ export async function syncPendingWorkouts(userId) {
   let failed = 0;
   const errors = [];
 
+  // Preload exercise DB and custom exercises once for the entire batch
+  let preloaded = null;
+  const workoutItems = pendingWorkouts.filter(w => w.type !== 'rest_day' && !w.id?.startsWith('rest-'));
+  if (workoutItems.length > 0) {
+    try {
+      const exercises = await storage.getExercises();
+      const exerciseMap = {};
+      exercises.forEach(ex => {
+        exerciseMap[String(ex.id)] = ex;
+      });
+
+      let customExercises = [];
+      try {
+        customExercises = await fetchUserCustomExercises(normalizedUserId);
+      } catch (err) {
+        console.warn('[Sync] Failed to fetch custom exercises for batch:', err.message);
+      }
+
+      // Add custom exercises to map
+      customExercises.forEach(ex => {
+        exerciseMap[String(ex.id)] = { ...ex, isCustom: true };
+      });
+
+      preloaded = { exerciseMap, customExercises };
+    } catch (err) {
+      console.warn('[Sync] Failed to preload exercise data, will load per-workout:', err.message);
+    }
+  }
+
   console.log('[Sync] Starting to process', pendingWorkouts.length, 'pending workouts');
 
   for (const workout of pendingWorkouts) {
@@ -305,7 +344,7 @@ export async function syncPendingWorkouts(userId) {
     }
 
     console.log('[Sync] Syncing workout:', workout.id);
-    const result = await syncWorkout(normalizedUserId, workout);
+    const result = await syncWorkout(normalizedUserId, workout, preloaded);
 
     if (result.success) {
       console.log('[Sync] Workout synced successfully:', workout.id);
@@ -317,7 +356,7 @@ export async function syncPendingWorkouts(userId) {
       // mark it as synced to prevent infinite retry loop
       if (result.shouldRetry === false) {
         console.warn('[Sync] Marking workout as synced to prevent infinite retry:', workout.id);
-        await storage.markWorkoutSynced(userId, workout.id);
+        await storage.markWorkoutSynced(normalizedUserId, workout.id);
       }
 
       failed++;

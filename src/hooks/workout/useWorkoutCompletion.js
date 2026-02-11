@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Alert } from 'react-native';
 import { storage, calculateStreakFromLocal } from '@/services/storage';
 import { syncPendingWorkouts } from '@/services/storage/syncService';
+import { getLocalPRStore, saveLocalPRStore } from '@/services/storage/prTracking';
 
 export const useWorkoutCompletion = ({
   userId,
@@ -28,8 +29,21 @@ export const useWorkoutCompletion = ({
           if (databaseId) {
             try {
               const { deleteWorkoutSession } = require('@/services/api/workoutSessions');
-              await deleteWorkoutSession(databaseId);
+              const result = await deleteWorkoutSession(databaseId);
               console.log('[Workout Completion] Deleted workout from backend:', databaseId);
+
+              // Update local PR store with recalculated PRs
+              if (result?.updatedPRs && userId) {
+                const prStore = await getLocalPRStore(userId);
+                for (const [exercise, value] of Object.entries(result.updatedPRs)) {
+                  if (value === null) {
+                    delete prStore[exercise];
+                  } else {
+                    prStore[exercise] = { bestE1RM: value };
+                  }
+                }
+                await saveLocalPRStore(userId, prStore);
+              }
             } catch (error) {
               if (error.response?.status !== 404) {
                 console.error('[Workout Completion] Error deleting workout from backend:', error);

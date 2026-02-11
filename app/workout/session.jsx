@@ -69,6 +69,9 @@ const WorkoutSessionScreen = () => {
   // Cache detected PRs so finishWorkoutCompletion doesn't re-detect (store already updated)
   const detectedPRsRef = useRef([]);
 
+  // Track workout start time so we don't need to re-read active workout after completion
+  const workoutStartedAtRef = useRef(null);
+
   // Helper to detect if an exercise is cardio
   const isCardioExercise = (exercise) => {
     if (!exercise) return false;
@@ -194,6 +197,7 @@ const WorkoutSessionScreen = () => {
           } else {
             // Restore the workout state from storage
             setWorkoutSessionId(activeWorkout.id);
+            workoutStartedAtRef.current = activeWorkout.startedAt || Date.now();
 
             // Restore source and workout name from the active workout
             setCurrentSource(activeWorkout.source || 'split');
@@ -302,6 +306,7 @@ const WorkoutSessionScreen = () => {
           // Start freestyle workout (empty exercises)
           newWorkout = await startFreestyleWorkout(user?.id);
           setWorkoutSessionId(newWorkout.id);
+          workoutStartedAtRef.current = newWorkout.startedAt || Date.now();
           setWorkoutName(newWorkout.workoutName);
           setCurrentSource('freestyle');
           setExercises([]);
@@ -317,6 +322,7 @@ const WorkoutSessionScreen = () => {
           // Start from saved workout
           newWorkout = await startSavedWorkout(user?.id, savedWorkoutId);
           setWorkoutSessionId(newWorkout.id);
+          workoutStartedAtRef.current = newWorkout.startedAt || Date.now();
           setWorkoutName(newWorkout.workoutName);
           setCurrentSource('saved');
 
@@ -372,6 +378,7 @@ const WorkoutSessionScreen = () => {
 
           newWorkout = await startWorkout(user?.id, splitId, dayIndex);
           setWorkoutSessionId(newWorkout.id);
+          workoutStartedAtRef.current = newWorkout.startedAt || Date.now();
           setWorkoutName(workoutData.dayName || 'Workout');
           setCurrentSource('split');
 
@@ -1385,48 +1392,51 @@ const WorkoutSessionScreen = () => {
       try {
         await completeWorkout(user?.id, workoutSessionId);
 
-        // Track workout completion for analytics
-        const activeWorkoutData = await getActiveWorkout(user?.id);
-        const startTime = activeWorkoutData?.startedAt || Date.now();
-        const durationSeconds = Math.floor((Date.now() - startTime) / 1000);
+        // Track workout completion for analytics using ref (active workout is already cleared)
+        const durationSeconds = Math.floor((Date.now() - (workoutStartedAtRef.current || Date.now())) / 1000);
         trackWorkoutCompleted({
           durationSeconds,
           exerciseCount: exercises.length,
           totalSets: workoutTotalSets,
         });
 
-        // Update pending count and sync immediately to get database ID
-        await updatePendingCount();
-        await manualSync();
+        // Prepare workout details for calendar (needed before deferred tasks)
+        const muscleGroups = [];
+        exercises.forEach(ex => {
+          const muscle = ex.primaryMuscle || ex.muscleGroup;
+          if (muscle && !muscleGroups.includes(muscle)) {
+            muscleGroups.push(muscle);
+          }
+        });
 
-        // Get the database ID after sync completes
-        const databaseId = await storage.getWorkoutDatabaseId(user?.id, workoutSessionId);
-        if (databaseId) {
-          completedWorkoutData.databaseWorkoutSessionId = databaseId;
-        }
+        const workoutDetails = {
+          workoutName: workoutName,
+          muscleGroups,
+          totalExercises: exercises.length,
+          totalSets: workoutTotalSets || null,
+          splitEmoji: workoutData?.emoji,
+        };
 
-        // Only mark split workouts as completed in context (affects day progression)
-        if (currentSource === 'split') {
-          // Extract workout details for calendar popup
-          const muscleGroups = [];
-          exercises.forEach(ex => {
-            const muscle = ex.primaryMuscle || ex.muscleGroup;
-            if (muscle && !muscleGroups.includes(muscle)) {
-              muscleGroups.push(muscle);
+        // Defer sync + calendar update — navigate immediately for faster UX
+        // The create post flow has its own sync-wait + polling fallback
+        const capturedUserId = user?.id;
+        const capturedSessionId = workoutSessionId;
+        const capturedSource = currentSource;
+        const capturedCompletedData = { ...completedWorkoutData };
+        (async () => {
+          try {
+            await Promise.all([updatePendingCount(), manualSync()]);
+            const databaseId = await storage.getWorkoutDatabaseId(capturedUserId, capturedSessionId);
+            if (databaseId) {
+              capturedCompletedData.databaseWorkoutSessionId = databaseId;
             }
-          });
-
-          const workoutDetails = {
-            workoutName: workoutName,
-            muscleGroups,
-            totalExercises: exercises.length,
-            totalSets: workoutTotalSets || null,
-            splitEmoji: workoutData?.emoji,
-          };
-
-          // Pass the actual completed workout data (4th param) for display on workout tab
-          await markWorkoutCompleted(workoutSessionId, false, workoutDetails, completedWorkoutData);
-        }
+            if (capturedSource === 'split') {
+              await markWorkoutCompleted(capturedSessionId, false, workoutDetails, capturedCompletedData);
+            }
+          } catch (e) {
+            console.error('[Session] Deferred tasks failed:', e);
+          }
+        })();
       } catch (error) {
         console.error('[Session] Error completing workout in storage:', error);
       }

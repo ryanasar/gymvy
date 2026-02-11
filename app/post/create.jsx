@@ -79,6 +79,9 @@ const CreatePostScreen = () => {
   // Ref-based guard to prevent race conditions between state check and setState
   const isPostingRef = useRef(false);
 
+  // Background image upload ref — starts uploading on image selection
+  const backgroundUploadRef = useRef(null);
+
   const handleImagePick = () => {
     Alert.alert(
       'Add Photo',
@@ -125,6 +128,18 @@ const CreatePostScreen = () => {
         const photoUri = result.assets[0].uri;
         setSelectedImage(photoUri);
 
+        // Start background image upload while user writes caption
+        backgroundUploadRef.current = (async () => {
+          const prepared = await preparePostImage(photoUri);
+          const uploadResult = await uploadImage(prepared.uri, 'posts');
+          setUploadedImageUrl(uploadResult.url);
+          setUploadedImagePath(uploadResult.path);
+          return uploadResult;
+        })().catch((err) => {
+          console.warn('[CreatePost] Background upload failed, will retry on post:', err.message);
+          return null;
+        });
+
         // Save to camera roll
         try {
           const { status: mediaStatus } = await MediaLibrary.requestPermissionsAsync();
@@ -163,7 +178,20 @@ const CreatePostScreen = () => {
       });
 
       if (!result.canceled && result.assets && result.assets.length > 0) {
-        setSelectedImage(result.assets[0].uri);
+        const photoUri = result.assets[0].uri;
+        setSelectedImage(photoUri);
+
+        // Start background image upload while user writes caption
+        backgroundUploadRef.current = (async () => {
+          const prepared = await preparePostImage(photoUri);
+          const uploadResult = await uploadImage(prepared.uri, 'posts');
+          setUploadedImageUrl(uploadResult.url);
+          setUploadedImagePath(uploadResult.path);
+          return uploadResult;
+        })().catch((err) => {
+          console.warn('[CreatePost] Background upload failed, will retry on post:', err.message);
+          return null;
+        });
       }
     } catch (error) {
       console.error('Error choosing from library:', error);
@@ -202,32 +230,44 @@ const CreatePostScreen = () => {
 
       // Upload image if one is selected and not already uploaded
       if (selectedImage && !uploadedImageUrl) {
-        try {
-          // Resize and compress image before upload
-          const preparedImage = await preparePostImage(selectedImage);
-          const uploadResult = await uploadImage(preparedImage.uri, 'posts');
-          imageUrl = uploadResult.url;
-          imagePath = uploadResult.path;
-          setUploadedImageUrl(imageUrl);
-          setUploadedImagePath(imagePath);
-        } catch (uploadError) {
-          console.error('Error uploading image:', uploadError);
-          const userChoice = await new Promise(resolve => {
-            Alert.alert(
-              'Image Upload Failed',
-              uploadError.message || 'Failed to upload image.',
-              [
-                { text: 'Post Without Image', onPress: () => resolve('continue') },
-                { text: 'Cancel', style: 'cancel', onPress: () => resolve('cancel') },
-              ]
-            );
-          });
-          if (userChoice === 'cancel') {
-            setIsPosting(false);
-            return;
+        // Check if background upload completed
+        if (backgroundUploadRef.current) {
+          const bgResult = await backgroundUploadRef.current;
+          backgroundUploadRef.current = null;
+          if (bgResult) {
+            imageUrl = bgResult.url;
+            imagePath = bgResult.path;
           }
-          imageUrl = null;
-          imagePath = null;
+        }
+
+        // Fallback: upload now if background upload didn't finish or failed
+        if (!imageUrl) {
+          try {
+            const preparedImage = await preparePostImage(selectedImage);
+            const uploadResult = await uploadImage(preparedImage.uri, 'posts');
+            imageUrl = uploadResult.url;
+            imagePath = uploadResult.path;
+            setUploadedImageUrl(imageUrl);
+            setUploadedImagePath(imagePath);
+          } catch (uploadError) {
+            console.error('Error uploading image:', uploadError);
+            const userChoice = await new Promise(resolve => {
+              Alert.alert(
+                'Image Upload Failed',
+                uploadError.message || 'Failed to upload image.',
+                [
+                  { text: 'Post Without Image', onPress: () => resolve('continue') },
+                  { text: 'Cancel', style: 'cancel', onPress: () => resolve('cancel') },
+                ]
+              );
+            });
+            if (userChoice === 'cancel') {
+              setIsPosting(false);
+              return;
+            }
+            imageUrl = null;
+            imagePath = null;
+          }
         }
       }
 
@@ -315,28 +355,22 @@ const CreatePostScreen = () => {
 
         const createdPost = await createPost(postData);
 
-        // Track post creation for analytics
+        // Track post creation for analytics (fire-and-forget, no await needed)
         trackPostCreated({
           hasImage: !!imageUrl,
           hasWorkout: !!databaseWorkoutSessionId,
         });
 
-        // Send tag notifications to tagged users
-        if (createdPost?.id && taggedUsers.length > 0) {
-          await Promise.all(
-            taggedUsers.map(taggedUser =>
-              createTagNotification(taggedUser.id, user.id, createdPost.id)
-            )
-          );
-        }
-
-        // Mark this workout session as posted
-        if (workoutSessionId) {
-          await AsyncStorage.setItem(`posted_${workoutSessionId}`, 'true');
-        }
-
-        // Refresh posts to show the new post
-        await refreshPosts();
+        // Parallelize independent post finalization tasks
+        await Promise.all([
+          createdPost?.id && taggedUsers.length > 0
+            ? Promise.all(taggedUsers.map(u => createTagNotification(u.id, user.id, createdPost.id)))
+            : Promise.resolve(),
+          workoutSessionId
+            ? AsyncStorage.setItem(`posted_${workoutSessionId}`, 'true')
+            : Promise.resolve(),
+          refreshPosts(),
+        ]);
 
         // Trigger automatic sync
         manualSync();
@@ -460,6 +494,8 @@ const CreatePostScreen = () => {
                   onPress={() => {
                     setSelectedImage(null);
                     setUploadedImageUrl(null);
+                    setUploadedImagePath(null);
+                    backgroundUploadRef.current = null;
                   }}
                 >
                   <Text style={styles.removeImageText}>✕</Text>

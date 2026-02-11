@@ -119,18 +119,13 @@ export class AsyncStorageAdapter {
       activeWorkout.completedAt = Date.now();
       activeWorkout.pendingSync = true;
 
-      // Add to pending workouts for sync
-      await this.addToPendingWorkouts(normalizedUserId, activeWorkout);
-
-      // Log the new pending count for debugging
-      const pendingCount = (await this.getPendingWorkouts(normalizedUserId)).length;
-      console.log('[StorageAdapter] Added to pending workouts, new count:', pendingCount);
-
-      // Add to completed workouts history (persists after sync)
-      await this.addToCompletedHistory(normalizedUserId, activeWorkout);
-
-      // Clear active workout
-      await this.clearActiveWorkout(normalizedUserId);
+      // Add to pending, completed history, and clear active workout in parallel
+      // These write to different storage keys so they're safe to parallelize
+      await Promise.all([
+        this.addToPendingWorkouts(normalizedUserId, activeWorkout),
+        this.addToCompletedHistory(normalizedUserId, activeWorkout),
+        this.clearActiveWorkout(normalizedUserId),
+      ]);
 
       console.log('[StorageAdapter] Workout completed successfully:', workoutId);
     } catch (error) {
