@@ -1513,7 +1513,7 @@ const WorkoutSessionScreen = () => {
             Save this workout to use it again later
           </Text>
 
-          <View style={[styles.saveWorkoutInputContainer, { backgroundColor: colors.cardBackground, borderColor: colors.borderLight }]}>
+          <View style={[styles.saveWorkoutInputContainer, { backgroundColor: colors.cardBackground, shadowColor: colors.shadow }]}>
             <Text style={[styles.saveWorkoutInputLabel, { color: colors.secondaryText }]}>Workout Name</Text>
             <TextInput
               style={[styles.saveWorkoutInput, { color: colors.text }]}
@@ -1719,7 +1719,7 @@ const WorkoutSessionScreen = () => {
         <Animated.View
           style={[
             styles.currentExerciseCard,
-            { backgroundColor: colors.cardBackground, borderColor: colors.primary + '30', shadowColor: colors.shadow },
+            { backgroundColor: colors.cardBackground, shadowColor: colors.shadow },
             {
               transform: [
                 { translateX: slideXAnim },
@@ -1743,7 +1743,7 @@ const WorkoutSessionScreen = () => {
 
             <View style={styles.exerciseTitleContainer}>
               <Text style={[styles.exerciseTitle, { color: colors.text }]}>{currentExercise.name}</Text>
-              <View style={[styles.setBadge, { backgroundColor: colors.primary + '15', borderColor: colors.primary + '30' }]}>
+              <View style={[styles.setBadge, { backgroundColor: colors.primary + '15' }]}>
                 <Text style={[styles.setBadgeText, { color: colors.primary }]}>
                   Set {currentSetIndex + 1}/{currentExercise.totalSets}
                 </Text>
@@ -2015,7 +2015,7 @@ const WorkoutSessionScreen = () => {
         {currentExercise.completedSets > 0 && (
           <View style={[
             styles.setHistoryCard,
-            { backgroundColor: colors.cardBackground, borderColor: colors.borderLight },
+            { backgroundColor: colors.cardBackground, shadowColor: colors.shadow },
             !nextExercise && styles.setHistoryCardLast
           ]}>
             <Text style={[styles.setHistoryTitle, { color: colors.text }]}>Completed Sets</Text>
@@ -2070,7 +2070,7 @@ const WorkoutSessionScreen = () => {
         {/* Next Exercise Preview */}
         {nextExercise && (
           <TouchableOpacity
-            style={[styles.nextExerciseCard, { backgroundColor: colors.borderLight + '25', borderColor: colors.borderLight + '60', shadowColor: colors.shadow }]}
+            style={[styles.nextExerciseCard, { backgroundColor: colors.borderLight + '25', shadowColor: colors.shadow }]}
             onPress={goToNextExercise}
             activeOpacity={0.7}
           >
@@ -2212,7 +2212,7 @@ const WorkoutSessionScreen = () => {
             <Text style={[styles.swapCurrentName, { color: colors.primary }]}>{currentExercise?.name}</Text>
           </View>
 
-          <View style={[styles.searchContainer, { backgroundColor: colors.cardBackground, borderColor: colors.borderLight }]}>
+          <View style={[styles.searchContainer, { backgroundColor: colors.cardBackground, shadowColor: colors.shadow }]}>
             <Ionicons name="search" size={20} color={colors.secondaryText} />
             <TextInput
               style={[styles.searchInput, { color: colors.text }]}
@@ -2280,7 +2280,7 @@ const WorkoutSessionScreen = () => {
                   <View
                     style={[
                       styles.reorderItem,
-                      { backgroundColor: colors.cardBackground, borderColor: colors.borderLight },
+                      { backgroundColor: colors.cardBackground, shadowColor: Colors.light.shadow },
                       isActive && [styles.reorderItemDragging, { shadowColor: colors.primary, borderColor: colors.primary }],
                       isCurrentExercise && { borderColor: colors.primary + '60', backgroundColor: colors.primary + '08' },
                       isCompleted && { opacity: 0.5 }
@@ -2412,9 +2412,9 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.light.cardBackground,
     shadowColor: Colors.light.shadow,
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    elevation: 2,
+    shadowOpacity: 0.08,
+    shadowRadius: 16,
+    elevation: 3,
   },
   progressHeader: {
     flexDirection: 'row',
@@ -2470,16 +2470,15 @@ const styles = StyleSheet.create({
   currentExerciseCard: {
     backgroundColor: Colors.light.cardBackground,
     borderRadius: 20,
-    padding: 28,
+    padding: 18,
     marginTop: 24,
     marginHorizontal: 4,
-    borderWidth: 2,
-    borderColor: Colors.light.primary + '30',
+    borderWidth: 0,
     shadowColor: Colors.light.shadow,
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.12,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
     shadowRadius: 16,
-    elevation: 8,
+    elevation: 3,
   },
   exerciseHeader: {
     marginBottom: 28,
@@ -2512,8 +2511,7 @@ const styles = StyleSheet.create({
   },
   setBadge: {
     backgroundColor: Colors.light.primary + '15',
-    borderWidth: 1,
-    borderColor: Colors.light.primary + '30',
+    borderWidth: 0,
     paddingHorizontal: 16,
     paddingVertical: 6,
     borderRadius: 20,
@@ -2599,7 +2597,7 @@ const styles = StyleSheet.create({
     gap: 6,
     paddingVertical: 14,
     paddingHorizontal: 24,
-    borderRadius: 12,
+    borderRadius: 16,
     borderWidth: 2,
     marginTop: 12,
   },
@@ -2618,11 +2616,15 @@ const styles = StyleSheet.create({
   // Set History
   setHistoryCard: {
     backgroundColor: Colors.light.cardBackground,
-    borderRadius: 12,
-    padding: 16,
+    borderRadius: 20,
+    padding: 18,
     marginTop: 16,
-    borderWidth: 1,
-    borderColor: Colors.light.borderLight,
+    borderWidth: 0,
+    shadowColor: Colors.light.shadow,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 16,
+    elevation: 3,
   },
   setHistoryCardLast: {
     marginBottom: 32,
@@ -2649,17 +2651,16 @@ const styles = StyleSheet.create({
   // Next Exercise
   nextExerciseCard: {
     backgroundColor: Colors.light.borderLight + '25',
-    borderRadius: 16,
-    padding: 20,
+    borderRadius: 20,
+    padding: 18,
     marginTop: 20,
     marginBottom: 32,
-    borderWidth: 1,
-    borderColor: Colors.light.borderLight + '60',
+    borderWidth: 0,
     shadowColor: Colors.light.shadow,
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    elevation: 2,
+    shadowOpacity: 0.08,
+    shadowRadius: 16,
+    elevation: 3,
   },
   nextExerciseHeader: {
     flexDirection: 'row',
@@ -2716,7 +2717,7 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.light.primary,
     paddingHorizontal: 24,
     paddingVertical: 12,
-    borderRadius: 8,
+    borderRadius: 16,
   },
   backButtonText: {
     color: Colors.light.onPrimary,
@@ -2745,7 +2746,7 @@ const styles = StyleSheet.create({
   },
   modalContent: {
     backgroundColor: Colors.light.cardBackground,
-    borderRadius: 16,
+    borderRadius: 20,
     padding: 8,
     minWidth: 200,
     shadowColor: Colors.light.shadow,
@@ -2759,7 +2760,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 16,
     paddingHorizontal: 16,
-    borderRadius: 12,
+    borderRadius: 16,
     gap: 12,
   },
   modalOptionDisabled: {
@@ -2821,9 +2822,12 @@ const styles = StyleSheet.create({
     marginVertical: 12,
     paddingHorizontal: 12,
     paddingVertical: 10,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: Colors.light.borderLight,
+    borderRadius: 16,
+    borderWidth: 0,
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.06,
+    shadowRadius: 8,
+    elevation: 2,
     gap: 8,
   },
   searchInput: {
@@ -2872,8 +2876,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: 20,
-    borderWidth: 1,
-    borderColor: 'transparent',
+    borderWidth: 0,
   },
   filterPillActive: {
     backgroundColor: Colors.light.primary,
@@ -2898,10 +2901,14 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.light.cardBackground,
     marginHorizontal: 16,
     marginBottom: 12,
-    padding: 16,
-    borderRadius: 12,
-    borderWidth: 2,
-    borderColor: Colors.light.primary + '40',
+    padding: 18,
+    borderRadius: 20,
+    borderWidth: 0,
+    shadowColor: Colors.light.shadow,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 16,
+    elevation: 3,
   },
   selectedExerciseBadge: {
     flexDirection: 'row',
@@ -2934,7 +2941,7 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.light.background,
     borderWidth: 1,
     borderColor: Colors.light.borderLight,
-    borderRadius: 8,
+    borderRadius: 12,
     paddingHorizontal: 12,
     paddingVertical: 10,
     fontSize: 16,
@@ -2953,11 +2960,15 @@ const styles = StyleSheet.create({
     paddingBottom: 24,
   },
   selectedExerciseWrapper: {
-    borderRadius: 14,
-    borderWidth: 2,
-    borderColor: Colors.light.primary,
+    borderRadius: 20,
+    borderWidth: 0,
     marginBottom: 4,
     position: 'relative',
+    shadowColor: Colors.light.primary,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 12,
+    elevation: 3,
   },
   selectedCheckmark: {
     position: 'absolute',
@@ -2975,10 +2986,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: Colors.light.cardBackground,
     padding: 16,
-    borderRadius: 12,
+    borderRadius: 16,
     marginBottom: 8,
-    borderWidth: 1,
-    borderColor: Colors.light.borderLight,
+    borderWidth: 0,
+    shadowColor: Colors.light.shadow,
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.06,
+    shadowRadius: 8,
+    elevation: 2,
   },
   exerciseListItemSelected: {
     borderColor: Colors.light.primary,
@@ -3010,8 +3025,8 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.light.primary + '10',
     marginHorizontal: 16,
     marginTop: 12,
-    padding: 12,
-    borderRadius: 10,
+    padding: 14,
+    borderRadius: 16,
     gap: 8,
   },
   swapCurrentLabel: {
@@ -3046,10 +3061,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: Colors.light.cardBackground,
     padding: 16,
-    borderRadius: 12,
+    borderRadius: 16,
     marginBottom: 8,
-    borderWidth: 1,
-    borderColor: Colors.light.borderLight,
+    borderWidth: 0,
+    shadowColor: Colors.light.shadow,
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.06,
+    shadowRadius: 8,
+    elevation: 2,
   },
   reorderItemDragging: {
     backgroundColor: Colors.light.cardBackground,
@@ -3114,7 +3133,7 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.light.primary,
     paddingHorizontal: 8,
     paddingVertical: 4,
-    borderRadius: 6,
+    borderRadius: 12,
   },
   currentBadgeText: {
     fontSize: 11,
@@ -3232,11 +3251,15 @@ const styles = StyleSheet.create({
   },
   saveWorkoutInputContainer: {
     backgroundColor: Colors.light.cardBackground,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: Colors.light.borderLight,
-    padding: 16,
+    borderRadius: 20,
+    borderWidth: 0,
+    padding: 18,
     marginBottom: 24,
+    shadowColor: Colors.light.shadow,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 16,
+    elevation: 3,
   },
   saveWorkoutInputLabel: {
     fontSize: 12,
@@ -3252,8 +3275,8 @@ const styles = StyleSheet.create({
     color: Colors.light.text,
   },
   saveWorkoutExerciseList: {
-    borderRadius: 12,
-    padding: 16,
+    borderRadius: 20,
+    padding: 18,
   },
   saveWorkoutExerciseListTitle: {
     fontSize: 14,
@@ -3309,7 +3332,7 @@ const styles = StyleSheet.create({
     gap: 8,
     paddingVertical: 16,
     paddingHorizontal: 24,
-    borderRadius: 14,
+    borderRadius: 16,
     width: '100%',
   },
   addFirstExerciseText: {

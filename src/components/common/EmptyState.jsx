@@ -29,7 +29,7 @@ const EmptyState = ({
   return (
     <View style={styles.container}>
       {/* Icon or Emoji */}
-      <View style={[styles.iconContainer, { backgroundColor: colors.border + '40' }]}>
+      <View style={[styles.iconContainer, { backgroundColor: colors.border + '25' }]}>
         {emoji ? (
           <Text style={styles.emoji}>{emoji}</Text>
         ) : icon ? (
@@ -41,7 +41,7 @@ const EmptyState = ({
       {title && <Text style={[styles.title, { color: colors.text }]}>{title}</Text>}
 
       {/* Message */}
-      {message && <Text style={[styles.message, { color: colors.secondaryText }]}>{message}</Text>}
+      {message && <Text style={[styles.message, { color: colors.secondaryText, opacity: 0.7 }]}>{message}</Text>}
 
       {/* CTA Button */}
       {ctaText && onCtaPress && (
@@ -64,30 +64,31 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingHorizontal: 32,
-    paddingVertical: 40,
+    paddingHorizontal: 40,
+    paddingVertical: 60,
   },
   iconContainer: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
+    width: 96,
+    height: 96,
+    borderRadius: 48,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 20,
   },
   emoji: {
-    fontSize: 36,
+    fontSize: 44,
   },
   title: {
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: '600',
     textAlign: 'center',
     marginBottom: 8,
+    letterSpacing: 0.3,
   },
   message: {
-    fontSize: 14,
+    fontSize: 15,
     textAlign: 'center',
-    lineHeight: 20,
+    lineHeight: 22,
     marginBottom: 24,
   },
   ctaButton: {

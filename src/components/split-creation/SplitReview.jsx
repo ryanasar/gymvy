@@ -162,7 +162,7 @@ const SplitReview = ({ splitData }) => {
       </View>
 
       {/* Ready Message */}
-      <View style={[styles.readyCard, { backgroundColor: colors.success + '15', borderColor: colors.success + '30' }]}>
+      <View style={[styles.readyCard, { backgroundColor: colors.success + '15', shadowColor: colors.shadow }]}>
         <Ionicons name="checkmark-circle" size={24} color={colors.success} />
         <View style={styles.readyContent}>
           <Text style={[styles.readyTitle, { color: colors.success }]}>Ready to go!</Text>
@@ -198,7 +198,7 @@ const styles = StyleSheet.create({
     marginBottom: 16,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
+    shadowOpacity: 0.08,
     shadowRadius: 8,
     elevation: 4,
   },
@@ -265,14 +265,14 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   dayCard: {
-    borderRadius: 16,
-    padding: 16,
+    borderRadius: 20,
+    padding: 18,
     marginBottom: 12,
     borderLeftWidth: 4,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
+    shadowOpacity: 0.08,
+    shadowRadius: 16,
     elevation: 2,
   },
   dayCardHeader: {
@@ -284,7 +284,7 @@ const styles = StyleSheet.create({
   dayBadge: {
     paddingHorizontal: 10,
     paddingVertical: 4,
-    borderRadius: 8,
+    borderRadius: 12,
   },
   dayBadgeText: {
     fontSize: 12,
@@ -295,7 +295,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 10,
     paddingVertical: 4,
-    borderRadius: 8,
+    borderRadius: 12,
     gap: 4,
   },
   restIndicatorText: {
@@ -367,9 +367,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginHorizontal: 20,
     padding: 16,
-    borderRadius: 16,
-    borderWidth: 1,
+    borderRadius: 20,
     gap: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 16,
+    elevation: 3,
   },
   readyContent: {
     flex: 1,

@@ -22,6 +22,7 @@ export default function SignUpScreen() {
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [ageConfirmed, setAgeConfirmed] = useState(false);
   const [error, setError] = useState('');
 
   const handleSignup = async () => {
@@ -94,6 +95,19 @@ export default function SignUpScreen() {
               autoCorrect={false}
             />
 
+            <TouchableOpacity
+              style={styles.ageCheckboxRow}
+              onPress={() => setAgeConfirmed(!ageConfirmed)}
+              activeOpacity={0.7}
+            >
+              <View style={[styles.checkbox, { borderColor: colors.border }, ageConfirmed && { backgroundColor: colors.primary, borderColor: colors.primary }]}>
+                {ageConfirmed && <Text style={styles.checkmark}>✓</Text>}
+              </View>
+              <Text style={[styles.ageText, { color: colors.secondaryText }]}>
+                I confirm that I am at least 13 years old
+              </Text>
+            </TouchableOpacity>
+
             {isOffline && (
               <View style={styles.offlineWarning}>
                 <Text style={styles.offlineText}>You are offline</Text>
@@ -104,7 +118,11 @@ export default function SignUpScreen() {
               <Text style={[styles.errorText, { color: colors.error }]}>{error}</Text>
             ) : null}
 
-            <TouchableOpacity style={[styles.primaryButton, { backgroundColor: colors.primary }]} onPress={handleSignup}>
+            <TouchableOpacity
+              style={[styles.primaryButton, { backgroundColor: colors.primary }, !ageConfirmed && { opacity: 0.5 }]}
+              onPress={handleSignup}
+              disabled={!ageConfirmed}
+            >
               <Text style={[styles.primaryButtonText, { color: colors.onPrimary }]}>Sign Up</Text>
             </TouchableOpacity>
 
@@ -175,6 +193,30 @@ const styles = StyleSheet.create({
     fontSize: 14,
     textAlign: 'center',
     marginBottom: 16,
+  },
+  ageCheckboxRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 16,
+    gap: 10,
+  },
+  checkbox: {
+    width: 22,
+    height: 22,
+    borderRadius: 6,
+    borderWidth: 2,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  checkmark: {
+    color: '#FFFFFF',
+    fontSize: 14,
+    fontWeight: '700',
+    marginTop: -1,
+  },
+  ageText: {
+    fontSize: 14,
+    flex: 1,
   },
   offlineWarning: {
     backgroundColor: '#374151',

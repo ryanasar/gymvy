@@ -101,7 +101,7 @@ const SplitOverviewStep = ({ splitData, updateSplitData, onEditDay }) => {
           return (
             <TouchableOpacity
               key={index}
-              style={[styles.dayCard, { backgroundColor: colors.cardBackground, borderColor: cardBorderColor, shadowColor: colors.shadow }]}
+              style={[styles.dayCard, { backgroundColor: colors.cardBackground, shadowColor: colors.shadow }]}
               onPress={() => onEditDay(index)}
               activeOpacity={0.7}
             >
@@ -189,8 +189,8 @@ const SplitOverviewStep = ({ splitData, updateSplitData, onEditDay }) => {
                 <View
                   style={[
                     styles.reorderItem,
-                    { backgroundColor: colors.cardBackground, borderColor: colors.border },
-                    isActive && [styles.reorderItemDragging, { backgroundColor: colors.cardBackground, shadowColor: colors.primary, borderColor: colors.primary }]
+                    { backgroundColor: colors.cardBackground, shadowColor: colors.shadow },
+                    isActive && [styles.reorderItemDragging, { backgroundColor: colors.cardBackground, shadowColor: colors.primary }]
                   ]}
                 >
                   <TouchableOpacity
@@ -266,7 +266,7 @@ const styles = StyleSheet.create({
     gap: 6,
     paddingVertical: 8,
     paddingHorizontal: 12,
-    borderRadius: 8,
+    borderRadius: 12,
   },
   reorderButtonText: {
     fontSize: 14,
@@ -280,12 +280,11 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   dayCard: {
-    borderRadius: 16,
-    padding: 16,
-    borderWidth: 1.5,
+    borderRadius: 20,
+    padding: 18,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.08,
-    shadowRadius: 8,
+    shadowRadius: 16,
     elevation: 3,
     height: 110,
     position: 'relative',
@@ -343,7 +342,7 @@ const styles = StyleSheet.create({
   infoBox: {
     flexDirection: 'row',
     alignItems: 'center',
-    borderRadius: 12,
+    borderRadius: 16,
     padding: 16,
     marginTop: 24,
   },
@@ -397,10 +396,13 @@ const styles = StyleSheet.create({
   reorderItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    borderRadius: 12,
+    borderRadius: 16,
     padding: 12,
     marginBottom: 8,
-    borderWidth: 1,
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.06,
+    shadowRadius: 8,
+    elevation: 2,
   },
   reorderItemDragging: {
     shadowOffset: { width: 0, height: 8 },

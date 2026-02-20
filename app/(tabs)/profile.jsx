@@ -12,6 +12,7 @@ import ProgressTab from '@/components/profile/ProgressTab';
 import WorkoutPlansTab from '@/components/profile/WorkoutPlansTab';
 import FollowListModal from '@/components/profile/FollowListModal';
 import EditProfileModal from '@/components/profile/EditProfileModal';
+import BlockedUsersModal from '@/components/profile/BlockedUsersModal';
 import { useThemeColors } from '@/hooks/useThemeColors';
 import { deleteProfile } from '@/services/api/profile';
 import TabBar from '@/components/ui/TabBar';
@@ -23,6 +24,7 @@ const ProfileScreen = () => {
   const [modalVisible, setModalVisible] = useState(false);
   const [modalType, setModalType] = useState('followers');
   const [editModalVisible, setEditModalVisible] = useState(false);
+  const [blockedUsersModalVisible, setBlockedUsersModalVisible] = useState(false);
   const [progressKey, setProgressKey] = useState(0);
   const { user, profile, posts, signOut, refreshPosts, refreshProfile } = useAuth();
   const { lastWorkoutCompleted } = useWorkout();
@@ -145,6 +147,7 @@ const ProfileScreen = () => {
           isVerified={isVerified}
           onSignOut={signOut}
           onDeleteAccount={handleDeleteAccount}
+          onBlockedUsersPress={() => setBlockedUsersModalVisible(true)}
           onFollowersPress={handleOpenFollowersModal}
           onFollowingPress={handleOpenFollowingModal}
           onEditPress={handleOpenEditModal}
@@ -178,6 +181,12 @@ const ProfileScreen = () => {
         onClose={handleCloseModal}
         username={username}
         type={modalType}
+      />
+
+      {/* Blocked Users Modal */}
+      <BlockedUsersModal
+        visible={blockedUsersModalVisible}
+        onClose={() => setBlockedUsersModalVisible(false)}
       />
 
       {/* Edit Profile Modal */}

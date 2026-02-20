@@ -149,7 +149,7 @@ const restTimerStyles = StyleSheet.create({
   presetButton: {
     flex: 1,
     paddingVertical: 8,
-    borderRadius: 6,
+    borderRadius: 8,
     borderWidth: 1,
     alignItems: 'center',
   },
@@ -465,7 +465,7 @@ const EditDayStep = ({
       <View style={styles.exercisesSection}>
         <View style={styles.exercisesHeader}>
           <Text style={[styles.sectionLabel, { color: colors.text }]}>Exercises</Text>
-          <View style={[styles.exerciseCounter, { backgroundColor: colors.cardBackground, borderColor: colors.border }]}>
+          <View style={[styles.exerciseCounter, { backgroundColor: colors.cardBackground }]}>
             <Text style={[
               styles.exerciseCounterText,
               { color: colors.text },
@@ -515,8 +515,8 @@ const EditDayStep = ({
         disabled={isActive}
         style={[
           styles.exerciseCard,
-          { backgroundColor: colors.cardBackground, borderColor: colors.borderLight },
-          isActive && [styles.exerciseCardDragging, { backgroundColor: colors.cardBackground, shadowColor: colors.primary, borderColor: colors.primary }]
+          { backgroundColor: colors.cardBackground, shadowColor: colors.shadow },
+          isActive && [styles.exerciseCardDragging, { backgroundColor: colors.cardBackground, shadowColor: colors.primary }]
         ]}
       >
           <View style={styles.exerciseCardHeader}>
@@ -700,7 +700,7 @@ const EditDayStep = ({
             </TouchableOpacity>
           </View>
 
-          <View style={[styles.restDayContainer, { backgroundColor: colors.cardBackground, borderColor: colors.borderLight }]}>
+          <View style={[styles.restDayContainer, { backgroundColor: colors.cardBackground, shadowColor: colors.shadow }]}>
             <Text style={styles.restDayEmoji}>😴</Text>
             <Text style={[styles.restDayTitle, { color: colors.text }]}>Rest Day</Text>
             <Text style={[styles.restDayText, { color: colors.secondaryText }]}>Take time to recover and let your muscles grow</Text>
@@ -801,8 +801,7 @@ const styles = StyleSheet.create({
     gap: 6,
     paddingHorizontal: 14,
     paddingVertical: 10,
-    borderRadius: 10,
-    borderWidth: 1,
+    borderRadius: 12,
   },
   quickActionText: {
     fontSize: 14,
@@ -861,7 +860,7 @@ const styles = StyleSheet.create({
   },
   input: {
     borderWidth: 1.5,
-    borderRadius: 12,
+    borderRadius: 16,
     paddingHorizontal: 16,
     paddingVertical: 14,
     fontSize: 16,
@@ -881,10 +880,9 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   exerciseCounter: {
-    borderWidth: 1,
     paddingHorizontal: 12,
     paddingVertical: 6,
-    borderRadius: 8,
+    borderRadius: 12,
   },
   exerciseCounterText: {
     fontSize: 14,
@@ -899,7 +897,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: 8,
     paddingVertical: 14,
-    borderRadius: 12,
+    borderRadius: 16,
     marginBottom: 4,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.2,
@@ -926,10 +924,13 @@ const styles = StyleSheet.create({
     fontStyle: 'italic',
   },
   exerciseCard: {
-    borderRadius: 12,
+    borderRadius: 16,
     padding: 16,
-    borderWidth: 1,
     marginBottom: 12,
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.06,
+    shadowRadius: 8,
+    elevation: 2,
   },
   exerciseCardDragging: {
     shadowOffset: { width: 0, height: 8 },
@@ -1027,7 +1028,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     marginTop: 10,
     borderWidth: 1,
-    borderRadius: 6,
+    borderRadius: 12,
   },
   restTimerOffButtonText: {
     fontSize: 12,
@@ -1044,7 +1045,7 @@ const styles = StyleSheet.create({
   },
   smallInput: {
     borderWidth: 1,
-    borderRadius: 8,
+    borderRadius: 12,
     paddingHorizontal: 8,
     paddingVertical: 8,
     fontSize: 14,
@@ -1054,8 +1055,7 @@ const styles = StyleSheet.create({
   emptyState: {
     alignItems: 'center',
     paddingVertical: 40,
-    borderRadius: 12,
-    borderWidth: 1,
+    borderRadius: 16,
   },
   emptyStateText: {
     fontSize: 15,
@@ -1064,8 +1064,11 @@ const styles = StyleSheet.create({
   restDayContainer: {
     alignItems: 'center',
     paddingVertical: 60,
-    borderRadius: 16,
-    borderWidth: 1,
+    borderRadius: 20,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 16,
+    elevation: 3,
   },
   restDayEmoji: {
     fontSize: 48,

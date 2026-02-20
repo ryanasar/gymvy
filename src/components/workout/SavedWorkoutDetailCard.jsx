@@ -57,7 +57,7 @@ const SavedWorkoutDetailCard = ({
       {/* Workout Card - matches SplitWorkoutCard styling */}
       <View style={[
         styles.workoutCard,
-        { backgroundColor: colors.cardBackground, shadowColor: colors.shadow, borderColor: colors.borderLight }
+        { backgroundColor: colors.cardBackground, shadowColor: colors.shadow }
       ]}>
         <View style={styles.workoutHeader}>
           <View style={styles.workoutInfo}>
@@ -134,8 +134,8 @@ export default SavedWorkoutDetailCard;
 
 const styles = StyleSheet.create({
   container: {
-    paddingHorizontal: 16,
-    paddingTop: 16,
+    paddingHorizontal: 6,
+    paddingTop: 12,
     paddingBottom: 40,
   },
   backButton: {
@@ -150,16 +150,15 @@ const styles = StyleSheet.create({
   },
   workoutCard: {
     backgroundColor: Colors.light.cardBackground,
-    borderRadius: 16,
-    padding: 20,
+    borderRadius: 20,
+    padding: 18,
     marginBottom: 16,
     shadowColor: Colors.light.shadow,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.15,
-    shadowRadius: 12,
-    elevation: 5,
-    borderWidth: 1,
-    borderColor: Colors.light.border,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 16,
+    elevation: 3,
+    borderWidth: 0,
     width: '100%',
   },
   workoutHeader: {
@@ -223,7 +222,7 @@ const styles = StyleSheet.create({
   startWorkoutButton: {
     backgroundColor: Colors.light.primary,
     paddingVertical: 16,
-    borderRadius: 12,
+    borderRadius: 16,
     shadowColor: Colors.light.primary,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,

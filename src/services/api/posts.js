@@ -10,9 +10,11 @@ export const getPostById = async (postId) => {
   }
 };
 
-export const getPostsByUserId = async (userId) => {
+export const getPostsByUserId = async (userId, { cursor, limit = 20 } = {}) => {
   try {
-    const response = await apiClient.get(`/posts/user/${userId}`);
+    const params = { limit };
+    if (cursor) params.cursor = cursor;
+    const response = await apiClient.get(`/posts/user/${userId}`, { params });
     return response.data;
   } catch (error) {
     console.error('Failed to fetch posts by userId:', error);

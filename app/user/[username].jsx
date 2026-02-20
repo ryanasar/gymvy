@@ -10,6 +10,7 @@ import { getPublicSplitsByUserId } from '@/services/api/splits';
 import { createFollowNotification, deleteFollowNotification } from '@/services/api/notifications';
 import { cancelFollowRequestByTargetId } from '@/services/api/followRequests';
 import { sendNudge } from '@/services/api/nudges';
+import { blockUser, unblockUser } from '@/services/api/blocks';
 import { useAuth } from '@/lib/auth';
 import { Ionicons } from '@expo/vector-icons';
 import ProfileHeader from '@/components/profile/ProfileHeader';
@@ -45,6 +46,8 @@ export default function UserProfileScreen() {
   const [nudgeModalVisible, setNudgeModalVisible] = useState(false);
   const [isNudgeLoading, setIsNudgeLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
+  const [isBlocked, setIsBlocked] = useState(false);
+  const [isBlockedBy, setIsBlockedBy] = useState(false);
 
   const isOwnProfile = currentUser?.username === username;
 
@@ -60,6 +63,10 @@ export default function UserProfileScreen() {
       }
       const userData = await getUserByUsername(username);
       setUser(userData);
+
+      // Set block status
+      setIsBlocked(userData?.isBlocked || false);
+      setIsBlockedBy(userData?.isBlockedBy || false);
 
       // Set follow status from API response
       if (userData?.followStatus) {
@@ -96,7 +103,7 @@ export default function UserProfileScreen() {
         if (canViewContent) {
           // Load tab data in background (don't block header)
           Promise.all([
-            getPostsByUserId(userData.id).catch((err) => {
+            getPostsByUserId(userData.id).then(res => res.posts || res).catch((err) => {
               if (err?.response?.status === 403) return [];
               console.error('Error fetching posts:', err);
               return [];
@@ -244,10 +251,67 @@ export default function UserProfileScreen() {
     }
   };
 
+  const handleBlockUser = () => {
+    Alert.alert(
+      'Block User',
+      `Are you sure you want to block ${user?.name || user?.username}? They won't be able to see your profile or posts, and you won't see theirs. Any existing follows will be removed.`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Block',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await blockUser(user.id);
+              setIsBlocked(true);
+              setIsFollowing(false);
+              setFollowStatus('none');
+              await loadUserData(false);
+            } catch (error) {
+              Alert.alert('Error', 'Failed to block user');
+            }
+          },
+        },
+      ]
+    );
+  };
+
+  const handleUnblockUser = async () => {
+    try {
+      await unblockUser(user.id);
+      setIsBlocked(false);
+      await loadUserData(false);
+    } catch (error) {
+      Alert.alert('Error', 'Failed to unblock user');
+    }
+  };
+
+  const handleMoreOptions = () => {
+    const options = isBlocked
+      ? [
+          { text: 'Cancel', style: 'cancel' },
+          { text: 'Unblock User', onPress: handleUnblockUser },
+        ]
+      : [
+          { text: 'Cancel', style: 'cancel' },
+          { text: 'Block User', style: 'destructive', onPress: handleBlockUser },
+        ];
+
+    Alert.alert(null, null, options);
+  };
+
   // Check if this is a private account that we can't view
   const isPrivateAndNotFollowing = user?.profile?.isPrivate && followStatus !== 'following' && !isOwnProfile;
 
   const renderSelectedTab = () => {
+    if (isBlockedBy) {
+      return (
+        <View style={styles.blockedContainer}>
+          <Ionicons name="ban-outline" size={48} color={colors.secondaryText} />
+          <Text style={[styles.blockedText, { color: colors.secondaryText }]}>This content is not available.</Text>
+        </View>
+      );
+    }
     if (isPrivateAndNotFollowing) {
       return <PrivateProfilePlaceholder />;
     }
@@ -291,7 +355,16 @@ export default function UserProfileScreen() {
           <Ionicons name="arrow-back" size={24} color={colors.text} />
         </TouchableOpacity>
         <Text style={[styles.title, { color: colors.text }]}>{user.name || `${user.firstName || ''} ${user.lastName || ''}`.trim() || `@${username}`}</Text>
-        <View style={styles.headerPlaceholder} />
+        {!isOwnProfile ? (
+          <TouchableOpacity
+            style={styles.moreButton}
+            onPress={handleMoreOptions}
+          >
+            <Ionicons name="ellipsis-horizontal" size={22} color={colors.text} />
+          </TouchableOpacity>
+        ) : (
+          <View style={styles.headerPlaceholder} />
+        )}
       </View>
 
       <ScrollView
@@ -391,5 +464,20 @@ const styles = StyleSheet.create({
   },
   headerPlaceholder: {
     width: 40,
+  },
+  moreButton: {
+    width: 40,
+    height: 40,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  blockedContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 60,
+    gap: 12,
+  },
+  blockedText: {
+    fontSize: 16,
   },
 });

@@ -250,11 +250,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 20,
     paddingTop: 60,
-    paddingBottom: 16,
+    paddingBottom: 20,
     shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
+    shadowOpacity: 0.03,
     shadowRadius: 2,
-    elevation: 1,
+    elevation: 0,
   },
   title: {
     fontSize: 28,
@@ -263,11 +263,11 @@ const styles = StyleSheet.create({
   headerIcons: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
+    gap: 16,
   },
   notificationButton: {
     position: 'relative',
-    padding: 4,
+    padding: 6,
   },
   notificationBadge: {
     position: 'absolute',
@@ -294,9 +294,9 @@ const styles = StyleSheet.create({
     paddingVertical: 100,
   },
   listContainer: {
-    paddingHorizontal: 8,
-    paddingTop: 8,
-    paddingBottom: 20,
+    paddingHorizontal: 6,
+    paddingTop: 6,
+    paddingBottom: 24,
   },
   emptyListContainer: {
     flexGrow: 1,

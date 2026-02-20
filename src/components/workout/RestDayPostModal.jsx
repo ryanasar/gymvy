@@ -547,10 +547,10 @@ const styles = StyleSheet.create({
 
   // Info Card
   infoCard: {
-    borderRadius: 16,
-    padding: 20,
+    borderRadius: 20,
+    padding: 18,
     marginBottom: 24,
-    borderWidth: 2,
+    borderWidth: 0,
   },
   infoCardHeader: {
     flexDirection: 'row',

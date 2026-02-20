@@ -6,7 +6,7 @@ import { Radius, Spacing, FontSize, FontWeight } from '@/constants/theme';
 
 const Badge = ({ label, color, icon, onPress, size = 'md', style }) => {
   const colors = useThemeColors();
-  const bgColor = color ? color + '20' : colors.borderLight;
+  const bgColor = color ? color + '15' : colors.borderLight;
   const textColor = color || colors.secondaryText;
   const isSmall = size === 'sm';
 
@@ -66,7 +66,8 @@ const styles = StyleSheet.create({
     marginRight: Spacing.xs,
   },
   label: {
-    fontWeight: FontWeight.semibold,
+    fontWeight: FontWeight.medium,
+    letterSpacing: 0.2,
   },
 });
 

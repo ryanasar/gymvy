@@ -1,4 +1,4 @@
-import React, { useState, useRef, useCallback } from 'react';
+import React, { useState, useRef, useCallback, useEffect } from 'react';
 import {
   Modal,
   View,
@@ -17,6 +17,7 @@ import { Colors } from '@/constants/colors';
 import { useThemeColors } from '@/hooks/useThemeColors';
 import { createComment, getComments } from '@/services/api/posts';
 import { deleteComment } from '@/services/api/comments';
+import { reportComment } from '@/services/api/reports';
 import { createCommentNotification, deleteCommentNotification, createCommentLikeNotification, deleteCommentLikeNotification, createReplyNotification, deleteReplyNotification } from '@/services/api/notifications';
 import { toggleCommentLike } from '@/services/api/commentLikes';
 import Avatar from '@/components/ui/Avatar';
@@ -47,6 +48,11 @@ const CommentModal = ({
   const isNavigatingRef = useRef(false);
   // Mounted ref to prevent setState after unmount
   const isMountedRef = useRef(true);
+
+  // Cleanup on unmount — covers case where parent unmounts without calling handleClose
+  useEffect(() => {
+    return () => { isMountedRef.current = false; };
+  }, []);
 
   const loadComments = async () => {
     // Only refresh if comment count changed or never loaded
@@ -334,6 +340,37 @@ const CommentModal = ({
     ]);
   };
 
+  const handleReportComment = (comment) => {
+    Alert.alert('Report Comment', 'Why are you reporting this comment?', [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Spam',
+        onPress: () => submitCommentReport(comment.id, 'Spam'),
+      },
+      {
+        text: 'Inappropriate',
+        onPress: () => submitCommentReport(comment.id, 'Inappropriate'),
+      },
+      {
+        text: 'Harassment',
+        onPress: () => submitCommentReport(comment.id, 'Harassment'),
+      },
+    ]);
+  };
+
+  const submitCommentReport = async (commentId, reason) => {
+    try {
+      await reportComment(commentId, reason);
+      Alert.alert('Report Submitted', 'Thank you for helping keep our community safe.');
+    } catch (error) {
+      if (error.response?.status === 409) {
+        Alert.alert('Already Reported', 'You have already reported this comment.');
+      } else {
+        Alert.alert('Error', 'Failed to submit report. Please try again.');
+      }
+    }
+  };
+
   const renderMentionHighlight = (text) => {
     if (!text) return null;
 
@@ -397,13 +434,21 @@ const CommentModal = ({
         </TouchableOpacity>
       </View>
       <View style={styles.commentActions}>
-        {(comment.userId === currentUserId || comment.author?.id === currentUserId) && (
+        {(comment.userId === currentUserId || comment.author?.id === currentUserId) ? (
           <TouchableOpacity
             style={styles.deleteButton}
             onPress={() => handleDelete(comment, isReply, parentId)}
             hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
           >
             <Ionicons name="trash-outline" size={16} color={colors.error} />
+          </TouchableOpacity>
+        ) : (
+          <TouchableOpacity
+            style={styles.deleteButton}
+            onPress={() => handleReportComment(comment)}
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+          >
+            <Ionicons name="flag-outline" size={16} color={colors.secondaryText} />
           </TouchableOpacity>
         )}
         <TouchableOpacity

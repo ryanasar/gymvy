@@ -135,7 +135,7 @@ const SavedWorkoutsTab = () => {
           {savedWorkouts.map((workout) => (
             <TouchableOpacity
               key={workout.id}
-              style={[styles.workoutCard, { backgroundColor: colors.cardBackground, borderColor: colors.borderLight }]}
+              style={[styles.workoutCard, { backgroundColor: colors.cardBackground, shadowColor: colors.shadow }]}
               onPress={() => handleViewWorkout(workout)}
               activeOpacity={0.7}
             >
@@ -209,7 +209,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: 10,
     paddingVertical: 16,
-    borderRadius: 12,
+    borderRadius: 16,
     borderWidth: 2,
     marginBottom: 20,
   },
@@ -252,9 +252,13 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    padding: 16,
-    borderRadius: 14,
-    borderWidth: 1,
+    padding: 18,
+    borderRadius: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 16,
+    elevation: 3,
   },
   workoutCardContent: {
     flexDirection: 'row',
@@ -264,7 +268,7 @@ const styles = StyleSheet.create({
   emojiContainer: {
     width: 48,
     height: 48,
-    borderRadius: 12,
+    borderRadius: 16,
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 14,
@@ -292,7 +296,7 @@ const styles = StyleSheet.create({
   actionButton: {
     width: 36,
     height: 36,
-    borderRadius: 10,
+    borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -304,7 +308,7 @@ const styles = StyleSheet.create({
     gap: 10,
     marginTop: 24,
     padding: 14,
-    borderRadius: 10,
+    borderRadius: 16,
   },
   infoNoteText: {
     fontSize: 13,

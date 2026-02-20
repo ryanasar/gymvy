@@ -18,14 +18,17 @@ const ExerciseCard = ({ exercise, onPress, showMuscles = true, compact = false, 
   const colors = useThemeColors();
   const {
     name,
-    primaryMuscles = [],
-    secondaryMuscles = [],
+    primaryMuscles,
+    secondaryMuscles,
     equipment = 'unknown',
     difficulty = 'intermediate',
     category = 'compound'
   } = exercise;
 
-  const primaryMuscleInfo = primaryMuscles.map(muscle => getMuscleInfo(muscle));
+  const safePrimary = primaryMuscles || [];
+  const safeSecondary = secondaryMuscles || [];
+
+  const primaryMuscleInfo = safePrimary.map(muscle => getMuscleInfo(muscle));
   const difficultyColor = {
     beginner: '#4ECDC4',
     intermediate: '#FECA57',
@@ -44,7 +47,7 @@ const ExerciseCard = ({ exercise, onPress, showMuscles = true, compact = false, 
     <TouchableOpacity
       style={[
         styles.card,
-        { backgroundColor: colors.cardBackground, shadowColor: colors.shadow, borderColor: colors.borderLight },
+        { backgroundColor: colors.cardBackground, shadowColor: colors.shadow },
         compact && styles.compactCard,
         style
       ]}
@@ -92,11 +95,11 @@ const ExerciseCard = ({ exercise, onPress, showMuscles = true, compact = false, 
               ))}
             </View>
 
-            {secondaryMuscles.length > 0 && !compact && (
+            {safeSecondary.length > 0 && !compact && (
               <>
                 <Text style={[styles.muscleLabel, { color: colors.text }]}>Secondary:</Text>
                 <View style={styles.muscleList}>
-                  {secondaryMuscles.map((muscle, index) => {
+                  {safeSecondary.map((muscle, index) => {
                     const muscleInfo = getMuscleInfo(muscle);
                     return (
                       <View
@@ -124,19 +127,18 @@ export default ExerciseCard;
 const styles = StyleSheet.create({
   card: {
     backgroundColor: Colors.light.cardBackground,
-    borderRadius: 12,
-    padding: 16,
+    borderRadius: 20,
+    padding: 18,
     marginBottom: 12,
     shadowColor: Colors.light.shadow,
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 4,
-    borderWidth: 1,
-    borderColor: Colors.light.borderLight,
+    shadowOpacity: 0.08,
+    shadowRadius: 16,
+    elevation: 3,
+    borderWidth: 0,
   },
   compactCard: {
-    padding: 12,
+    padding: 14,
     marginBottom: 8,
   },
   contentContainer: {
@@ -169,7 +171,7 @@ const styles = StyleSheet.create({
   difficultyBadge: {
     paddingHorizontal: 8,
     paddingVertical: 4,
-    borderRadius: 8,
+    borderRadius: 12,
   },
   difficultyText: {
     fontSize: 12,

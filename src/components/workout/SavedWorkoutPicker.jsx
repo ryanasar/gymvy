@@ -22,7 +22,7 @@ const SavedWorkoutPicker = ({ workouts = [], onSelect }) => {
           key={workout.id}
           style={[
             styles.workoutCard,
-            { backgroundColor: colors.cardBackground, borderColor: colors.borderLight }
+            { backgroundColor: colors.cardBackground, shadowColor: colors.shadow }
           ]}
           onPress={() => onSelect(workout)}
           activeOpacity={0.7}
@@ -56,15 +56,19 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: Colors.light.cardBackground,
-    borderRadius: 12,
-    padding: 14,
-    borderWidth: 1,
-    borderColor: Colors.light.borderLight,
+    borderRadius: 20,
+    padding: 18,
+    borderWidth: 0,
+    shadowColor: Colors.light.shadow,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 16,
+    elevation: 3,
   },
   emojiContainer: {
     width: 44,
     height: 44,
-    borderRadius: 12,
+    borderRadius: 14,
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 12,

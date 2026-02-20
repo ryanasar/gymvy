@@ -74,7 +74,9 @@ export const getUserWorkoutPlans = async (userId) => {
 export const getUserPosts = async (userId) => {
   try {
     const response = await apiClient.get(`/posts/user/${userId}`);
-    return response.data;
+    // Handle both paginated ({ posts, nextCursor, hasMore }) and legacy (array) responses
+    const data = response.data;
+    return Array.isArray(data) ? data : (data.posts || []);
   } catch (error) {
     console.error('Error fetching user posts:', error);
     return [];

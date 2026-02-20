@@ -302,7 +302,7 @@ const ViewSplitScreen = () => {
       <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
         <View style={styles.contentContainer}>
           {/* Split Header Card */}
-          <View style={[styles.splitHeaderCard, { backgroundColor: colors.cardBackground, shadowColor: colors.shadow, borderColor: colors.primary }]}>
+          <View style={[styles.splitHeaderCard, { backgroundColor: colors.cardBackground, shadowColor: colors.shadow }]}>
             <View style={styles.splitHeaderContent}>
               <Text style={styles.splitEmoji}>{splitData.emoji}</Text>
               <View style={styles.splitHeaderText}>
@@ -325,7 +325,7 @@ const ViewSplitScreen = () => {
 
             {splitData.workoutDays && splitData.workoutDays.length > 0 ? (
               splitData.workoutDays.map((day, index) => (
-                <View key={index} style={[styles.workoutDayCard, { backgroundColor: colors.cardBackground, shadowColor: colors.shadow, borderColor: colors.borderLight }]}>
+                <View key={index} style={[styles.workoutDayCard, { backgroundColor: colors.cardBackground, shadowColor: colors.shadow }]}>
                   {/* Day Header */}
                   <View style={[
                     styles.workoutDayHeader,
@@ -474,7 +474,7 @@ const styles = StyleSheet.create({
     gap: 4,
     paddingVertical: 8,
     paddingHorizontal: 12,
-    borderRadius: 8,
+    borderRadius: 12,
     minWidth: 40,
     justifyContent: 'center',
     zIndex: 1,
@@ -493,16 +493,14 @@ const styles = StyleSheet.create({
   // Split Header Card
   splitHeaderCard: {
     backgroundColor: Colors.light.cardBackground,
-    borderRadius: 12,
-    padding: 14,
+    borderRadius: 20,
+    padding: 18,
     marginBottom: 20,
     shadowColor: Colors.light.shadow,
-    shadowOffset: { width: 0, height: 1 },
+    shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.08,
-    shadowRadius: 4,
-    elevation: 2,
-    borderWidth: 1,
-    borderColor: Colors.light.primary,
+    shadowRadius: 16,
+    elevation: 3,
   },
   splitHeaderContent: {
     flexDirection: 'row',
@@ -547,16 +545,14 @@ const styles = StyleSheet.create({
   },
   workoutDayCard: {
     backgroundColor: Colors.light.cardBackground,
-    borderRadius: 16,
-    padding: 20,
+    borderRadius: 20,
+    padding: 18,
     marginBottom: 16,
     shadowColor: Colors.light.shadow,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.08,
-    shadowRadius: 6,
+    shadowRadius: 16,
     elevation: 3,
-    borderWidth: 1,
-    borderColor: Colors.light.borderLight,
   },
   workoutDayHeader: {
     flexDirection: 'row',
@@ -570,7 +566,7 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.light.primary,
     paddingHorizontal: 10,
     paddingVertical: 4,
-    borderRadius: 8,
+    borderRadius: 12,
     marginRight: 12,
   },
   dayNumberText: {
@@ -592,7 +588,7 @@ const styles = StyleSheet.create({
     gap: 4,
     paddingVertical: 6,
     paddingHorizontal: 10,
-    borderRadius: 8,
+    borderRadius: 12,
     marginLeft: 8,
   },
   saveWorkoutButtonText: {
@@ -638,7 +634,7 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.light.borderLight + '60',
     paddingHorizontal: 8,
     paddingVertical: 3,
-    borderRadius: 6,
+    borderRadius: 12,
     fontWeight: '500',
   },
   emptyContainer: {

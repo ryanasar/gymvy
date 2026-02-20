@@ -99,7 +99,7 @@ export default function WelcomeScreen() {
         </TouchableOpacity>
 
         <Text style={[styles.legalText, { color: colors.secondaryText }]}>
-          By signing up, you agree to our{' '}
+          By signing up, you confirm that you are at least 13 years old and agree to our{' '}
           <Text style={styles.legalLink} onPress={() => Linking.openURL('https://ryanasar.github.io/gymvy-site/privacy.html')}>
             Privacy Policy
           </Text>

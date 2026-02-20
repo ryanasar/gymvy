@@ -14,16 +14,22 @@ let appStateSubscription = null;
 
 const CHECK_INTERVAL = 10000; // Check every 10 seconds when active
 
+const CONNECTIVITY_ENDPOINTS = [
+  'https://www.google.com/generate_204',
+  'https://captive.apple.com/hotspot-detect.html',
+];
+
 /**
- * Perform a network connectivity check
+ * Try a single connectivity check against one URL
+ * @param {string} url
  * @returns {Promise<boolean>}
  */
-async function performNetworkCheck() {
+async function checkEndpoint(url) {
   try {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 5000);
 
-    const response = await fetch('https://www.google.com/generate_204', {
+    const response = await fetch(url, {
       method: 'HEAD',
       signal: controller.signal,
       cache: 'no-store',
@@ -34,6 +40,17 @@ async function performNetworkCheck() {
   } catch (error) {
     return false;
   }
+}
+
+/**
+ * Perform a network connectivity check with fallback endpoints
+ * @returns {Promise<boolean>}
+ */
+async function performNetworkCheck() {
+  for (const url of CONNECTIVITY_ENDPOINTS) {
+    if (await checkEndpoint(url)) return true;
+  }
+  return false;
 }
 
 /**

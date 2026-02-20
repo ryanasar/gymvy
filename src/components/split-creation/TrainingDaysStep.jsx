@@ -90,9 +90,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 32,
     paddingVertical: 8,
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
+    shadowOpacity: 0.08,
     shadowRadius: 12,
-    elevation: 4,
+    elevation: 3,
   },
   picker: {
     width: 120,
@@ -111,7 +111,7 @@ const styles = StyleSheet.create({
   infoBox: {
     flexDirection: 'row',
     alignItems: 'center',
-    borderRadius: 12,
+    borderRadius: 16,
     padding: 16,
     marginTop: 24,
   },

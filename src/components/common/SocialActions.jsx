@@ -14,7 +14,7 @@ const SocialActions = ({ isLiked, likeCount, commentCount, onLike, onComment }) 
         <TouchableOpacity
           style={[
             styles.actionButton,
-            { backgroundColor: isLiked ? `${colors.error}15` : colors.cardBackground }
+            { backgroundColor: isLiked ? `${colors.error}15` : 'transparent' }
           ]}
           onPress={onLike}
           activeOpacity={0.7}
@@ -33,7 +33,7 @@ const SocialActions = ({ isLiked, likeCount, commentCount, onLike, onComment }) 
         </TouchableOpacity>
 
         <TouchableOpacity
-          style={[styles.actionButton, { backgroundColor: colors.cardBackground }]}
+          style={[styles.actionButton, { backgroundColor: 'transparent' }]}
           onPress={onComment}
           activeOpacity={0.7}
         >
@@ -61,30 +61,30 @@ export default SocialActions;
 const styles = StyleSheet.create({
   actionsRow: {
     flexDirection: 'row',
-    gap: 8,
-    paddingHorizontal: 14,
-    paddingTop: 10,
-    paddingBottom: 6,
+    gap: 12,
+    paddingHorizontal: 18,
+    paddingTop: 14,
+    paddingBottom: 8,
   },
   actionButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 5,
-    paddingVertical: 6,
-    paddingHorizontal: 12,
-    borderRadius: 18,
+    gap: 6,
+    paddingVertical: 8,
+    paddingHorizontal: 14,
+    borderRadius: 20,
   },
   actionCount: {
-    fontSize: 13,
-    fontWeight: '600',
+    fontSize: 14,
+    fontWeight: '500',
   },
   viewCommentsButton: {
-    paddingHorizontal: 14,
+    paddingHorizontal: 18,
     paddingTop: 6,
-    paddingBottom: 12,
+    paddingBottom: 14,
   },
   viewCommentsText: {
-    fontSize: 12,
-    fontWeight: '600',
+    fontSize: 13,
+    fontWeight: '500',
   },
 });

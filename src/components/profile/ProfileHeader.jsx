@@ -31,6 +31,7 @@ const ProfileHeader = ({
   onEditPress,
   onNudgePress,
   onDeleteAccount,
+  onBlockedUsersPress,
   canNudge = false,
 }) => {
   const colors = useThemeColors();
@@ -43,7 +44,7 @@ const ProfileHeader = ({
         {/* Settings Dropdown - Top Right */}
         {isOwnProfile && (
           <View style={styles.settingsContainer}>
-            <SettingsDropdown onSignOut={onSignOut} onDeleteAccount={onDeleteAccount} />
+            <SettingsDropdown onSignOut={onSignOut} onDeleteAccount={onDeleteAccount} onBlockedUsersPress={onBlockedUsersPress} />
           </View>
         )}
 
@@ -62,7 +63,7 @@ const ProfileHeader = ({
           <View style={styles.profileInfo}>
             {/* Username */}
             <View style={styles.usernameRow}>
-              <Text style={[styles.username, { color: colors.text }]} numberOfLines={1}>@{username}</Text>
+              <Text style={[styles.username, { color: colors.text }]} numberOfLines={1}>@{username || ''}</Text>
               {isVerified && (
                 <Ionicons name="checkmark-circle" size={20} color="#1D9BF0" style={styles.verifiedBadge} />
               )}

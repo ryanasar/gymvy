@@ -96,7 +96,7 @@ const BeginSplitCard = ({ split, onDaySelected }) => {
               {split.days?.map((day, index) => (
                 <TouchableOpacity
                   key={index}
-                  style={[styles.dayCard, { backgroundColor: colors.background, borderColor: colors.borderLight, opacity: isLoading ? 0.5 : 1 }]}
+                  style={[styles.dayCard, { backgroundColor: colors.background, shadowColor: colors.shadow, opacity: isLoading ? 0.5 : 1 }]}
                   onPress={() => handleDaySelect(index)}
                   activeOpacity={0.7}
                   disabled={isLoading}
@@ -125,7 +125,7 @@ const BeginSplitCard = ({ split, onDaySelected }) => {
               )) || split.workoutDays?.map((day, index) => (
                 <TouchableOpacity
                   key={index}
-                  style={[styles.dayCard, { backgroundColor: colors.background, borderColor: colors.borderLight, opacity: isLoading ? 0.5 : 1 }]}
+                  style={[styles.dayCard, { backgroundColor: colors.background, shadowColor: colors.shadow, opacity: isLoading ? 0.5 : 1 }]}
                   onPress={() => handleDaySelect(index)}
                   activeOpacity={0.7}
                   disabled={isLoading}
@@ -164,12 +164,12 @@ export default BeginSplitCard;
 
 const styles = StyleSheet.create({
   card: {
-    borderRadius: 16,
-    padding: 20,
+    borderRadius: 20,
+    padding: 18,
     marginBottom: 16,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.08,
-    shadowRadius: 8,
+    shadowRadius: 16,
     elevation: 3,
   },
   description: {
@@ -215,10 +215,15 @@ const styles = StyleSheet.create({
   dayCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    borderRadius: 12,
+    borderRadius: 16,
     padding: 16,
     marginBottom: 12,
-    borderWidth: 1,
+    borderWidth: 0,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.06,
+    shadowRadius: 8,
+    elevation: 2,
   },
   dayCardContent: {
     flexDirection: 'row',

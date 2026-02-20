@@ -401,7 +401,7 @@ const WorkoutScreen = () => {
             return (
               <TouchableOpacity
                 key={index}
-                style={[styles.dayPickerCard, { backgroundColor: colors.cardBackground, borderColor: colors.borderLight, opacity: isDaySelecting ? 0.5 : 1 }]}
+                style={[styles.dayPickerCard, { backgroundColor: colors.cardBackground, shadowColor: colors.shadow, opacity: isDaySelecting ? 0.5 : 1 }]}
                 onPress={() => handleDaySelectedWrapper(index)}
                 activeOpacity={0.7}
                 disabled={isDaySelecting}
@@ -595,7 +595,7 @@ const WorkoutScreen = () => {
               <>
                 {/* Freestyle Workout Option */}
                 <TouchableOpacity
-                  style={[styles.freestyleCard, { backgroundColor: colors.cardBackground, borderColor: colors.primary + '30' }]}
+                  style={[styles.freestyleCard, { backgroundColor: colors.cardBackground, shadowColor: colors.shadow }]}
                   onPress={() => handleNavigation('/workout/session', { source: 'freestyle' })}
                   activeOpacity={0.8}
                   disabled={isNavigatingRef.current}
@@ -625,7 +625,7 @@ const WorkoutScreen = () => {
                   </View>
                 ) : (
                   <View style={styles.createSplitSection}>
-                    <View style={[styles.noSplitCard, { backgroundColor: colors.cardBackground, borderColor: colors.borderLight }]}>
+                    <View style={[styles.noSplitCard, { backgroundColor: colors.cardBackground, shadowColor: colors.shadow }]}>
                       <Ionicons name="barbell-outline" size={48} color={colors.secondaryText} style={{ marginBottom: 16 }} />
                       <Text style={[styles.noSplitTitle, { color: colors.text }]}>No Saved Workouts</Text>
                       <Text style={[styles.noSplitSubtitle, { color: colors.secondaryText }]}>
@@ -647,7 +647,7 @@ const WorkoutScreen = () => {
           ) : (
             /* My Split Tab - No split created yet */
             <View style={styles.createSplitSection}>
-              <View style={[styles.noSplitCard, { backgroundColor: colors.cardBackground, borderColor: colors.borderLight }]}>
+              <View style={[styles.noSplitCard, { backgroundColor: colors.cardBackground, shadowColor: colors.shadow }]}>
                 <Ionicons name="calendar-outline" size={48} color={colors.secondaryText} style={{ marginBottom: 16 }} />
                 <Text style={[styles.noSplitTitle, { color: colors.text }]}>No Workout Split</Text>
                 <Text style={[styles.noSplitSubtitle, { color: colors.secondaryText }]}>
@@ -994,13 +994,13 @@ const styles = StyleSheet.create({
   headerContainer: {
     paddingHorizontal: 20,
     paddingTop: 60,
-    paddingBottom: 16,
+    paddingBottom: 20,
     backgroundColor: Colors.light.cardBackground,
     shadowColor: Colors.light.shadow,
     shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
+    shadowOpacity: 0.03,
     shadowRadius: 2,
-    elevation: 1,
+    elevation: 0,
   },
   headerContainerCompleted: {
     backgroundColor: '#4CAF50',
@@ -1022,8 +1022,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   contentContainer: {
-    paddingHorizontal: 8,
-    paddingTop: 8,
+    paddingHorizontal: 6,
+    paddingTop: 6,
     paddingBottom: 20,
     flex: 1,
     alignItems: 'stretch',
@@ -1032,20 +1032,18 @@ const styles = StyleSheet.create({
   // Workout Card (matching Activity card styling)
   workoutCard: {
     backgroundColor: Colors.light.cardBackground,
-    borderRadius: 16,
-    padding: 20,
+    borderRadius: 20,
+    padding: 18,
     marginBottom: 16,
     shadowColor: Colors.light.shadow,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.15,
-    shadowRadius: 12,
-    elevation: 5,
-    borderWidth: 1,
-    borderColor: Colors.light.border,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 16,
+    elevation: 3,
+    borderWidth: 0,
     width: '100%',
   },
   workoutCardCompleted: {
-    borderColor: '#4CAF50',
     backgroundColor: '#4CAF50' + '08',
     shadowColor: '#4CAF50',
     shadowOpacity: 0.15,
@@ -1175,7 +1173,7 @@ const styles = StyleSheet.create({
     gap: 8,
     paddingVertical: 16,
     paddingHorizontal: 32,
-    borderRadius: 12,
+    borderRadius: 16,
     shadowColor: Colors.light.primary,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.25,
@@ -1215,7 +1213,7 @@ const styles = StyleSheet.create({
   startWorkoutButton: {
     backgroundColor: Colors.light.primary,
     paddingVertical: 16,
-    borderRadius: 12,
+    borderRadius: 16,
     shadowColor: Colors.light.primary,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
@@ -1242,7 +1240,7 @@ const styles = StyleSheet.create({
     borderWidth: 1.5,
     borderColor: Colors.light.borderLight,
     paddingVertical: 14,
-    borderRadius: 12,
+    borderRadius: 16,
   },
   secondaryActionButtonDisabled: {
     opacity: 0.5,
@@ -1258,7 +1256,7 @@ const styles = StyleSheet.create({
   postWorkoutButton: {
     backgroundColor: '#4CAF50',
     paddingVertical: 16,
-    borderRadius: 12,
+    borderRadius: 16,
     shadowColor: '#4CAF50',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
@@ -1395,11 +1393,15 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: Colors.light.background,
-    borderRadius: 12,
+    borderRadius: 16,
     padding: 16,
     marginBottom: 12,
-    borderWidth: 1,
-    borderColor: Colors.light.borderLight,
+    borderWidth: 0,
+    shadowColor: Colors.light.shadow,
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.06,
+    shadowRadius: 8,
+    elevation: 2,
   },
 
   // Day Picker Card Content
@@ -1443,7 +1445,7 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.light.borderLight + '40',
     paddingHorizontal: 10,
     paddingVertical: 5,
-    borderRadius: 12,
+    borderRadius: 16,
     marginRight: 8,
   },
 
@@ -1456,18 +1458,22 @@ const styles = StyleSheet.create({
 
   // No-Split Freestyle Workout UI
   noSplitScrollContent: {
-    paddingHorizontal: 16,
-    paddingTop: 24,
+    paddingHorizontal: 6,
+    paddingTop: 12,
     paddingBottom: 40,
   },
   freestyleCard: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: Colors.light.cardBackground,
-    borderRadius: 12,
-    padding: 14,
-    borderWidth: 1,
-    borderColor: Colors.light.primary + '30',
+    borderRadius: 20,
+    padding: 18,
+    borderWidth: 0,
+    shadowColor: Colors.light.shadow,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 16,
+    elevation: 3,
   },
   freestyleIconContainer: {
     width: 44,
@@ -1546,9 +1552,14 @@ const styles = StyleSheet.create({
 
   // No Split Card styles
   noSplitCard: {
-    borderRadius: 16,
-    borderWidth: 1,
-    padding: 32,
+    borderRadius: 20,
+    borderWidth: 0,
+    padding: 28,
+    shadowColor: Colors.light.shadow,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 16,
+    elevation: 3,
     alignItems: 'center',
     marginHorizontal: 8,
   },
@@ -1570,7 +1581,7 @@ const styles = StyleSheet.create({
     gap: 8,
     paddingVertical: 14,
     paddingHorizontal: 24,
-    borderRadius: 12,
+    borderRadius: 16,
   },
   createSplitButtonPrimaryText: {
     fontSize: 16,

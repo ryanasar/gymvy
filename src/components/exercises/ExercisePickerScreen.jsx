@@ -15,6 +15,7 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
+import { Colors } from '@/constants/colors';
 import { useThemeColors } from '@/hooks/useThemeColors';
 import ExerciseCard from '@/components/exercises/ExerciseCard';
 
@@ -230,6 +231,12 @@ const ExercisePickerScreen = ({
     setSelectedExercise(exercise);
   }, []);
 
+  // Safe parseInt that returns fallback on NaN
+  const safeParseInt = (val, fallback) => {
+    const parsed = parseInt(val);
+    return isNaN(parsed) ? fallback : parsed;
+  };
+
   // Handle add exercise with config
   const handleAddExercise = useCallback(() => {
     if (!selectedExercise) return;
@@ -241,8 +248,8 @@ const ExercisePickerScreen = ({
           speed: speed || ''
         }
       : {
-          sets: parseInt(sets) || defaultSets,
-          reps: reps ? parseInt(reps) : '',
+          sets: safeParseInt(sets, defaultSets),
+          reps: reps ? safeParseInt(reps, defaultReps) : '',
           weight: weight || ''
         };
 
@@ -261,7 +268,7 @@ const ExercisePickerScreen = ({
     const isAdded = isExerciseAdded(exercise.id);
 
     return (
-      <View style={isSelected ? [styles.selectedExerciseWrapper, { borderColor: colors.primary }] : undefined}>
+      <View style={isSelected ? [styles.selectedExerciseWrapper, { shadowColor: colors.primary }] : undefined}>
         <ExerciseCard
           exercise={exercise}
           onPress={() => !isAdded && handleExerciseSelect(exercise)}
@@ -321,7 +328,6 @@ const ExercisePickerScreen = ({
           styles.configPanel,
           {
             backgroundColor: colors.cardBackground,
-            borderTopColor: colors.borderLight,
             shadowColor: '#000',
             transform: [{ translateY }],
             bottom: keyboardHeight > 0 ? keyboardHeight : 0,
@@ -534,7 +540,7 @@ const ExercisePickerScreen = ({
 
         {/* Search */}
         <View style={styles.searchSection}>
-          <View style={[styles.searchBar, { backgroundColor: colors.cardBackground, borderColor: colors.border }]}>
+          <View style={[styles.searchBar, { backgroundColor: colors.cardBackground, shadowColor: colors.shadow }]}>
             <Ionicons name="search" size={20} color={colors.secondaryText} />
             <TextInput
               style={[styles.searchInput, { color: colors.text }]}
@@ -658,7 +664,7 @@ const styles = StyleSheet.create({
     bottom: 0,
     left: 0,
     right: 0,
-    borderTopWidth: 1,
+    borderTopWidth: 0,
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
     paddingHorizontal: 20,
@@ -710,7 +716,7 @@ const styles = StyleSheet.create({
   },
   configInput: {
     borderWidth: 1,
-    borderRadius: 10,
+    borderRadius: 16,
     paddingHorizontal: 12,
     paddingVertical: 12,
     fontSize: 18,
@@ -724,7 +730,7 @@ const styles = StyleSheet.create({
   },
   addToWorkoutButton: {
     paddingVertical: 16,
-    borderRadius: 12,
+    borderRadius: 16,
     alignItems: 'center',
   },
   addToWorkoutButtonText: {
@@ -762,8 +768,13 @@ const styles = StyleSheet.create({
   searchBar: {
     flexDirection: 'row',
     alignItems: 'center',
-    borderWidth: 1,
-    borderRadius: 12,
+    borderWidth: 0,
+    borderRadius: 16,
+    shadowColor: Colors.light.shadow,
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.06,
+    shadowRadius: 8,
+    elevation: 2,
     paddingHorizontal: 16,
     paddingVertical: 12,
     gap: 12,
@@ -805,9 +816,14 @@ const styles = StyleSheet.create({
     paddingBottom: 280, // Extra padding when config panel is visible
   },
   selectedExerciseWrapper: {
-    borderRadius: 14,
-    borderWidth: 2,
+    borderRadius: 20,
+    borderWidth: 0,
     marginBottom: 8,
+    shadowColor: Colors.light.primary,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 12,
+    elevation: 3,
   },
   selectedCheckmark: {
     position: 'absolute',
@@ -825,7 +841,7 @@ const styles = StyleSheet.create({
     right: 8,
     paddingHorizontal: 8,
     paddingVertical: 4,
-    borderRadius: 8,
+    borderRadius: 12,
   },
   addedBadgeText: {
     fontSize: 11,
@@ -852,7 +868,7 @@ const styles = StyleSheet.create({
     gap: 6,
     paddingHorizontal: 20,
     paddingVertical: 12,
-    borderRadius: 10,
+    borderRadius: 16,
   },
   createFirstButtonText: {
     fontSize: 15,

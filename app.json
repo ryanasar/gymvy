@@ -29,7 +29,7 @@
         "android.permission.READ_EXTERNAL_STORAGE",
         "android.permission.WRITE_EXTERNAL_STORAGE",
         "android.permission.READ_MEDIA_IMAGES",
-        "android.permission.RECORD_AUDIO",
+
         "android.permission.POST_NOTIFICATIONS"
       ],
       "package": "com.ryanasar.gymvy"
@@ -77,6 +77,7 @@
     "experiments": {
       "typedRoutes": true
     },
+    "privacyPolicyUrl": "https://ryanasar.github.io/gymvy-site/privacy.html",
     "extra": {
       "router": {},
       "eas": {

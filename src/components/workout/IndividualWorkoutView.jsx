@@ -75,7 +75,7 @@ const IndividualWorkoutView = ({
     <View style={styles.noSplitScrollContent}>
       {/* Freestyle Workout Option */}
       <TouchableOpacity
-        style={[styles.freestyleCard, { backgroundColor: colors.cardBackground, borderColor: colors.primary + '30' }]}
+        style={[styles.freestyleCard, { backgroundColor: colors.cardBackground, shadowColor: colors.shadow }]}
         onPress={() => router.push({ pathname: '/workout/session', params: { source: 'freestyle' } })}
         activeOpacity={0.8}
       >
@@ -104,7 +104,7 @@ const IndividualWorkoutView = ({
         </View>
       ) : (
         <View style={styles.createWorkoutSection}>
-          <View style={[styles.noWorkoutsCard, { backgroundColor: colors.cardBackground, borderColor: colors.borderLight }]}>
+          <View style={[styles.noWorkoutsCard, { backgroundColor: colors.cardBackground, shadowColor: colors.shadow }]}>
             <Ionicons name="barbell-outline" size={48} color={colors.secondaryText} style={{ marginBottom: 16 }} />
             <Text style={[styles.noWorkoutsTitle, { color: colors.text }]}>No Saved Workouts</Text>
             <Text style={[styles.noWorkoutsSubtitle, { color: colors.secondaryText }]}>
@@ -128,25 +128,29 @@ export default IndividualWorkoutView;
 
 const styles = StyleSheet.create({
   contentContainer: {
-    paddingHorizontal: 8,
-    paddingTop: 8,
+    paddingHorizontal: 6,
+    paddingTop: 6,
     paddingBottom: 20,
     flex: 1,
     alignItems: 'stretch',
   },
   noSplitScrollContent: {
-    paddingHorizontal: 16,
-    paddingTop: 24,
+    paddingHorizontal: 6,
+    paddingTop: 12,
     paddingBottom: 40,
   },
   freestyleCard: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: Colors.light.cardBackground,
-    borderRadius: 12,
-    padding: 14,
-    borderWidth: 1,
-    borderColor: Colors.light.primary + '30',
+    borderRadius: 20,
+    padding: 18,
+    borderWidth: 0,
+    shadowColor: Colors.light.shadow,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 16,
+    elevation: 3,
   },
   freestyleIconContainer: {
     width: 44,
@@ -187,9 +191,14 @@ const styles = StyleSheet.create({
   noWorkoutsCard: {
     alignItems: 'center',
     padding: 32,
-    borderRadius: 16,
-    borderWidth: 1,
+    borderRadius: 20,
+    borderWidth: 0,
     width: '100%',
+    shadowColor: Colors.light.shadow,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 16,
+    elevation: 3,
   },
   noWorkoutsTitle: {
     fontSize: 18,
@@ -207,7 +216,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 12,
     paddingHorizontal: 20,
-    borderRadius: 12,
+    borderRadius: 16,
     gap: 6,
   },
   createWorkoutButtonText: {

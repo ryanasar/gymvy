@@ -46,7 +46,7 @@ const RestDayCard = ({ splitName, splitEmoji, weekNumber, dayNumber, onRestLogge
 
   return (
     <>
-      <View style={[styles.card, { backgroundColor: greenBackground, borderColor: greenPrimary }]}>
+      <View style={[styles.card, { backgroundColor: greenBackground }]}>
         <IconHeader
           icon="🌿"
           iconBackgroundColor={iconBackground}
@@ -115,14 +115,14 @@ export default RestDayCard;
 
 const styles = StyleSheet.create({
   card: {
-    borderRadius: 16,
-    padding: 20,
+    borderRadius: 20,
+    padding: 18,
     marginBottom: 24,
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.15,
-    shadowRadius: 8,
-    elevation: 4,
-    borderWidth: 2,
+    shadowOpacity: 0.08,
+    shadowRadius: 16,
+    elevation: 3,
+    borderWidth: 0,
   },
   splitInfo: {
     marginBottom: 20,
@@ -141,7 +141,7 @@ const styles = StyleSheet.create({
   },
   postRestDayButton: {
     paddingVertical: 16,
-    borderRadius: 12,
+    borderRadius: 16,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 8,

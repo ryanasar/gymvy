@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import {
   View,
   Text,
@@ -14,12 +14,14 @@ import { Ionicons } from '@expo/vector-icons';
 import { useThemeColors } from '@/hooks/useThemeColors';
 import { Radius, Spacing, FontSize, FontWeight, Shadows } from '@/constants/theme';
 
-const SettingsDropdown = ({ onSignOut, onDeleteAccount }) => {
+const SettingsDropdown = ({ onSignOut, onDeleteAccount, onBlockedUsersPress }) => {
   const colors = useThemeColors();
   const [isVisible, setIsVisible] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deleteText, setDeleteText] = useState('');
   const [isDeleting, setIsDeleting] = useState(false);
+  // Synchronous ref guard to prevent double-tap on delete
+  const isDeletingRef = useRef(false);
 
   const handleSignOut = () => {
     setIsVisible(false);
@@ -31,18 +33,30 @@ const SettingsDropdown = ({ onSignOut, onDeleteAccount }) => {
     setShowDeleteModal(true);
   };
 
-  const handlePrivacyPolicy = () => {
+  const handlePrivacyPolicy = async () => {
     setIsVisible(false);
-    Linking.openURL('https://ryanasar.github.io/gymvy-site/privacy.html');
+    try {
+      await Linking.openURL('https://ryanasar.github.io/gymvy-site/privacy.html');
+    } catch {
+      Alert.alert('Error', 'Unable to open link');
+    }
+  };
+
+  const handleBlockedUsers = () => {
+    setIsVisible(false);
+    onBlockedUsersPress?.();
   };
 
   const handleConfirmDelete = async () => {
     if (deleteText !== 'DELETE') return;
+    if (isDeletingRef.current) return;
+    isDeletingRef.current = true;
     setIsDeleting(true);
     try {
       await onDeleteAccount();
     } catch (error) {
       Alert.alert('Error', 'Failed to delete account. Please try again.');
+      isDeletingRef.current = false;
       setIsDeleting(false);
     }
   };
@@ -93,6 +107,15 @@ const SettingsDropdown = ({ onSignOut, onDeleteAccount }) => {
             >
               <Ionicons name="shield-checkmark-outline" size={20} color={colors.text} />
               <Text style={[styles.dropdownText, { color: colors.text }]}>Privacy Policy</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[styles.dropdownItem, { borderBottomWidth: 1, borderBottomColor: colors.borderLight }]}
+              onPress={handleBlockedUsers}
+              activeOpacity={0.7}
+            >
+              <Ionicons name="ban-outline" size={20} color={colors.text} />
+              <Text style={[styles.dropdownText, { color: colors.text }]}>Blocked Users</Text>
             </TouchableOpacity>
 
             <TouchableOpacity

@@ -23,7 +23,7 @@ const SavedWorkoutPickerModal = ({
 
   const renderWorkoutItem = ({ item }) => (
     <TouchableOpacity
-      style={[styles.workoutItem, { backgroundColor: colors.cardBackground, borderColor: colors.borderLight }]}
+      style={[styles.workoutItem, { backgroundColor: colors.cardBackground, shadowColor: colors.shadow }]}
       onPress={() => onSelectWorkout(item)}
       activeOpacity={0.7}
     >
@@ -127,10 +127,14 @@ const styles = StyleSheet.create({
     padding: 20,
   },
   workoutItem: {
-    borderRadius: 12,
+    borderRadius: 16,
     padding: 16,
     marginBottom: 12,
-    borderWidth: 1,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.06,
+    shadowRadius: 8,
+    elevation: 2,
   },
   workoutItemContent: {
     flexDirection: 'row',

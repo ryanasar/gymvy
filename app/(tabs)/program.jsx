@@ -328,7 +328,7 @@ const ProgramScreen = () => {
             <Text style={[styles.sectionTitle, { color: colors.text }]}>Active Split</Text>
 
             {currentActiveSplit ? (
-              <View style={[styles.activeProgramCard, { backgroundColor: colors.cardBackground, shadowColor: colors.shadow, borderColor: colors.borderLight }]}>
+              <View style={[styles.activeProgramCard, { backgroundColor: colors.cardBackground, shadowColor: colors.shadow }]}>
                 {/* Program Info with Circular Emoji Icon */}
                 <View style={styles.activeProgramHeader}>
                   <View style={[styles.emojiCircle, { backgroundColor: colors.primary + '15' }]}>
@@ -471,15 +471,13 @@ const styles = StyleSheet.create({
   },
   activeProgramCard: {
     backgroundColor: Colors.light.cardBackground,
-    borderRadius: 16,
-    padding: 20,
+    borderRadius: 20,
+    padding: 18,
     shadowColor: Colors.light.shadow,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.08,
-    shadowRadius: 8,
-    elevation: 4,
-    borderWidth: 1,
-    borderColor: Colors.light.borderLight,
+    shadowRadius: 16,
+    elevation: 3,
   },
   activeProgramHeader: {
     flexDirection: 'row',
@@ -530,7 +528,7 @@ const styles = StyleSheet.create({
   primaryActionButton: {
     backgroundColor: Colors.light.primary,
     paddingVertical: 16,
-    borderRadius: 12,
+    borderRadius: 16,
     shadowColor: Colors.light.primary,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.2,
@@ -552,7 +550,7 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: Colors.light.cardBackground,
     paddingVertical: 12,
-    borderRadius: 12,
+    borderRadius: 16,
     borderWidth: 1.5,
     borderColor: Colors.light.border,
   },
@@ -568,7 +566,7 @@ const styles = StyleSheet.create({
   createSplitButton: {
     backgroundColor: Colors.light.cardBackground,
     paddingVertical: 14,
-    borderRadius: 12,
+    borderRadius: 16,
     marginBottom: 16,
     borderWidth: 2,
     borderColor: Colors.light.primary,

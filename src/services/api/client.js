@@ -5,6 +5,9 @@ import { supabase } from '@/lib/supabase';
 // Module-level token cache — updated synchronously by auth.tsx
 let _cachedAccessToken = null;
 
+// Mutex: only one refresh at a time; subsequent 401s await the same promise
+let _refreshPromise = null;
+
 export const setAccessToken = (token) => {
   _cachedAccessToken = token;
 };
@@ -30,12 +33,20 @@ apiClient.interceptors.request.use(
 apiClient.interceptors.response.use(
   (response) => response,
   async (error) => {
-    if (error.response?.status === 401) {
-      // Try to refresh the session
+    // Prevent infinite retry: only retry once per request
+    if (error.response?.status === 401 && !error.config._retried) {
+      error.config._retried = true;
+
       try {
-        const { data: { session }, error: refreshError } = await supabase.auth.refreshSession();
+        // Mutex: reuse in-flight refresh if one exists
+        if (!_refreshPromise) {
+          _refreshPromise = supabase.auth.refreshSession().finally(() => {
+            _refreshPromise = null;
+          });
+        }
+
+        const { data: { session }, error: refreshError } = await _refreshPromise;
         if (session && !refreshError) {
-          // Update cached token and retry the original request
           _cachedAccessToken = session.access_token;
           error.config.headers.Authorization = `Bearer ${session.access_token}`;
           return apiClient.request(error.config);

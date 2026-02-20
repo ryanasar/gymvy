@@ -337,7 +337,7 @@ const Activity = ({ post, currentUserId, onPostUpdated, onPostDeleted, initialOp
     <Pressable
       style={({ pressed }) => [
         styles.card,
-        { backgroundColor: colors.cardBackground, borderColor: colors.borderLight, shadowColor: colors.shadow },
+        { backgroundColor: colors.cardBackground, shadowColor: colors.shadow },
         pressed && !isRestDay && styles.cardPressed
       ]}
       onPress={handleCardPress}
@@ -379,7 +379,7 @@ const Activity = ({ post, currentUserId, onPostUpdated, onPostDeleted, initialOp
 
       {/* Overflow Menu */}
       {showMenu && (
-        <View style={[styles.menuOverlay, { backgroundColor: colors.cardBackground, borderColor: colors.border }]}>
+        <View style={[styles.menuOverlay, { backgroundColor: colors.cardBackground, shadowColor: colors.shadow }]}>
           {isOwnPost ? (
             <>
               <TouchableOpacity
@@ -453,18 +453,20 @@ const Activity = ({ post, currentUserId, onPostUpdated, onPostDeleted, initialOp
 
       {/* Post Image */}
       {imageUrl && (
-        <TouchableOpacity
-          activeOpacity={0.9}
-          onPress={() => setShowExpandedImage(true)}
-        >
-          <Image
-            source={{ uri: imageUrl }}
-            style={styles.postImage}
-            contentFit="cover"
-            transition={200}
-            cachePolicy="memory-disk"
-          />
-        </TouchableOpacity>
+        <View style={styles.imageContainer}>
+          <TouchableOpacity
+            activeOpacity={0.9}
+            onPress={() => setShowExpandedImage(true)}
+          >
+            <Image
+              source={{ uri: imageUrl }}
+              style={styles.postImage}
+              contentFit="cover"
+              transition={200}
+              cachePolicy="memory-disk"
+            />
+          </TouchableOpacity>
+        </View>
       )}
 
       {/* Metadata Section */}
@@ -559,32 +561,31 @@ export default Activity;
 const styles = StyleSheet.create({
   card: {
     backgroundColor: Colors.light.cardBackground,
-    borderRadius: 16,
-    marginBottom: 16,
-    borderWidth: 1,
-    borderColor: Colors.light.border,
+    borderRadius: 20,
+    marginBottom: 20,
+    borderWidth: 0,
     overflow: 'hidden',
     shadowColor: Colors.light.shadow,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.15,
-    shadowRadius: 12,
-    elevation: 5,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 16,
+    elevation: 3,
   },
   cardPressed: {
-    opacity: 0.96,
+    opacity: 0.98,
   },
   headerRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 14,
-    paddingTop: 14,
-    paddingBottom: 8,
+    paddingHorizontal: 18,
+    paddingTop: 18,
+    paddingBottom: 12,
   },
   authorInfo: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 10,
+    gap: 12,
     flex: 1,
   },
   authorTextContainer: {
@@ -605,11 +606,13 @@ const styles = StyleSheet.create({
   timestampInline: {
     fontSize: 13,
     fontWeight: '400',
+    opacity: 0.6,
   },
   authorUsername: {
     fontSize: 13,
     fontWeight: '400',
     marginTop: 1,
+    opacity: 0.6,
   },
   menuButton: {
     padding: 4,
@@ -617,13 +620,13 @@ const styles = StyleSheet.create({
   menuOverlay: {
     position: 'absolute',
     top: 50,
-    right: 14,
-    borderRadius: 12,
-    borderWidth: 1,
+    right: 18,
+    borderRadius: 14,
+    borderWidth: 0,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.12,
-    shadowRadius: 12,
-    elevation: 8,
+    shadowRadius: 20,
+    elevation: 12,
     zIndex: 1000,
     minWidth: 160,
   },
@@ -631,8 +634,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
-    paddingHorizontal: 16,
-    paddingVertical: 14,
+    paddingHorizontal: 18,
+    paddingVertical: 16,
     borderBottomWidth: 0.5,
     borderBottomColor: Colors.light.borderLight + '30',
   },
@@ -644,44 +647,51 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
   contentBody: {
-    paddingHorizontal: 14,
+    paddingHorizontal: 18,
     paddingBottom: 12,
   },
   contentBodyNoImage: {
     paddingBottom: 0,
   },
   typeLabel: {
-    fontSize: 10,
-    fontWeight: '700',
-    letterSpacing: 0.8,
+    fontSize: 11,
+    fontWeight: '600',
+    letterSpacing: 1.2,
     textTransform: 'uppercase',
     marginBottom: 4,
+    opacity: 0.7,
   },
   workoutName: {
-    fontSize: 18,
+    fontSize: 22,
     fontWeight: '700',
-    marginBottom: 6,
-    lineHeight: 24,
+    marginBottom: 8,
+    lineHeight: 28,
+    letterSpacing: 0.3,
   },
   description: {
     fontSize: 15,
     lineHeight: 21,
     fontWeight: '400',
+    opacity: 0.9,
   },
   showMoreText: {
     fontSize: 14,
     fontWeight: '500',
-    marginTop: 4,
+    marginTop: 6,
+  },
+  imageContainer: {
+    paddingHorizontal: 18,
   },
   postImage: {
     width: '100%',
-    height: 320,
+    height: 340,
+    borderRadius: 16,
     backgroundColor: Colors.light.borderLight + '20',
   },
   metadataSection: {
-    paddingHorizontal: 14,
-    paddingTop: 12,
-    gap: 10,
+    paddingHorizontal: 18,
+    paddingTop: 14,
+    gap: 12,
   },
   metadataSectionNoImage: {
     paddingTop: 6,
@@ -695,12 +705,12 @@ const styles = StyleSheet.create({
   taggedBadgesContainer: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 6,
+    gap: 8,
   },
   badgesContainer: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 6,
+    gap: 8,
   },
   statsRow: {
     flexDirection: 'row',
@@ -710,12 +720,13 @@ const styles = StyleSheet.create({
   },
   statsText: {
     fontSize: 13,
-    fontWeight: '600',
+    fontWeight: '500',
+    opacity: 0.7,
   },
   tapHintText: {
     fontSize: 12,
-    fontWeight: '500',
-    opacity: 0.7,
+    fontWeight: '400',
+    opacity: 0.5,
     fontStyle: 'italic',
   },
 });

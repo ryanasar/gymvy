@@ -217,7 +217,7 @@ export async function processQueue(handlers) {
         console.error('[OfflineQueue] Max retries reached, removing action:', action.id);
         await removeAction(action.id);
         failed++;
-        errors.push({ actionId: action.id, error: error.message });
+        errors.push({ actionId: action.id, type: action.type, error: error.message, dropped: true });
       } else {
         // Increment retry count
         await updateAction(action.id, { retryCount: newRetryCount });

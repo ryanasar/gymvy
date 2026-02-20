@@ -39,9 +39,8 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   title: {
-    fontSize: FontSize.xxl,
-    fontWeight: FontWeight.bold,
-    letterSpacing: -0.5,
+    fontSize: 28,
+    fontWeight: '700',
   },
   subtitle: {
     fontSize: FontSize.body,

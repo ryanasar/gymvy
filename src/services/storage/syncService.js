@@ -9,6 +9,9 @@ import { markRestDay } from '@/services/api/dailyActivity';
 import { checkNetworkStatus as checkNetwork } from '@/services/network/networkService';
 import { fetchUserCustomExercises } from '@/services/api/customExercisesBackend';
 
+// Guard against concurrent sync calls (e.g., periodic interval + network change)
+let _syncInProgress = false;
+
 /**
  * Network status check
  * @returns {Promise<boolean>}
@@ -260,6 +263,14 @@ export async function syncPendingWorkouts(userId) {
     return { synced: 0, failed: 0, errors: [] };
   }
 
+  // Prevent duplicate concurrent syncs
+  if (_syncInProgress) {
+    console.log('[Sync] Early return: sync already in progress');
+    return { synced: 0, failed: 0, errors: [] };
+  }
+  _syncInProgress = true;
+
+  try {
   // Normalize userId to string for consistent storage key generation
   const normalizedUserId = String(userId);
 
@@ -369,6 +380,9 @@ export async function syncPendingWorkouts(userId) {
   }
 
   return { synced, failed, errors };
+  } finally {
+    _syncInProgress = false;
+  }
 }
 
 /**

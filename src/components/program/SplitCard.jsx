@@ -22,8 +22,8 @@ const SplitCard = ({ split, onPress, onDelete, showDelete = false }) => {
     <TouchableOpacity
       style={[
         styles.card,
-        { backgroundColor: colors.cardBackground, borderColor: colors.borderLight, shadowColor: colors.shadow },
-        isActive && [styles.activeCard, { borderColor: colors.primary }]
+        { backgroundColor: colors.cardBackground, shadowColor: colors.shadow },
+        isActive && styles.activeCard
       ]}
       onPress={onPress}
       activeOpacity={0.8}
@@ -65,19 +65,16 @@ export default SplitCard;
 const styles = StyleSheet.create({
   card: {
     backgroundColor: Colors.light.cardBackground,
-    borderRadius: 12,
-    padding: 16,
+    borderRadius: 20,
+    padding: 18,
     shadowColor: Colors.light.shadow,
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    elevation: 2,
-    borderWidth: 1,
-    borderColor: Colors.light.borderLight,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 16,
+    elevation: 3,
   },
   activeCard: {
-    borderColor: Colors.light.primary,
-    borderWidth: 2,
+    shadowOpacity: 0.15,
   },
   cardContent: {
     flexDirection: 'row',

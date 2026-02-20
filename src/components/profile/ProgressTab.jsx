@@ -140,7 +140,7 @@ const ProgressTab = ({ userId, onRefresh, embedded = false, prefetchedCalendarDa
         try {
           const [sessions, posts] = await Promise.all([
             getWorkoutSessionsByUserId(userId),
-            getPostsByUserId(userId)
+            getPostsByUserId(userId).then(res => Array.isArray(res) ? res : (res.posts || []))
           ]);
 
           const calendarDataMap = {};
