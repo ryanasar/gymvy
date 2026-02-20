@@ -104,6 +104,7 @@ export const STORAGE_KEYS = {
   WORKOUT_ID_MAP: '@gymvy/workout_id_map',
   SAVED_WORKOUTS: '@gymvy/saved_workouts',
   BODY_WEIGHT_LOG: '@gymvy/body_weight_log',
+  STREAK_RESTORE: '@gymvy/streak_restore',
   // CUSTOM_EXERCISES - REMOVED: custom exercises are now backend-only
   // CALENDAR - REMOVED: calendar is now backend-only (DailyActivity table)
 };

@@ -32,13 +32,13 @@ const AnimatedTextInput = Animated.createAnimatedComponent(TextInput);
 
 export default function ProfileSetup() {
   const router = useRouter();
-  const { user, setUser } = useAuth();
+  const { user, authUser, setUser } = useAuth();
   const colors = useThemeColors();
   const [loading, setLoading] = useState(false);
   const [focusedInput, setFocusedInput] = useState(null);
 
   const [formData, setFormData] = useState({
-    name: user?.name || '',
+    name: user?.name || authUser?.name || '',
     username: user?.username || '',
     bio: '',
   });

@@ -93,6 +93,9 @@ export const PushNotificationProvider = ({ children }) => {
       case 'follow':
         router.push('/notifications');
         break;
+      case 'streak_lost':
+        router.push('/notifications');
+        break;
       default:
         router.push('/notifications');
     }

@@ -2,7 +2,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { initializeApp, storage, migrateUserStorage } from '@/services/storage';
 import { useAuth } from '@/lib/auth';
-import { getSplitsByUserId } from "@/services/api/splits";
+import { getSplitsByUserId, syncSplitProgress } from "@/services/api/splits";
 import { getCustomExercises } from '@/services/api/customExercises';
 import { checkNetworkStatus } from '@/services/network/networkService';
 import { markRestDay } from '@/services/api/dailyActivity';
@@ -122,6 +122,9 @@ export const WorkoutProvider = ({ children }) => {
         });
         setExerciseDatabase(exerciseMap);
 
+        // Track the working split for use in advancement logic below
+        let workingSplit = null;
+
         if (appState.split) {
           // Use split from storage
 
@@ -159,6 +162,7 @@ export const WorkoutProvider = ({ children }) => {
             } else if (userId) {
               await storage.saveSplit(userId, migratedSplit);
             }
+            workingSplit = validatedSplit;
             setActiveSplit(validatedSplit);
           } else {
             // Validate exercise IDs match local database
@@ -184,14 +188,18 @@ export const WorkoutProvider = ({ children }) => {
                   if (revalidatedSplit.needsSave && userId) {
                     await storage.saveSplit(userId, revalidatedSplit);
                   }
+                  workingSplit = revalidatedSplit;
                   setActiveSplit(revalidatedSplit);
                 } else {
+                  workingSplit = validatedSplit;
                   setActiveSplit(validatedSplit);
                 }
               } catch (error) {
+                workingSplit = validatedSplit;
                 setActiveSplit(validatedSplit);
               }
             } else {
+              workingSplit = validatedSplit;
               setActiveSplit(validatedSplit);
             }
           }
@@ -201,7 +209,7 @@ export const WorkoutProvider = ({ children }) => {
         }
 
         // Only load progress if we have an active split
-        if (appState.split) {
+        if (workingSplit) {
           const savedWeek = await AsyncStorage.getItem('currentWeek');
           const savedDayIndex = await AsyncStorage.getItem('currentDayIndex');
           const savedCompletionDate = await AsyncStorage.getItem('lastCompletionDate');
@@ -241,7 +249,7 @@ export const WorkoutProvider = ({ children }) => {
                 await AsyncStorage.setItem('currentDayIndex', currentDayValue.toString());
               } else if (currentDayValue === 0 && currentWeekValue > 1) {
                 // If we're on day 0, go back to last day of previous week
-                const totalDays = appState.split?.totalDays || 6;
+                const totalDays = workingSplit?.totalDays || 6;
                 currentDayValue = totalDays - 1;
                 currentWeekValue = currentWeekValue - 1;
                 setCurrentDayIndex(currentDayValue);
@@ -263,7 +271,7 @@ export const WorkoutProvider = ({ children }) => {
             const elapsed = daysBetween(dateToCheck, today);
 
             const result = computeAdvancedDay(
-              currentDayValue, currentWeekValue, appState.split,
+              currentDayValue, currentWeekValue, workingSplit,
               elapsed, wasLastDayCompleted, wasFreeRestDay, dateToCheck
             );
 
@@ -274,6 +282,7 @@ export const WorkoutProvider = ({ children }) => {
               setCurrentWeek(currentWeekValue);
               await AsyncStorage.setItem('currentDayIndex', currentDayValue.toString());
               await AsyncStorage.setItem('currentWeek', currentWeekValue.toString());
+              syncProgress(workingSplit.id, currentDayValue, currentWeekValue, today);
             }
 
             // Record skipped rest days to backend (fire-and-forget)
@@ -283,7 +292,7 @@ export const WorkoutProvider = ({ children }) => {
                   await markRestDay(user.id, restDay.date, {
                     activityType: 'planned_rest',
                     isPlanned: true,
-                    splitId: appState.split.id,
+                    splitId: workingSplit.id,
                     dayNumber: restDay.dayIndex + 1,
                     plannedWorkoutName: restDay.dayName,
                   });
@@ -453,6 +462,16 @@ export const WorkoutProvider = ({ children }) => {
     return `${year}-${month}-${day}`;
   };
 
+  // Fire-and-forget sync of split progress to backend
+  const syncProgress = (splitId, dayIdx, weekNum, dateStr) => {
+    if (!splitId) return;
+    syncSplitProgress(splitId, {
+      currentDayIndex: dayIdx,
+      currentWeek: weekNum,
+      lastAdvancementDate: dateStr || getLocalDateString(),
+    });
+  };
+
   // Shared advancement logic: advance through elapsed days, auto-skipping rest days
   // Returns { dayIndex, week, didAdvance, skippedRestDays }
   const computeAdvancedDay = (startDayIndex, startWeek, split, elapsedDays, wasCompleted, wasFreeRestDay, lastCheckDate) => {
@@ -462,48 +481,45 @@ export const WorkoutProvider = ({ children }) => {
     let didAdvance = false;
     const skippedRestDays = [];
 
-    // Cap iterations to prevent infinite loops
-    const maxIterations = Math.min(elapsedDays, totalDays);
+    const currentDay = split.days?.[dayIndex % totalDays];
+    const isCurrentRest = currentDay?.isRest === true;
 
-    for (let i = 0; i < maxIterations; i++) {
-      const currentDayData = split.days?.[dayIndex % totalDays];
-      const isCurrentDayRest = currentDayData?.isRest === true;
+    // Step 1: Handle lastCheckDate's day
+    // Advance if the workout was completed OR it was a rest day (rest days auto-advance)
+    if ((wasCompleted && !wasFreeRestDay) || isCurrentRest) {
+      // Log rest day if it was a rest day on lastCheckDate
+      if (isCurrentRest) {
+        skippedRestDays.push({
+          date: lastCheckDate,
+          dayIndex: dayIndex % totalDays,
+          dayName: currentDay?.name || 'Rest Day',
+        });
+      }
+      const nextIdx = (dayIndex + 1) % totalDays;
+      if (nextIdx === 0) week = week + 1;
+      dayIndex = nextIdx;
+      didAdvance = true;
+    } else {
+      // Workout wasn't completed, wasn't rest, wasn't free rest — stay put
+      return { dayIndex, week, didAdvance: false, skippedRestDays };
+    }
 
-      if (i === 0) {
-        // First iteration: advance if last day was completed (and not free rest) OR current day is rest
-        if ((wasCompleted && !wasFreeRestDay) || isCurrentDayRest) {
-          // If it's a rest day we're advancing past, record it
-          if (isCurrentDayRest) {
-            skippedRestDays.push({
-              date: addDaysToDateString(lastCheckDate, i + 1),
-              dayIndex: dayIndex % totalDays,
-              dayName: currentDayData?.name || 'Rest Day',
-            });
-          }
-          const nextDayIndex = (dayIndex + 1) % totalDays;
-          if (nextDayIndex === 0) week = week + 1;
-          dayIndex = nextDayIndex;
-          didAdvance = true;
-        } else {
-          // Workout wasn't completed and wasn't a rest day — stop
-          break;
-        }
+    // Step 2: Process intermediate days (lastCheckDate+1 through yesterday)
+    // Auto-skip past rest days; stop at missed workout days
+    for (let d = 1; d < elapsedDays; d++) {
+      const dayData = split.days?.[dayIndex % totalDays];
+      if (dayData?.isRest) {
+        skippedRestDays.push({
+          date: addDaysToDateString(lastCheckDate, d),
+          dayIndex: dayIndex % totalDays,
+          dayName: dayData?.name || 'Rest Day',
+        });
+        const nextIdx = (dayIndex + 1) % totalDays;
+        if (nextIdx === 0) week = week + 1;
+        dayIndex = nextIdx;
       } else {
-        // Subsequent iterations: only auto-advance through rest days
-        const nextDayData = split.days?.[dayIndex % totalDays];
-        if (nextDayData?.isRest === true) {
-          skippedRestDays.push({
-            date: addDaysToDateString(lastCheckDate, i + 1),
-            dayIndex: dayIndex % totalDays,
-            dayName: nextDayData?.name || 'Rest Day',
-          });
-          const nextDayIndex = (dayIndex + 1) % totalDays;
-          if (nextDayIndex === 0) week = week + 1;
-          dayIndex = nextDayIndex;
-        } else {
-          // Hit a workout day — stop advancing
-          break;
-        }
+        // Missed workout day — don't advance past it
+        break;
       }
     }
 
@@ -542,6 +558,7 @@ export const WorkoutProvider = ({ children }) => {
             setCurrentWeek(result.week);
             await AsyncStorage.setItem('currentDayIndex', result.dayIndex.toString());
             await AsyncStorage.setItem('currentWeek', result.week.toString());
+            syncProgress(activeSplit.id, result.dayIndex, result.week, today);
           }
 
           // Record skipped rest days to backend (fire-and-forget)
@@ -668,6 +685,7 @@ export const WorkoutProvider = ({ children }) => {
     try {
       await AsyncStorage.setItem('currentDayIndex', nextDayIndex.toString());
       await AsyncStorage.setItem('currentWeek', newWeek.toString());
+      syncProgress(split.id, nextDayIndex, newWeek);
     } catch (error) {
       console.error('[WorkoutContext] Failed to save workout progress:', error);
     }
@@ -681,6 +699,7 @@ export const WorkoutProvider = ({ children }) => {
     try {
       await AsyncStorage.setItem('currentDayIndex', dayIndex.toString());
       await AsyncStorage.setItem('currentWeek', weekNumber.toString());
+      syncProgress(activeSplit?.id, dayIndex, weekNumber);
     } catch (error) {
       console.error('[WorkoutContext] Failed to save workout progress:', error);
     }
@@ -708,6 +727,7 @@ export const WorkoutProvider = ({ children }) => {
         await storage.saveSplit(user.id, newSplit);
         await AsyncStorage.setItem('currentDayIndex', '0');
         await AsyncStorage.setItem('currentWeek', '1');
+        syncProgress(newSplit.id, 0, 1);
       } else if (user?.id) {
         // Clear split data when null - use user-specific key
         const { getUserStorageKey, STORAGE_KEYS } = await import('@/services/storage/types');

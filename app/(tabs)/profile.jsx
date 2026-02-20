@@ -13,6 +13,7 @@ import WorkoutPlansTab from '@/components/profile/WorkoutPlansTab';
 import FollowListModal from '@/components/profile/FollowListModal';
 import EditProfileModal from '@/components/profile/EditProfileModal';
 import { useThemeColors } from '@/hooks/useThemeColors';
+import { deleteProfile } from '@/services/api/profile';
 import TabBar from '@/components/ui/TabBar';
 
 const ProfileScreen = () => {
@@ -111,6 +112,11 @@ const ProfileScreen = () => {
     }
   };
 
+  const handleDeleteAccount = async () => {
+    await deleteProfile(user.id);
+    await signOut();
+  };
+
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       {/* Fixed "Profile" title header */}
@@ -138,6 +144,7 @@ const ProfileScreen = () => {
           isPrivate={isPrivate}
           isVerified={isVerified}
           onSignOut={signOut}
+          onDeleteAccount={handleDeleteAccount}
           onFollowersPress={handleOpenFollowersModal}
           onFollowingPress={handleOpenFollowingModal}
           onEditPress={handleOpenEditModal}

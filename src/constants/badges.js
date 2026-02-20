@@ -47,7 +47,13 @@ export function buildBadges({ streak, isSplitCompleted, prExercises } = {}) {
   }
 
   if (prExercises && prExercises.length > 0) {
-    badges.push({ type: BADGE_TYPES.NEW_1RM, exercises: prExercises });
+    const big3 = prExercises.filter((name) => {
+      const lower = name.toLowerCase();
+      return lower.includes('bench press') || lower.includes('squat') || lower.includes('deadlift');
+    });
+    if (big3.length > 0) {
+      badges.push({ type: BADGE_TYPES.NEW_1RM, exercises: big3 });
+    }
   }
 
   return badges.length > 0 ? badges : null;

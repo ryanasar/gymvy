@@ -137,9 +137,67 @@ export const scheduleLocalNotification = async (title, body, data = {}) => {
   });
 };
 
+// Identifier for streak lost notifications so we can cancel them
+const STREAK_LOST_IDENTIFIER = 'streak-lost-notification';
+
+/**
+ * Schedule a streak lost notification for 8am tomorrow
+ * Called when we detect the user has a 5+ day streak and hasn't worked out today
+ * @param {number} streak - The streak count that will be lost
+ * @param {string} missedDate - YYYY-MM-DD of the day that was missed
+ */
+export const scheduleStreakLostNotification = async (streak, missedDate) => {
+  try {
+    // Cancel any existing streak lost notification first
+    await cancelStreakLostNotification();
+
+    // Schedule for 8am tomorrow
+    const trigger = new Date();
+    trigger.setDate(trigger.getDate() + 1);
+    trigger.setHours(8, 0, 0, 0);
+
+    // Calculate expiry (end of tomorrow)
+    const expiresAt = new Date(trigger);
+    expiresAt.setHours(23, 59, 59, 999);
+
+    await Notifications.scheduleNotificationAsync({
+      content: {
+        title: 'Streak Lost 😔',
+        body: `Your ${streak}-day streak ended. Restore it before midnight!`,
+        data: {
+          type: 'streak_lost',
+          lostStreak: streak,
+          missedDate,
+          expiresAt: expiresAt.toISOString(),
+        },
+      },
+      trigger: { date: trigger },
+      identifier: STREAK_LOST_IDENTIFIER,
+    });
+
+    console.log('[PushNotification] Scheduled streak lost notification for:', trigger.toISOString());
+  } catch (error) {
+    console.error('[PushNotification] Error scheduling streak lost notification:', error);
+  }
+};
+
+/**
+ * Cancel any pending streak lost notification
+ * Called when the user completes a workout (streak preserved)
+ */
+export const cancelStreakLostNotification = async () => {
+  try {
+    await Notifications.cancelScheduledNotificationAsync(STREAK_LOST_IDENTIFIER);
+  } catch (error) {
+    // Silently fail - notification may not exist
+  }
+};
+
 export default {
   registerForPushNotificationsAsync,
   registerTokenWithBackend,
   removeTokenFromBackend,
   scheduleLocalNotification,
+  scheduleStreakLostNotification,
+  cancelStreakLostNotification,
 };

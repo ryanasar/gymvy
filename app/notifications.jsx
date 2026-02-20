@@ -171,6 +171,8 @@ const NotificationsScreen = () => {
         return 'accepted your follow request';
       case 'nudge':
         return 'sent you a nudge';
+      case 'streak_lost':
+        return null; // Handled separately in render
       default:
         return 'interacted with you';
     }
@@ -202,6 +204,8 @@ const NotificationsScreen = () => {
         return { name: 'checkmark-circle', color: colors.success || '#10B981' };
       case 'nudge':
         return { name: 'barbell-outline', color: colors.accent };
+      case 'streak_lost':
+        return { name: 'flame-outline', color: colors.warning || '#F59E0B' };
       default:
         return { name: 'notifications', color: colors.secondaryText };
     }
@@ -237,6 +241,9 @@ const NotificationsScreen = () => {
   };
 
   const handleNotificationPress = (notification) => {
+    // For streak_lost, do nothing on row press
+    if (notification.type === 'streak_lost') return;
+
     // For follow, follow request, and nudge notifications, go to profile
     if (notification.type === 'follow' || notification.type === 'follow_request' || notification.type === 'follow_request_accepted' || notification.type === 'nudge') {
       handleProfilePress(notification);
@@ -258,7 +265,38 @@ const NotificationsScreen = () => {
     const avatarUrl = item.actor_avatar || actorProfile?.avatarUrl;
     const icon = getNotificationIcon(item.type);
     const isFollowRequest = item.type === 'follow_request';
+    const isStreakLost = item.type === 'streak_lost';
     const isProcessing = processingRequests[item.actor_id];
+
+    // Streak lost notifications have a special layout
+    if (isStreakLost) {
+      const lostStreak = item.metadata?.lost_streak || 0;
+      return (
+        <View
+          style={[
+            styles.notificationItem,
+            { backgroundColor: colors.cardBackground, borderBottomColor: colors.borderLight + '50' },
+            !item.is_read && { backgroundColor: (colors.warning || '#F59E0B') + '08' },
+          ]}
+        >
+          <View style={styles.notificationContent}>
+            {/* Fire emoji avatar */}
+            <View style={[styles.avatarPlaceholder, { backgroundColor: (colors.warning || '#F59E0B') + '20' }]}>
+              <Text style={{ fontSize: 22 }}>🔥</Text>
+            </View>
+
+            {/* Text content */}
+            <View style={styles.textContent}>
+              <Text style={[styles.notificationText, { color: colors.text }]}>
+                <Text style={styles.actorName}>Your {lostStreak}-day streak</Text>
+                {' '}ended yesterday
+              </Text>
+              <Text style={[styles.timestamp, { color: colors.secondaryText }]}>{formatDate(item.created_at)}</Text>
+            </View>
+          </View>
+        </View>
+      );
+    }
 
     return (
       <TouchableOpacity

@@ -1,9 +1,4 @@
-/**
- * StreakRestoreModal - EXAMPLE ONLY
- * This is a visual mockup, not functional implementation
- */
-
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Modal,
   View,
@@ -11,20 +6,118 @@ import {
   StyleSheet,
   TouchableOpacity,
   Dimensions,
+  ActivityIndicator,
+  Alert,
 } from 'react-native';
 import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
+import { Ionicons } from '@expo/vector-icons';
+import Purchases from 'react-native-purchases';
 import { useThemeColors } from '@/hooks/useThemeColors';
+import { useAuth } from '@/lib/auth';
+import { restoreStreak } from '@/services/streak/streakRestoreService';
+import {
+  hasFreeRestore as checkFreeRestore,
+  useFreeRestore,
+  incrementRestoreCount,
+} from '@/services/storage/streakRestoreStorage';
 
 const { width } = Dimensions.get('window');
+const PRODUCT_ID = 'com.gymvy.streak_restore';
 
-export function StreakRestoreModal({ visible, onClose }) {
+export function StreakRestoreModal({ visible, onClose, lostStreak = 0, missedDate, onRestored }) {
   const colors = useThemeColors();
+  const { user } = useAuth();
+  const [freeRestoreAvailable, setFreeRestoreAvailable] = useState(false);
+  const [product, setProduct] = useState(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isLoadingProduct, setIsLoadingProduct] = useState(false);
 
-  // Mock data for display
-  const lostStreak = 12;
-  const hasFreeRestore = false; // Would check if user has used free restore
-  const price = '$0.99';
+  // Check free restore availability and fetch product on mount
+  useEffect(() => {
+    if (!visible || !user?.id) return;
+
+    const init = async () => {
+      // Check free restore
+      const hasFree = await checkFreeRestore(user.id);
+      setFreeRestoreAvailable(hasFree);
+
+      // Fetch consumable product (only if no free restore)
+      if (!hasFree) {
+        setIsLoadingProduct(true);
+        try {
+          const products = await Purchases.getProducts([PRODUCT_ID]);
+          if (products.length > 0) {
+            setProduct(products[0]);
+          }
+        } catch (error) {
+          console.error('[StreakRestore] Error fetching product:', error);
+        } finally {
+          setIsLoadingProduct(false);
+        }
+      }
+    };
+
+    init();
+  }, [visible, user?.id]);
+
+  const handleRestore = async (isFree) => {
+    if (!user?.id || !missedDate || isLoading) return;
+
+    setIsLoading(true);
+    try {
+      if (!isFree) {
+        // Purchase via RevenueCat
+        if (!product) {
+          Alert.alert('Error', 'Unable to load purchase. Please try again.');
+          setIsLoading(false);
+          return;
+        }
+
+        const purchaseResult = await Purchases.purchaseStoreProduct(product);
+        if (!purchaseResult) {
+          setIsLoading(false);
+          return;
+        }
+      }
+
+      // Insert unplanned_rest for the missed date
+      const success = await restoreStreak(user.id, missedDate);
+
+      if (!success) {
+        Alert.alert('Error', 'Failed to restore streak. Please try again.');
+        setIsLoading(false);
+        return;
+      }
+
+      // Track the restore
+      if (isFree) {
+        await useFreeRestore(user.id);
+      } else {
+        await incrementRestoreCount(user.id);
+      }
+
+      // Notify parent
+      if (onRestored) {
+        onRestored();
+      }
+
+      onClose();
+    } catch (error) {
+      // User cancelled purchase
+      if (error.userCancelled) {
+        setIsLoading(false);
+        return;
+      }
+
+      console.error('[StreakRestore] Error during restore:', error);
+      Alert.alert('Error', 'Something went wrong. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const price = product?.priceString || '$0.99';
 
   return (
     <Modal
@@ -45,7 +138,7 @@ export function StreakRestoreModal({ visible, onClose }) {
           <View style={styles.iconContainer}>
             <View style={styles.iconGlow} />
             <Text style={styles.icon}>🔥</Text>
-            <View style={styles.brokenIndicator}>
+            <View style={[styles.brokenIndicator, { backgroundColor: colors.cardBackground }]}>
               <Ionicons name="close-circle" size={28} color="#EF4444" />
             </View>
           </View>
@@ -71,47 +164,70 @@ export function StreakRestoreModal({ visible, onClose }) {
             Don't let your hard work go to waste!
           </Text>
 
-          {/* Restore Button - Primary CTA */}
-          <TouchableOpacity activeOpacity={0.9} style={styles.restoreButton}>
-            <LinearGradient
-              colors={['#818CF8', '#6366F1']}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
-              style={styles.restoreButtonGradient}
+          {/* Paid Restore Button */}
+          {!freeRestoreAvailable && (
+            <TouchableOpacity
+              activeOpacity={0.9}
+              style={styles.restoreButton}
+              onPress={() => handleRestore(false)}
+              disabled={isLoading || isLoadingProduct}
             >
-              <View style={styles.restoreButtonContent}>
-                <View style={styles.restoreButtonLeft}>
-                  <Ionicons name="flame" size={24} color="#fff" />
-                  <View>
-                    <Text style={styles.restoreButtonTitle}>
-                      Restore My Streak
-                    </Text>
-                    <Text style={styles.restoreButtonSubtitle}>
-                      Get back to {lostStreak} days
-                    </Text>
+              <LinearGradient
+                colors={['#818CF8', '#6366F1']}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={styles.restoreButtonGradient}
+              >
+                {isLoading ? (
+                  <ActivityIndicator size="small" color="#fff" />
+                ) : (
+                  <View style={styles.restoreButtonContent}>
+                    <View style={styles.restoreButtonLeft}>
+                      <Ionicons name="flame" size={24} color="#fff" />
+                      <View>
+                        <Text style={styles.restoreButtonTitle}>
+                          Restore My Streak
+                        </Text>
+                        <Text style={styles.restoreButtonSubtitle}>
+                          Get back to {lostStreak} days
+                        </Text>
+                      </View>
+                    </View>
+                    <View style={styles.priceTag}>
+                      <Text style={styles.priceText}>
+                        {isLoadingProduct ? '...' : price}
+                      </Text>
+                    </View>
                   </View>
-                </View>
-                <View style={styles.priceTag}>
-                  <Text style={styles.priceText}>{price}</Text>
-                </View>
-              </View>
-            </LinearGradient>
-          </TouchableOpacity>
+                )}
+              </LinearGradient>
+            </TouchableOpacity>
+          )}
 
-          {/* Free restore option (if available) */}
-          {hasFreeRestore && (
-            <TouchableOpacity style={styles.freeRestoreButton}>
+          {/* Free restore option */}
+          {freeRestoreAvailable && (
+            <TouchableOpacity
+              style={styles.freeRestoreButton}
+              onPress={() => handleRestore(true)}
+              disabled={isLoading}
+            >
               <LinearGradient
                 colors={['rgba(52, 211, 153, 0.15)', 'rgba(52, 211, 153, 0.05)']}
                 style={styles.freeRestoreGradient}
               >
-                <Ionicons name="gift" size={20} color="#34D399" />
-                <Text style={styles.freeRestoreText}>
-                  Use Free Restore
-                </Text>
-                <View style={styles.freeBadge}>
-                  <Text style={styles.freeBadgeText}>1 LEFT</Text>
-                </View>
+                {isLoading ? (
+                  <ActivityIndicator size="small" color="#34D399" />
+                ) : (
+                  <>
+                    <Ionicons name="gift" size={20} color="#34D399" />
+                    <Text style={styles.freeRestoreText}>
+                      Use Free Restore
+                    </Text>
+                    <View style={styles.freeBadge}>
+                      <Text style={styles.freeBadgeText}>1 LEFT</Text>
+                    </View>
+                  </>
+                )}
               </LinearGradient>
             </TouchableOpacity>
           )}
@@ -120,15 +236,12 @@ export function StreakRestoreModal({ visible, onClose }) {
           <TouchableOpacity
             style={styles.dismissButton}
             onPress={onClose}
+            disabled={isLoading}
           >
             <Text style={[styles.dismissText, { color: colors.secondaryText }]}>
-              No Thanks
-            </Text>
-            <Text style={styles.restoreButtonSubtitle}>
               Start over from 0 days
             </Text>
           </TouchableOpacity>
-
         </View>
       </BlurView>
     </Modal>
@@ -177,7 +290,6 @@ const styles = StyleSheet.create({
     position: 'absolute',
     bottom: -4,
     right: -8,
-    backgroundColor: '#1a1a2e',
     borderRadius: 14,
   },
   title: {
@@ -218,6 +330,8 @@ const styles = StyleSheet.create({
   restoreButtonGradient: {
     borderRadius: 16,
     padding: 16,
+    minHeight: 56,
+    justifyContent: 'center',
   },
   restoreButtonContent: {
     flexDirection: 'row',
@@ -263,6 +377,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     borderWidth: 1,
     borderColor: 'rgba(52, 211, 153, 0.3)',
+    minHeight: 48,
   },
   freeRestoreText: {
     fontSize: 15,
@@ -282,27 +397,11 @@ const styles = StyleSheet.create({
     letterSpacing: 0.5,
   },
   dismissButton: {
-    width: '100%',
-    marginTop: 6,
-    elevation: 8,
-    alignItems: 'center',
+    paddingVertical: 12,
   },
   dismissText: {
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: '500',
-  },
-  nudge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    borderRadius: 10,
-  },
-  nudgeText: {
-    fontSize: 12,
-    fontWeight: '500',
-    flex: 1,
   },
 });
 

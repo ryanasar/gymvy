@@ -404,6 +404,24 @@ export const createNudgeNotification = async (recipientId, actorId, message) => 
   }
 };
 
+/**
+ * Delete a notification by ID
+ */
+export const deleteNotificationById = async (notificationId) => {
+  try {
+    const { error } = await supabase
+      .from('Notifications')
+      .delete()
+      .eq('id', notificationId);
+
+    if (error) throw error;
+    return true;
+  } catch (error) {
+    console.error('Error deleting notification:', error);
+    return false;
+  }
+};
+
 export default function NotificationsApiPage() {
   return null;
 }

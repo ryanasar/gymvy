@@ -104,21 +104,6 @@ export const createComment = async (postId, commentData) => {
 };
 
 /**
- * Check if a workout post exists for today
- * Returns the post if found, null otherwise
- * Uses dedicated backend endpoint for efficiency (instead of fetching all posts)
- */
-export const getTodaysWorkoutPost = async (userId) => {
-  try {
-    const response = await apiClient.get(`/posts/user/${userId}/today`);
-    return response.data;
-  } catch (error) {
-    console.error('Failed to check for today\'s workout post:', error);
-    return null;
-  }
-};
-
-/**
  * Get posts from users that the current user is following (with pagination)
  */
 export const getFollowingPosts = async (userId, cursor = null, limit = 10) => {

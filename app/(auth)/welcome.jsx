@@ -1,5 +1,5 @@
 import React, { useRef, useCallback } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, useColorScheme } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, useColorScheme, Linking } from 'react-native';
 import { Image } from 'expo-image';
 import { useAuth } from '@/lib/auth';
 import { useNetwork } from '@/contexts/NetworkContext';
@@ -97,6 +97,13 @@ export default function WelcomeScreen() {
             Already have an account? <Text style={[styles.loginLink, { color: colors.primary }]}>Log In</Text>
           </Text>
         </TouchableOpacity>
+
+        <Text style={[styles.legalText, { color: colors.secondaryText }]}>
+          By signing up, you agree to our{' '}
+          <Text style={styles.legalLink} onPress={() => Linking.openURL('https://ryanasar.github.io/gymvy-site/privacy.html')}>
+            Privacy Policy
+          </Text>
+        </Text>
       </View>
     </View>
   );
@@ -199,6 +206,15 @@ const styles = StyleSheet.create({
   },
   loginLink: {
     fontWeight: '600',
+  },
+  legalText: {
+    textAlign: 'center',
+    fontSize: 12,
+    marginTop: 20,
+    lineHeight: 18,
+  },
+  legalLink: {
+    textDecorationLine: 'underline',
   },
   offlineWarning: {
     backgroundColor: '#374151',

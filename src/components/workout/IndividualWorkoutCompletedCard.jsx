@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Alert } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Alert, ActivityIndicator } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useThemeColors } from '@/hooks/useThemeColors';
 import { Colors } from '@/constants/colors';
 import OptionsMenu from '@/components/ui/OptionsMenu';
 import ExerciseList from '@/components/ui/ExerciseList';
 
-const IndividualWorkoutCompletedCard = ({ workoutData, onPostWorkout, onUncomplete }) => {
+const IndividualWorkoutCompletedCard = ({ workoutData, onPostWorkout, onUncomplete, isPostProcessing }) => {
   const colors = useThemeColors();
   const [showOptionsMenu, setShowOptionsMenu] = useState(false);
 
@@ -79,12 +79,17 @@ const IndividualWorkoutCompletedCard = ({ workoutData, onPostWorkout, onUncomple
       <View style={styles.actionButtons}>
         {/* Post Workout Button */}
         <TouchableOpacity
-          style={styles.postWorkoutButton}
+          style={[styles.postWorkoutButton, isPostProcessing && styles.postWorkoutButtonDisabled]}
           onPress={onPostWorkout}
-          activeOpacity={0.7}
+          disabled={isPostProcessing}
+          activeOpacity={isPostProcessing ? 1 : 0.7}
         >
           <View style={styles.postWorkoutContent}>
-            <Ionicons name="cloud-upload-outline" size={20} color="#FFFFFF" />
+            {isPostProcessing ? (
+              <ActivityIndicator size="small" color="#FFFFFF" />
+            ) : (
+              <Ionicons name="cloud-upload-outline" size={20} color="#FFFFFF" />
+            )}
             <Text style={styles.postWorkoutText}>Post Workout</Text>
           </View>
         </TouchableOpacity>
@@ -169,6 +174,9 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.3,
     shadowRadius: 8,
     elevation: 4,
+  },
+  postWorkoutButtonDisabled: {
+    opacity: 0.5,
   },
   postWorkoutContent: {
     flexDirection: 'row',

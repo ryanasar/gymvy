@@ -1,7 +1,7 @@
 import { Alert } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { storage, unmarkTodayCompleted } from '@/services/storage';
-import { updateSplit } from "@/services/api/splits";
+import { updateSplit, syncSplitProgress } from "@/services/api/splits";
 import { markRestDay } from '@/services/api/dailyActivity';
 
 export const handleDaySelection = async (userId, dayIndex, activeSplit, markWorkoutCompleted, refreshTodaysWorkout) => {
@@ -9,12 +9,11 @@ export const handleDaySelection = async (userId, dayIndex, activeSplit, markWork
     // Clear any existing completion for today when changing days
     await unmarkTodayCompleted(userId);
 
-    // Clear all completion state in storage and context
-    await AsyncStorage.multiRemove([
-      'completedSessionId',
-      'lastCompletionDate',
-      'lastCheckDate'
-    ]);
+    // Clear completion state but preserve lastCheckDate so advancement works tomorrow
+    const now = new Date();
+    const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+    await AsyncStorage.multiRemove(['completedSessionId', 'lastCompletionDate']);
+    await AsyncStorage.setItem('lastCheckDate', todayStr);
 
     // Clear completion in context
     await markWorkoutCompleted(null);
@@ -33,16 +32,28 @@ export const handleDaySelection = async (userId, dayIndex, activeSplit, markWork
 
     // Only reset cycle when starting a split for the first time
     // If split is already started, preserve the current cycle
+    let weekValue;
     if (!activeSplit?.started) {
       await AsyncStorage.setItem('currentWeek', '1');
+      weekValue = 1;
+    } else {
+      const savedWeek = await AsyncStorage.getItem('currentWeek');
+      weekValue = savedWeek ? parseInt(savedWeek) : 1;
+    }
+
+    // Sync progress to backend (fire-and-forget)
+    if (activeSplit?.id) {
+      syncSplitProgress(activeSplit.id, {
+        currentDayIndex: dayIndex,
+        currentWeek: weekValue,
+        lastAdvancementDate: todayStr,
+      });
     }
 
     // Check if selected day is a rest day and sync to backend
     const days = activeSplit?.days || activeSplit?.workoutDays || [];
     const selectedDay = days[dayIndex];
     if (selectedDay?.isRest) {
-      const now = new Date();
-      const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
       try {
         await markRestDay(userId, todayStr, {
           activityType: 'planned_rest',

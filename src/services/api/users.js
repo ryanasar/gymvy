@@ -1,9 +1,10 @@
 import apiClient from './client';
 
-export const getOrCreateUserBySupabaseId = async (supabaseId, email) => {
+export const getOrCreateUserBySupabaseId = async (supabaseId, email, name) => {
   try {
     const response = await apiClient.post(`/users/auth/${supabaseId}`, {
       email,
+      ...(name && { name }),
     }, {
       timeout: 10000,
     });

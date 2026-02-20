@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Alert } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Alert, ActivityIndicator } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { Colors } from '@/constants/colors';
@@ -15,7 +15,6 @@ const SplitWorkoutCard = ({
   isToggling,
   hasExercises,
   hasActiveWorkout,
-  hasPosted,
   currentStreak,
   completedSessionId,
   completedWorkoutData, // Actual session data (exercises/sets performed), different from template
@@ -27,7 +26,8 @@ const SplitWorkoutCard = ({
   onChangeDayPress,
   onEditWorkoutPress,
   onFreeRestDayPress,
-  skipAutoResumeRef
+  skipAutoResumeRef,
+  isPostProcessing
 }) => {
   const colors = useThemeColors();
   const router = useRouter();
@@ -204,53 +204,46 @@ const SplitWorkoutCard = ({
         )}
 
         {isCompleted && (
-          <>
-            {hasPosted ? (
-              <View style={styles.workoutCompletedContainer}>
-                <View style={styles.workoutCompletedBadge}>
-                  <Ionicons name="checkmark-circle" size={24} color="#4CAF50" />
-                  <Text style={[styles.workoutCompletedText, { color: colors.text }]}>Workout Completed</Text>
-                </View>
-              </View>
-            ) : (
-              <TouchableOpacity
-                style={[
-                  styles.postWorkoutButton,
-                  isToggling && styles.postWorkoutButtonDisabled
-                ]}
-                onPress={() => {
-                  const isSplitCompleted = require('@/utils/workout/workoutCalculations').checkIfSplitCompleted(activeSplit, todaysWorkout);
+          <TouchableOpacity
+            style={[
+              styles.postWorkoutButton,
+              (isToggling || isPostProcessing) && styles.postWorkoutButtonDisabled
+            ]}
+            onPress={() => {
+              const isSplitCompleted = require('@/utils/workout/workoutCalculations').checkIfSplitCompleted(activeSplit, todaysWorkout);
 
-                  // Use database ID if available (from sync), otherwise fall back to local session ID
-                  const sessionIdForPost = completedWorkoutData?.databaseWorkoutSessionId || completedSessionId;
+              // Use database ID if available (from sync), otherwise fall back to local session ID
+              const sessionIdForPost = completedWorkoutData?.databaseWorkoutSessionId || completedSessionId;
 
-                  const badges = buildBadges({
-                    streak: currentStreak,
-                    isSplitCompleted,
-                    prExercises: completedWorkoutData?.newPRs || [],
-                  });
+              const badges = buildBadges({
+                streak: currentStreak,
+                isSplitCompleted,
+                prExercises: completedWorkoutData?.newPRs || [],
+              });
 
-                  // Use displayWorkout (actual session data if available) for the post
-                  router.push({
-                    pathname: '/post/create',
-                    params: {
-                      workoutData: JSON.stringify(displayWorkout),
-                      workoutSessionId: sessionIdForPost?.toString() || '',
-                      splitId: activeSplit?.id?.toString() || '',
-                      badges: badges ? JSON.stringify(badges) : '',
-                    },
-                  });
-                }}
-                disabled={isToggling}
-                activeOpacity={isToggling ? 1 : 0.7}
-              >
-                <View style={styles.postWorkoutContent}>
-                  <Ionicons name="cloud-upload-outline" size={20} color="#FFFFFF" />
-                  <Text style={styles.postWorkoutText}>Post Workout</Text>
-                </View>
-              </TouchableOpacity>
-            )}
-          </>
+              // Use displayWorkout (actual session data if available) for the post
+              router.push({
+                pathname: '/post/create',
+                params: {
+                  workoutData: JSON.stringify(displayWorkout),
+                  workoutSessionId: sessionIdForPost?.toString() || '',
+                  splitId: activeSplit?.id?.toString() || '',
+                  badges: badges ? JSON.stringify(badges) : '',
+                },
+              });
+            }}
+            disabled={isToggling || isPostProcessing}
+            activeOpacity={(isToggling || isPostProcessing) ? 1 : 0.7}
+          >
+            <View style={styles.postWorkoutContent}>
+              {isPostProcessing ? (
+                <ActivityIndicator size="small" color="#FFFFFF" />
+              ) : (
+                <Ionicons name="cloud-upload-outline" size={20} color="#FFFFFF" />
+              )}
+              <Text style={styles.postWorkoutText}>Post Workout</Text>
+            </View>
+          </TouchableOpacity>
         )}
       </View>
     </View>
@@ -398,19 +391,6 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 18,
     fontWeight: '700',
-  },
-  workoutCompletedContainer: {
-    alignItems: 'center',
-    paddingVertical: 8,
-  },
-  workoutCompletedBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  workoutCompletedText: {
-    fontSize: 18,
-    fontWeight: '600',
   },
   headerActions: {
     flexDirection: 'row',

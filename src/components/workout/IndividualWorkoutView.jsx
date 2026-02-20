@@ -19,7 +19,8 @@ const IndividualWorkoutView = ({
   onEditWorkout,
   onSelectWorkout,
   onBackFromWorkout,
-  onMarkComplete
+  onMarkComplete,
+  isPostProcessing
 }) => {
   const colors = useThemeColors();
   const router = useRouter();
@@ -30,6 +31,7 @@ const IndividualWorkoutView = ({
       <View style={styles.contentContainer}>
         <IndividualWorkoutCompletedCard
           workoutData={completedIndividualWorkout}
+          isPostProcessing={isPostProcessing}
           onPostWorkout={() => {
             // Format workout data like split workouts for consistent post creation
             const workoutDataForPost = {

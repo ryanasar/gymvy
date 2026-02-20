@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { AppState } from 'react-native';
 import { supabase } from '@/lib/supabase';
-import { getNotificationsWithActors, markAllNotificationsAsReadApi, markAllNotificationsAsRead } from '@/services/api/notifications';
+import { getNotificationsWithActors, markAllNotificationsAsReadApi, markAllNotificationsAsRead, deleteNotificationById } from '@/services/api/notifications';
 import { useAuth } from '@/lib/auth';
 
 const NotificationContext = createContext({
@@ -34,6 +34,12 @@ export const NotificationProvider = ({ children }) => {
       setIsLoading(false);
     }
   }, [user?.id]);
+
+  // Remove a single notification by ID (optimistic local removal + backend delete)
+  const removeNotification = useCallback(async (notificationId) => {
+    setNotifications(prev => prev.filter(n => n.id !== notificationId));
+    await deleteNotificationById(notificationId);
+  }, []);
 
   // Mark all notifications as read (called when user views notifications)
   const markAllAsRead = useCallback(async () => {
@@ -157,6 +163,7 @@ export const NotificationProvider = ({ children }) => {
         isLoading,
         refreshNotifications,
         markAllAsRead,
+        removeNotification,
       }}
     >
       {children}

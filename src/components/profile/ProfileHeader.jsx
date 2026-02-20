@@ -30,6 +30,7 @@ const ProfileHeader = ({
   onFollowingPress,
   onEditPress,
   onNudgePress,
+  onDeleteAccount,
   canNudge = false,
 }) => {
   const colors = useThemeColors();
@@ -42,7 +43,7 @@ const ProfileHeader = ({
         {/* Settings Dropdown - Top Right */}
         {isOwnProfile && (
           <View style={styles.settingsContainer}>
-            <SettingsDropdown onSignOut={onSignOut} onClearCache={onClearCache} />
+            <SettingsDropdown onSignOut={onSignOut} onDeleteAccount={onDeleteAccount} />
           </View>
         )}
 

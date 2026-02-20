@@ -12,7 +12,6 @@ import { getBestOneRMFromSets } from '@/utils/oneRMCalculator';
 import BodyWeightCard from '@/components/progress/BodyWeightCard';
 import ExerciseOneRMCard from '@/components/progress/ExerciseOneRMCard';
 import ExercisePickerDropdown from '@/components/progress/ExercisePickerDropdown';
-import { StreakRestoreModal } from '@/components/streak/StreakRestoreModal';
 
 const BIG_THREE = ['Bench Press', 'Squat', 'Deadlift'];
 

@@ -21,7 +21,6 @@ import { useAuth } from '@/lib/auth';
 import { getActiveWorkout, calculateStreakFromLocal, createCompletedWorkoutSession } from '@/services/storage';
 import { getCalendarData } from '@/services/storage/calendarStorage';
 import { isFreeRestDayAvailable, clearFreeRestDayUsageForToday } from '@/services/storage/freeRestDayStorage';
-import { getTodaysWorkoutPost } from '@/services/api/posts';
 import { markRestDay } from '@/services/api/dailyActivity';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useThemeColors } from '@/hooks/useThemeColors';
@@ -61,7 +60,6 @@ const WorkoutScreen = () => {
   const [refreshing, setRefreshing] = useState(false);
   const [currentStreak, setCurrentStreak] = useState(0);
   const [showCelebration, setShowCelebration] = useState(false);
-  const [hasPosted, setHasPosted] = useState(false);
   const [hasActiveWorkout, setHasActiveWorkout] = useState(false);
   const skipAutoResumeRef = useRef(false);
   const completionProcessedRef = useRef(false);
@@ -69,6 +67,7 @@ const WorkoutScreen = () => {
   const [workoutMode, setWorkoutMode] = useState('split');
   const [savedWorkouts, setSavedWorkouts] = useState([]);
   const [selectedSavedWorkout, setSelectedSavedWorkout] = useState(null);
+  const [isPostProcessing, setIsPostProcessing] = useState(false);
 
   // Modal state
   const [showChangeDayModal, setShowChangeDayModal] = useState(false);
@@ -77,8 +76,6 @@ const WorkoutScreen = () => {
   // Navigation guard to prevent double-click issues
   const isNavigatingRef = useRef(false);
 
-  // Track last check time for cooldown on API calls
-  const lastPostedCheckRef = useRef(0);
   // Track last focus time to prevent rapid re-execution of focus effects
   const lastFocusTimeRef = useRef(0);
   const FOCUS_COOLDOWN_MS = 1000;
@@ -109,33 +106,6 @@ const WorkoutScreen = () => {
       lastFocusTimeRef.current = now;
       manualSync();
     }, [manualSync])
-  );
-
-  // Check if workout has been posted when tab is focused
-  // Only check if 30+ seconds have passed since last check to reduce API calls
-  useFocusEffect(
-    useCallback(() => {
-      const checkIfPosted = async () => {
-        // Only check if workout is completed today and user is logged in
-        if (todaysWorkoutCompleted && user?.id) {
-          const now = Date.now();
-          if (now - lastPostedCheckRef.current > 30000) {
-            try {
-              // Check the API for a workout post created today
-              const post = await getTodaysWorkoutPost(user.id);
-              setHasPosted(!!post);
-              lastPostedCheckRef.current = now;
-            } catch (error) {
-              console.error('Error checking if posted:', error);
-              setHasPosted(false);
-            }
-          }
-        } else {
-          setHasPosted(false);
-        }
-      };
-      checkIfPosted();
-    }, [todaysWorkoutCompleted, user?.id])
   );
 
   // Check free rest day availability on focus
@@ -222,29 +192,37 @@ const WorkoutScreen = () => {
       // Handle individual workout completion (freestyle or saved)
       const source = params.source;
       if (source === 'freestyle' || source === 'saved') {
-        // Parse the workout data and mark as completed FIRST
-        if (params.workoutData) {
-          try {
-            const workoutData = JSON.parse(params.workoutData);
-            await markIndividualWorkoutCompleted(workoutData);
-          } catch (error) {
-            console.error('[Workout Tab] Error parsing workout data:', error);
-          }
-        }
         // Switch to Individual tab to show the completed card
         setWorkoutMode('individual');
       }
 
-      // Calculate streak AFTER calendar is updated (so current workout is counted)
-      try {
-        const streak = await calculateStreakFromLocal(user?.id, 'workout');
-        setCurrentStreak(streak);
-      } catch (error) {
-        console.error('[Workout Tab] Error calculating streak after session:', error);
-      }
-
-      // Show celebration animation when returning from completed workout
+      // Show celebration IMMEDIATELY, process in background
       setShowCelebration(true);
+      setIsPostProcessing(true);
+
+      try {
+        // Mark individual workout completed (freestyle/saved only)
+        if (source === 'freestyle' || source === 'saved') {
+          if (params.workoutData) {
+            try {
+              const workoutData = JSON.parse(params.workoutData);
+              await markIndividualWorkoutCompleted(workoutData);
+            } catch (error) {
+              console.error('[Workout Tab] Error parsing workout data:', error);
+            }
+          }
+        }
+
+        // Calculate streak
+        try {
+          const streak = await calculateStreakFromLocal(user?.id, 'workout');
+          setCurrentStreak(streak);
+        } catch (error) {
+          console.error('[Workout Tab] Error calculating streak after session:', error);
+        }
+      } finally {
+        setIsPostProcessing(false);
+      }
     };
     handleCompletedSession();
   }, [params.completed, params.source, params.workoutData, markIndividualWorkoutCompleted]);
@@ -535,6 +513,7 @@ const WorkoutScreen = () => {
               <View style={styles.contentContainer}>
                 <IndividualWorkoutCompletedCard
                   workoutData={completedIndividualWorkout}
+                  isPostProcessing={isPostProcessing}
                   onPostWorkout={() => {
                     // Format workout data like split workouts for consistent post creation
                     const workoutDataForPost = {
@@ -573,7 +552,6 @@ const WorkoutScreen = () => {
                 onMarkComplete={async (workout) => {
                   setSelectedSavedWorkout(null);
 
-                  // Run all async operations, then show celebration after streak is ready
                   (async () => {
                     try {
                       const workoutSessionId = await createCompletedWorkoutSession(user?.id, {
@@ -597,10 +575,15 @@ const WorkoutScreen = () => {
                       await manualSync();
                       await markIndividualWorkoutCompleted(workoutData);
 
-                      // Calculate streak before showing celebration
-                      const streak = await calculateStreakFromLocal(user?.id, 'workout');
-                      setCurrentStreak(streak);
+                      // Show celebration immediately, calc streak during animation
                       setShowCelebration(true);
+                      setIsPostProcessing(true);
+                      try {
+                        const streak = await calculateStreakFromLocal(user?.id, 'workout');
+                        setCurrentStreak(streak);
+                      } finally {
+                        setIsPostProcessing(false);
+                      }
                     } catch (error) {
                       console.error('[Workout Tab] Error marking workout complete:', error);
                     }
@@ -825,18 +808,22 @@ const WorkoutScreen = () => {
 
   // Wrapper for handleToggleCompletion from hook with celebration logic
   const handleToggleCompletionWrapper = async () => {
-    const workoutId = await handleToggleCompletion(isCompleted);
-    if (workoutId && !isCompleted) {
-      // Calculate streak before showing celebration so badge data is ready
-      try {
-        const streak = await calculateStreakFromLocal(user?.id, 'workout');
-        setCurrentStreak(streak);
-      } catch (error) {
-        console.error('[Workout Tab] Error calculating streak:', error);
+    if (!isCompleted) {
+      const workoutId = await handleToggleCompletion(isCompleted);
+      if (workoutId) {
+        // Show celebration immediately, calc streak during animation
+        setShowCelebration(true);
+        setIsPostProcessing(true);
+        try {
+          const streak = await calculateStreakFromLocal(user?.id, 'workout');
+          setCurrentStreak(streak);
+        } finally {
+          setIsPostProcessing(false);
+        }
       }
-      setShowCelebration(true);
-    } else if (!workoutId && isCompleted) {
-      // Recalculate streak when un-completing
+    } else {
+      // Un-complete path
+      await handleToggleCompletion(isCompleted);
       try {
         const streak = await calculateStreakFromLocal(user?.id);
         setCurrentStreak(streak);
@@ -887,7 +874,6 @@ const WorkoutScreen = () => {
               isToggling={isToggling}
               hasExercises={todaysWorkout?.exercises?.length > 0}
               hasActiveWorkout={hasActiveWorkout}
-              hasPosted={hasPosted}
               currentStreak={currentStreak}
               completedSessionId={completedSessionId}
               completedWorkoutData={completedSplitWorkout}
@@ -914,6 +900,7 @@ const WorkoutScreen = () => {
                 );
               }}
               skipAutoResumeRef={skipAutoResumeRef}
+              isPostProcessing={isPostProcessing}
             />
           </View>
         ) : (
@@ -923,6 +910,7 @@ const WorkoutScreen = () => {
             savedWorkouts={savedWorkouts}
             selectedSavedWorkout={selectedSavedWorkout}
             currentStreak={currentStreak}
+            isPostProcessing={isPostProcessing}
             onUncomplete={async () => {
               // If it was a saved workout, go back to the saved workout detail view
               if (completedIndividualWorkout?.source === 'saved' && completedIndividualWorkout?.savedWorkoutId) {
@@ -939,7 +927,6 @@ const WorkoutScreen = () => {
             onMarkComplete={async (workout) => {
               setSelectedSavedWorkout(null);
 
-              // Run all async operations, then show celebration after streak is ready
               (async () => {
                 try {
                   const workoutSessionId = await createCompletedWorkoutSession(user?.id, {
@@ -963,10 +950,15 @@ const WorkoutScreen = () => {
                   await manualSync();
                   await markIndividualWorkoutCompleted(workoutData);
 
-                  // Calculate streak before showing celebration
-                  const streak = await calculateStreakFromLocal(user?.id, 'workout');
-                  setCurrentStreak(streak);
+                  // Show celebration immediately, calc streak during animation
                   setShowCelebration(true);
+                  setIsPostProcessing(true);
+                  try {
+                    const streak = await calculateStreakFromLocal(user?.id, 'workout');
+                    setCurrentStreak(streak);
+                  } finally {
+                    setIsPostProcessing(false);
+                  }
                 } catch (error) {
                   console.error('[Workout Tab] Error marking workout complete:', error);
                 }
@@ -1286,21 +1278,6 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 18,
     fontWeight: '700',
-  },
-
-  // Workout Completed State
-  workoutCompletedContainer: {
-    alignItems: 'center',
-    paddingVertical: 8,
-  },
-  workoutCompletedBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  workoutCompletedText: {
-    fontSize: 18,
-    fontWeight: '600',
   },
 
   // Header Actions (exercise count + options button)

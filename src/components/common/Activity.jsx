@@ -4,6 +4,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Alert, StyleSheet, Text, TouchableOpacity, View, Pressable, Dimensions } from 'react-native';
 import { Image } from 'expo-image';
 import { deletePost, likePost, unlikePost } from '@/services/api/posts';
+import { reportPost } from '@/services/api/reports';
 import { createLikeNotification, deleteLikeNotification } from '@/services/api/notifications';
 import { trackPostLiked, trackPostUnliked } from '@/lib/analytics';
 import { Colors } from '@/constants/colors';
@@ -299,6 +300,19 @@ const Activity = ({ post, currentUserId, onPostUpdated, onPostDeleted, initialOp
     ]);
   };
 
+  const submitReport = async (reason) => {
+    try {
+      await reportPost(id, reason);
+      Alert.alert('Report Submitted', 'Thank you. We will review this post shortly.');
+    } catch (error) {
+      if (error.response?.status === 409) {
+        Alert.alert('Already Reported', 'You have already reported this post.');
+      } else {
+        Alert.alert('Error', 'Failed to submit report. Please try again.');
+      }
+    }
+  };
+
   const handleCommentCountChange = (newCount) => {
     setLocalCommentCount(newCount);
     if (onPostUpdated) {
@@ -354,34 +368,56 @@ const Activity = ({ post, currentUserId, onPostUpdated, onPostDeleted, initialOp
           </View>
         </TouchableOpacity>
 
-        {isOwnPost && (
-          <TouchableOpacity
-            style={styles.menuButton}
-            onPress={() => setShowMenu(!showMenu)}
-            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-          >
-            <Ionicons name="ellipsis-horizontal" size={20} color={colors.secondaryText} />
-          </TouchableOpacity>
-        )}
+        <TouchableOpacity
+          style={styles.menuButton}
+          onPress={() => setShowMenu(!showMenu)}
+          hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+        >
+          <Ionicons name="ellipsis-horizontal" size={20} color={colors.secondaryText} />
+        </TouchableOpacity>
       </View>
 
       {/* Overflow Menu */}
-      {showMenu && isOwnPost && (
+      {showMenu && (
         <View style={[styles.menuOverlay, { backgroundColor: colors.cardBackground, borderColor: colors.border }]}>
-          <TouchableOpacity
-            style={styles.menuItem}
-            onPress={() => { setShowMenu(false); handleEditPost(); }}
-          >
-            <Ionicons name="pencil" size={18} color={colors.text} />
-            <Text style={[styles.menuItemText, { color: colors.text }]}>Edit Post</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.menuItem, styles.menuItemDanger]}
-            onPress={() => { setShowMenu(false); handleDeletePost(); }}
-          >
-            <Ionicons name="trash-outline" size={18} color={colors.error} />
-            <Text style={[styles.menuItemText, { color: colors.error }]}>Delete Post</Text>
-          </TouchableOpacity>
+          {isOwnPost ? (
+            <>
+              <TouchableOpacity
+                style={styles.menuItem}
+                onPress={() => { setShowMenu(false); handleEditPost(); }}
+              >
+                <Ionicons name="pencil" size={18} color={colors.text} />
+                <Text style={[styles.menuItemText, { color: colors.text }]}>Edit Post</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.menuItem, styles.menuItemDanger]}
+                onPress={() => { setShowMenu(false); handleDeletePost(); }}
+              >
+                <Ionicons name="trash-outline" size={18} color={colors.error} />
+                <Text style={[styles.menuItemText, { color: colors.error }]}>Delete Post</Text>
+              </TouchableOpacity>
+            </>
+          ) : (
+            <TouchableOpacity
+              style={[styles.menuItem, styles.menuItemDanger]}
+              onPress={() => {
+                setShowMenu(false);
+                Alert.alert(
+                  'Report Post',
+                  'Why are you reporting this post?',
+                  [
+                    { text: 'Cancel', style: 'cancel' },
+                    { text: 'Spam', onPress: () => submitReport('Spam') },
+                    { text: 'Inappropriate', onPress: () => submitReport('Inappropriate content') },
+                    { text: 'Harassment', onPress: () => submitReport('Harassment or bullying') },
+                  ]
+                );
+              }}
+            >
+              <Ionicons name="flag-outline" size={18} color={colors.error} />
+              <Text style={[styles.menuItemText, { color: colors.error }]}>Report Post</Text>
+            </TouchableOpacity>
+          )}
         </View>
       )}
 

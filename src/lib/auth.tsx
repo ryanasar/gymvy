@@ -255,7 +255,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         if (_event === 'SIGNED_IN' || _event === 'USER_UPDATED') {
           if (authUserData.supabaseID) {
             try {
-              const userData = await getOrCreateUserBySupabaseId(authUserData.supabaseID, authUserData.email);
+              const userData = await getOrCreateUserBySupabaseId(authUserData.supabaseID, authUserData.email, authUserData.name);
               setUser(userData);
 
               // Identify user for analytics
@@ -331,7 +331,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
         if (authUserData.supabaseID) {
           try {
-            const userData = await getOrCreateUserBySupabaseId(authUserData.supabaseID, authUserData.email);
+            const userData = await getOrCreateUserBySupabaseId(authUserData.supabaseID, authUserData.email, authUserData.name);
             setUser(userData);
 
             // Save session securely for offline access

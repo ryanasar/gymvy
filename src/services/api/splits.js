@@ -83,6 +83,20 @@ export const updateSplit = async (splitId, updates) => {
 };
 
 /**
+ * Sync split progress to backend (fire-and-forget)
+ * @param {number} splitId
+ * @param {Object} progress - { currentDayIndex, currentWeek, lastAdvancementDate }
+ */
+export const syncSplitProgress = async (splitId, progress) => {
+  try {
+    await apiClient.put(`/splits/${splitId}/progress`, progress);
+  } catch (error) {
+    // Non-critical — don't block the UI
+    console.warn('Failed to sync split progress:', error.message);
+  }
+};
+
+/**
  * Delete a split by splitId
  * @param {number} splitId
  * @returns {Promise<Object>}

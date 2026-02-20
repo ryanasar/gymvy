@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Alert } from 'react-native';
-import { storage, calculateStreakFromLocal } from '@/services/storage';
+import { storage } from '@/services/storage';
 import { syncPendingWorkouts } from '@/services/storage/syncService';
 import { getLocalPRStore, saveLocalPRStore } from '@/services/storage/prTracking';
 
@@ -95,20 +95,12 @@ export const useWorkoutCompletion = ({
           await storage.saveActiveWorkout(userId, workout);
           await localCompleteWorkout(userId, workout.id);
 
-          try {
-            await calculateStreakFromLocal(userId, isRestDay ? 'rest' : 'workout');
-          } catch (error) {
-            console.error('[Workout Completion] Error calculating streak:', error);
-          }
-
           await updatePendingCount();
 
-          // Sync BEFORE marking completed so calendar refresh sees up-to-date backend data
-          try {
-            await syncPendingWorkouts(userId);
-          } catch (syncError) {
-            console.warn('[Workout Completion] Sync failed, will retry later:', syncError.message);
-          }
+          // Fire-and-forget sync — don't block completion for network call
+          syncPendingWorkouts(userId).catch(e =>
+            console.warn('[Workout Completion] Sync failed, will retry later:', e.message)
+          );
 
           await markWorkoutCompleted(workout.id, isRestDay);
 
