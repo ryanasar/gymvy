@@ -109,8 +109,8 @@ export default function SignUpScreen() {
             </TouchableOpacity>
 
             {isOffline && (
-              <View style={styles.offlineWarning}>
-                <Text style={styles.offlineText}>You are offline</Text>
+              <View style={[styles.offlineWarning, { backgroundColor: colors.warning + '20' }]}>
+                <Text style={[styles.offlineText, { color: colors.warning }]}>You are offline</Text>
               </View>
             )}
 
@@ -165,7 +165,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   input: {
-    borderRadius: 8,
+    borderRadius: 16,
     borderWidth: 1,
     paddingHorizontal: 16,
     paddingVertical: 14,
@@ -174,7 +174,7 @@ const styles = StyleSheet.create({
   },
   primaryButton: {
     paddingVertical: 16,
-    borderRadius: 8,
+    borderRadius: 20,
     marginBottom: 24,
   },
   primaryButtonText: {
@@ -219,8 +219,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   offlineWarning: {
-    backgroundColor: '#374151',
-    borderRadius: 8,
+    borderRadius: 16,
     padding: 12,
     marginBottom: 16,
     flexDirection: 'row',
@@ -228,7 +227,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   offlineText: {
-    color: '#FCD34D',
     fontSize: 14,
     fontWeight: '500',
   },

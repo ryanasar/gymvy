@@ -117,19 +117,6 @@ export const deleteImage = async (path) => {
   }
 };
 
-/**
- * Get public URL for an image
- * @param {string} path - Storage path of the file
- * @returns {string} - Public URL
- */
-export const getImageUrl = (path) => {
-  const { data: { publicUrl } } = supabase.storage
-    .from('images')
-    .getPublicUrl(path);
-
-  return publicUrl;
-};
-
 export default function StorageApiPage() {
   return null;
 }

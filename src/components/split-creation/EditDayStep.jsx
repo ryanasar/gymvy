@@ -149,7 +149,7 @@ const restTimerStyles = StyleSheet.create({
   presetButton: {
     flex: 1,
     paddingVertical: 8,
-    borderRadius: 8,
+    borderRadius: 16,
     borderWidth: 1,
     alignItems: 'center',
   },
@@ -469,7 +469,7 @@ const EditDayStep = ({
             <Text style={[
               styles.exerciseCounterText,
               { color: colors.text },
-              (exercises.length >= 20) && styles.exerciseCounterTextLimit
+              (exercises.length >= 20) && { color: colors.error }
             ]}>
               {exercises.length}/20
             </Text>
@@ -544,7 +544,7 @@ const EditDayStep = ({
               style={styles.removeButton}
               onPress={() => removeExerciseFromWorkout(index)}
             >
-              <Ionicons name="close-circle" size={24} color="#EF4444" />
+              <Ionicons name="close-circle" size={24} color={colors.error} />
             </TouchableOpacity>
           </View>
 
@@ -801,7 +801,7 @@ const styles = StyleSheet.create({
     gap: 6,
     paddingHorizontal: 14,
     paddingVertical: 10,
-    borderRadius: 12,
+    borderRadius: 16,
   },
   quickActionText: {
     fontSize: 14,
@@ -817,7 +817,7 @@ const styles = StyleSheet.create({
   },
   toggleSection: {
     flexDirection: 'row',
-    borderRadius: 12,
+    borderRadius: 16,
     padding: 4,
     gap: 4,
     marginBottom: 24,
@@ -828,7 +828,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: 12,
-    borderRadius: 8,
+    borderRadius: 16,
     gap: 8,
   },
   toggleOptionActive: {
@@ -882,15 +882,13 @@ const styles = StyleSheet.create({
   exerciseCounter: {
     paddingHorizontal: 12,
     paddingVertical: 6,
-    borderRadius: 12,
+    borderRadius: 16,
   },
   exerciseCounterText: {
     fontSize: 14,
     fontWeight: '700',
   },
-  exerciseCounterTextLimit: {
-    color: '#EF4444',
-  },
+  exerciseCounterTextLimit: {},
   addExerciseButton: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -1028,7 +1026,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     marginTop: 10,
     borderWidth: 1,
-    borderRadius: 12,
+    borderRadius: 16,
   },
   restTimerOffButtonText: {
     fontSize: 12,
@@ -1045,7 +1043,7 @@ const styles = StyleSheet.create({
   },
   smallInput: {
     borderWidth: 1,
-    borderRadius: 12,
+    borderRadius: 16,
     paddingHorizontal: 8,
     paddingVertical: 8,
     fontSize: 14,

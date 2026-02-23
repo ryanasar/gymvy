@@ -3,7 +3,6 @@ import { Alert, RefreshControl, ScrollView, StyleSheet, Text, TouchableOpacity, 
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useFocusEffect } from '@react-navigation/native';
-import { Colors } from '@/constants/colors';
 import { useThemeColors } from '@/hooks/useThemeColors';
 import { useAuth } from '@/lib/auth';
 import { getSavedWorkouts, deleteSavedWorkout } from '@/services/api/savedWorkouts';
@@ -209,7 +208,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: 10,
     paddingVertical: 16,
-    borderRadius: 16,
+    borderRadius: 20,
     borderWidth: 2,
     marginBottom: 20,
   },
@@ -254,6 +253,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     padding: 18,
     borderRadius: 20,
+    borderWidth: 0,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.08,
@@ -296,7 +296,7 @@ const styles = StyleSheet.create({
   actionButton: {
     width: 36,
     height: 36,
-    borderRadius: 12,
+    borderRadius: 16,
     alignItems: 'center',
     justifyContent: 'center',
   },

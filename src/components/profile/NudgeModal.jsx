@@ -287,7 +287,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     padding: 14,
-    borderRadius: 14,
+    borderRadius: 16,
     borderWidth: 1.5,
     gap: 12,
   },
@@ -318,7 +318,7 @@ const styles = StyleSheet.create({
   },
   customInput: {
     borderWidth: 1.5,
-    borderRadius: 14,
+    borderRadius: 16,
     padding: 14,
     fontSize: 15,
     minHeight: 80,
@@ -331,7 +331,7 @@ const styles = StyleSheet.create({
   },
   sendButton: {
     paddingVertical: 16,
-    borderRadius: 14,
+    borderRadius: 16,
     alignItems: 'center',
   },
   sendButtonDisabled: {

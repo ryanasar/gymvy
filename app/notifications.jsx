@@ -276,7 +276,7 @@ const NotificationsScreen = () => {
           style={[
             styles.notificationItem,
             { backgroundColor: colors.cardBackground, borderBottomColor: colors.borderLight + '50' },
-            !item.is_read && { backgroundColor: (colors.warning || '#F59E0B') + '08' },
+            !item.is_read && { backgroundColor: colors.warning + '08' },
           ]}
         >
           <View style={styles.notificationContent}>
@@ -537,7 +537,7 @@ const styles = StyleSheet.create({
   acceptButton: {
     paddingVertical: 8,
     paddingHorizontal: 20,
-    borderRadius: 8,
+    borderRadius: 20,
     minWidth: 80,
     alignItems: 'center',
   },
@@ -548,7 +548,7 @@ const styles = StyleSheet.create({
   rejectButton: {
     paddingVertical: 8,
     paddingHorizontal: 20,
-    borderRadius: 8,
+    borderRadius: 20,
     borderWidth: 1.5,
     minWidth: 80,
     alignItems: 'center',

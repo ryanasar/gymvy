@@ -70,7 +70,6 @@ export async function saveSessionSecurely({
     }
 
     await Promise.all(promises);
-    console.log('[SecureStorage] Session data saved securely');
   } catch (error) {
     console.error('[SecureStorage] Failed to save session:', error);
     throw error;
@@ -124,7 +123,7 @@ export async function getStoredSession() {
         authUserData = JSON.parse(authUserDataStr);
       }
     } catch (parseError) {
-      console.warn('[SecureStorage] Failed to parse cached user data:', parseError);
+      // Silent fail
     }
 
     return {
@@ -195,7 +194,6 @@ export async function clearSecureSession() {
       SecureStore.deleteItemAsync(SECURE_KEYS.USER_DATA),
       SecureStore.deleteItemAsync(SECURE_KEYS.AUTH_USER_DATA),
     ]);
-    console.log('[SecureStorage] Session data cleared');
   } catch (error) {
     console.error('[SecureStorage] Failed to clear session:', error);
     throw error;

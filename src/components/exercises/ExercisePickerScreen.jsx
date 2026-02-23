@@ -15,7 +15,6 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { Colors } from '@/constants/colors';
 import { useThemeColors } from '@/hooks/useThemeColors';
 import ExerciseCard from '@/components/exercises/ExerciseCard';
 
@@ -770,7 +769,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     borderWidth: 0,
     borderRadius: 16,
-    shadowColor: Colors.light.shadow,
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.06,
     shadowRadius: 8,
@@ -819,7 +817,6 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     borderWidth: 0,
     marginBottom: 8,
-    shadowColor: Colors.light.primary,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.15,
     shadowRadius: 12,
@@ -831,7 +828,7 @@ const styles = StyleSheet.create({
     right: 8,
     width: 24,
     height: 24,
-    borderRadius: 12,
+    borderRadius: 16,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -841,7 +838,7 @@ const styles = StyleSheet.create({
     right: 8,
     paddingHorizontal: 8,
     paddingVertical: 4,
-    borderRadius: 12,
+    borderRadius: 16,
   },
   addedBadgeText: {
     fontSize: 11,

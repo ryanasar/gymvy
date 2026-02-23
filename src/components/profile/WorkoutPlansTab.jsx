@@ -2,7 +2,6 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { View, Text, FlatList, StyleSheet, ActivityIndicator, TouchableOpacity, RefreshControl, Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter, useLocalSearchParams } from 'expo-router';
-import { Colors } from '@/constants/colors';
 import { useThemeColors } from '@/hooks/useThemeColors';
 import { useSync } from '@/contexts/SyncContext';
 import { usePreload } from '../../contexts/PreloadContext';
@@ -318,7 +317,6 @@ const styles = StyleSheet.create({
   emptyIconContainer: {
     width: 80,
     height: 80,
-    backgroundColor: Colors.light.borderLight + '40',
     borderRadius: 40,
     justifyContent: 'center',
     alignItems: 'center',
@@ -330,24 +328,20 @@ const styles = StyleSheet.create({
   emptyTitle: {
     fontSize: 20,
     fontWeight: '700',
-    color: Colors.light.text,
     marginBottom: 8,
     textAlign: 'center',
   },
   emptySubtitle: {
     fontSize: 16,
-    color: Colors.light.secondaryText,
     textAlign: 'center',
     lineHeight: 22,
   },
   errorText: {
     fontSize: 16,
-    color: '#EF4444',
     textAlign: 'center',
   },
   debugText: {
     fontSize: 12,
-    color: Colors.light.secondaryText,
     marginTop: 8,
     textAlign: 'center',
   },
@@ -359,16 +353,13 @@ const styles = StyleSheet.create({
 
   // Split Card
   splitCard: {
-    backgroundColor: Colors.light.cardBackground,
-    borderRadius: 16,
-    padding: 16,
+    borderRadius: 20,
+    padding: 18,
     marginBottom: 16,
-    borderWidth: 1,
-    borderColor: Colors.light.borderLight,
-    shadowColor: Colors.light.shadow,
+    borderWidth: 0,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.08,
-    shadowRadius: 8,
+    shadowRadius: 16,
     elevation: 3,
   },
   splitHeader: {
@@ -389,22 +380,19 @@ const styles = StyleSheet.create({
   splitName: {
     fontSize: 20,
     fontWeight: '700',
-    color: Colors.light.text,
     flex: 1,
   },
   publicBadge: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
-    backgroundColor: '#4CAF50' + '15',
     paddingHorizontal: 8,
     paddingVertical: 4,
-    borderRadius: 12,
+    borderRadius: 999,
   },
   publicBadgeText: {
     fontSize: 11,
     fontWeight: '600',
-    color: '#4CAF50',
     textTransform: 'uppercase',
     letterSpacing: 0.5,
   },
@@ -414,7 +402,7 @@ const styles = StyleSheet.create({
     gap: 4,
     paddingHorizontal: 10,
     paddingVertical: 6,
-    borderRadius: 8,
+    borderRadius: 999,
   },
   saveBadgeText: {
     fontSize: 13,
@@ -422,7 +410,6 @@ const styles = StyleSheet.create({
   },
   splitDescription: {
     fontSize: 14,
-    color: Colors.light.secondaryText,
     lineHeight: 20,
     marginBottom: 12,
   },
@@ -439,7 +426,6 @@ const styles = StyleSheet.create({
   infoText: {
     fontSize: 13,
     fontWeight: '600',
-    color: Colors.light.secondaryText,
   },
 
   // Days Preview
@@ -454,27 +440,23 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    backgroundColor: Colors.light.borderLight + '30',
     paddingHorizontal: 12,
     paddingVertical: 10,
-    borderRadius: 10,
+    borderRadius: 999,
   },
   restDayText: {
     fontSize: 14,
     fontWeight: '600',
-    color: Colors.light.secondaryText,
     fontStyle: 'italic',
   },
   workoutDayChip: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
-    backgroundColor: Colors.light.primary + '10',
     paddingHorizontal: 12,
     paddingVertical: 10,
-    borderRadius: 10,
+    borderRadius: 999,
     borderWidth: 1,
-    borderColor: Colors.light.primary + '30',
   },
   dayEmoji: {
     fontSize: 16,
@@ -482,7 +464,6 @@ const styles = StyleSheet.create({
   dayName: {
     fontSize: 14,
     fontWeight: '600',
-    color: Colors.light.primary,
     flex: 1,
   },
 });

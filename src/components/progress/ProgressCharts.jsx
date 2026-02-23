@@ -1,31 +1,34 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Dimensions } from 'react-native';
-import { Colors } from '@/constants/colors';
+import { View, Text, StyleSheet, TouchableOpacity, useWindowDimensions } from 'react-native';
+import { useThemeColors } from '@/hooks/useThemeColors';
+import { Radius, Spacing, FontSize, FontWeight, Layout } from '@/constants/theme';
 
-const { width: screenWidth } = Dimensions.get('window');
-const chartWidth = screenWidth - 80;
 const chartHeight = 180;
 
 const ProgressCharts = ({ weightData = [], oneRMData = [], volumeData = [] }) => {
+  const colors = useThemeColors();
+  const { width: screenWidth } = useWindowDimensions();
+  const chartWidth = Math.min(screenWidth - 80, Layout.maxContentWidth - 80);
   const [weightTimeframe, setWeightTimeframe] = useState('3M');
   const [oneRMTimeframe, setOneRMTimeframe] = useState('3M');
   const [volumeTimeframe, setVolumeTimeframe] = useState('3M');
 
   const TimeframeToggle = ({ timeframe, setTimeframe }) => (
-    <View style={styles.timeframeToggle}>
+    <View style={[styles.timeframeToggle, { backgroundColor: colors.borderLight }]}>
       {['1M', '3M', '6M', '1Y'].map((option) => (
         <TouchableOpacity
           key={option}
           style={[
             styles.timeframeButton,
-            timeframe === option && styles.timeframeButtonActive
+            timeframe === option && { backgroundColor: colors.primary }
           ]}
           onPress={() => setTimeframe(option)}
         >
           <Text
             style={[
               styles.timeframeButtonText,
-              timeframe === option && styles.timeframeButtonTextActive
+              { color: colors.secondaryText },
+              timeframe === option && { color: colors.onPrimary }
             ]}
           >
             {option}
@@ -35,11 +38,11 @@ const ProgressCharts = ({ weightData = [], oneRMData = [], volumeData = [] }) =>
     </View>
   );
 
-  const SimpleLineChart = ({ data, color = Colors.light.primary }) => {
+  const SimpleLineChart = ({ data, color = colors.primary }) => {
     if (!data || data.length === 0) {
       return (
-        <View style={styles.emptyChart}>
-          <Text style={styles.emptyChartText}>No data available</Text>
+        <View style={[styles.emptyChart, { backgroundColor: colors.background }]}>
+          <Text style={[styles.emptyChartText, { color: colors.secondaryText }]}>No data available</Text>
         </View>
       );
     }
@@ -61,17 +64,17 @@ const ProgressCharts = ({ weightData = [], oneRMData = [], volumeData = [] }) =>
       <View style={styles.chartContainer}>
         {/* Y-axis labels */}
         <View style={styles.yAxisLabels}>
-          <Text style={styles.axisLabel}>{Math.round(maxValue)}</Text>
-          <Text style={styles.axisLabel}>{Math.round((maxValue + minValue) / 2)}</Text>
-          <Text style={styles.axisLabel}>{Math.round(minValue)}</Text>
+          <Text style={[styles.axisLabel, { color: colors.secondaryText }]}>{Math.round(maxValue)}</Text>
+          <Text style={[styles.axisLabel, { color: colors.secondaryText }]}>{Math.round((maxValue + minValue) / 2)}</Text>
+          <Text style={[styles.axisLabel, { color: colors.secondaryText }]}>{Math.round(minValue)}</Text>
         </View>
 
         {/* Chart area */}
-        <View style={styles.chartArea}>
+        <View style={[styles.chartArea, { backgroundColor: colors.background }]}>
           {/* Grid lines */}
-          <View style={styles.gridLine} />
-          <View style={[styles.gridLine, { top: '50%' }]} />
-          <View style={[styles.gridLine, { top: '100%' }]} />
+          <View style={[styles.gridLine, { backgroundColor: colors.borderLight }]} />
+          <View style={[styles.gridLine, { backgroundColor: colors.borderLight, top: '50%' }]} />
+          <View style={[styles.gridLine, { backgroundColor: colors.borderLight, top: '100%' }]} />
 
           {/* Data points */}
           {points.map((point, index) => (
@@ -121,39 +124,39 @@ const ProgressCharts = ({ weightData = [], oneRMData = [], volumeData = [] }) =>
   return (
     <View style={styles.container}>
       {/* Weight Over Time Chart */}
-      <View style={styles.card}>
+      <View style={[styles.card, { backgroundColor: colors.background, borderColor: colors.borderLight }]}>
         <View style={styles.cardHeader}>
           <View>
-            <Text style={styles.cardTitle}>Weight Over Time</Text>
-            <Text style={styles.cardSubtitle}>Track your strength progression</Text>
+            <Text style={[styles.cardTitle, { color: colors.text }]}>Weight Over Time</Text>
+            <Text style={[styles.cardSubtitle, { color: colors.secondaryText }]}>Track your strength progression</Text>
           </View>
           <TimeframeToggle timeframe={weightTimeframe} setTimeframe={setWeightTimeframe} />
         </View>
-        <SimpleLineChart data={weightData} color={Colors.light.primary} />
+        <SimpleLineChart data={weightData} color={colors.primary} />
       </View>
 
       {/* Estimated 1RM Trend */}
-      <View style={styles.card}>
+      <View style={[styles.card, { backgroundColor: colors.background, borderColor: colors.borderLight }]}>
         <View style={styles.cardHeader}>
           <View>
-            <Text style={styles.cardTitle}>Estimated 1RM Trend</Text>
-            <Text style={styles.cardSubtitle}>Your maximum strength estimate</Text>
+            <Text style={[styles.cardTitle, { color: colors.text }]}>Estimated 1RM Trend</Text>
+            <Text style={[styles.cardSubtitle, { color: colors.secondaryText }]}>Your maximum strength estimate</Text>
           </View>
           <TimeframeToggle timeframe={oneRMTimeframe} setTimeframe={setOneRMTimeframe} />
         </View>
-        <SimpleLineChart data={oneRMData} color="#FF6B6B" />
+        <SimpleLineChart data={oneRMData} color={colors.error} />
       </View>
 
       {/* Weekly Volume */}
-      <View style={styles.card}>
+      <View style={[styles.card, { backgroundColor: colors.background, borderColor: colors.borderLight }]}>
         <View style={styles.cardHeader}>
           <View>
-            <Text style={styles.cardTitle}>Weekly Volume</Text>
-            <Text style={styles.cardSubtitle}>Total weight lifted per week</Text>
+            <Text style={[styles.cardTitle, { color: colors.text }]}>Weekly Volume</Text>
+            <Text style={[styles.cardSubtitle, { color: colors.secondaryText }]}>Total weight lifted per week</Text>
           </View>
           <TimeframeToggle timeframe={volumeTimeframe} setTimeframe={setVolumeTimeframe} />
         </View>
-        <SimpleLineChart data={volumeData} color="#4ECDC4" />
+        <SimpleLineChart data={volumeData} color={colors.accent} />
       </View>
     </View>
   );
@@ -163,37 +166,32 @@ export default ProgressCharts;
 
 const styles = StyleSheet.create({
   container: {
-    gap: 16,
+    gap: Spacing.lg,
   },
   card: {
-    backgroundColor: Colors.light.background,
-    borderRadius: 12,
-    padding: 20,
+    borderRadius: Radius.lg,
+    padding: Spacing.container,
     borderWidth: 1,
-    borderColor: Colors.light.borderLight,
   },
   cardHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
-    marginBottom: 20,
+    marginBottom: Spacing.container,
   },
   cardTitle: {
     fontSize: 17,
-    fontWeight: '700',
-    color: Colors.light.text,
-    marginBottom: 4,
+    fontWeight: FontWeight.bold,
+    marginBottom: Spacing.xs,
     letterSpacing: -0.3,
   },
   cardSubtitle: {
-    fontSize: 13,
-    color: '#6E6E6E',
-    fontWeight: '500',
+    fontSize: FontSize.sm + 1,
+    fontWeight: FontWeight.medium,
   },
   timeframeToggle: {
     flexDirection: 'row',
-    backgroundColor: Colors.light.borderLight,
-    borderRadius: 8,
+    borderRadius: Radius.sm,
     padding: 2,
   },
   timeframeButton: {
@@ -201,16 +199,9 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
     borderRadius: 6,
   },
-  timeframeButtonActive: {
-    backgroundColor: Colors.light.primary,
-  },
   timeframeButtonText: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: Colors.light.secondaryText,
-  },
-  timeframeButtonTextActive: {
-    color: Colors.light.onPrimary,
+    fontSize: FontSize.sm,
+    fontWeight: FontWeight.semibold,
   },
   chartContainer: {
     flexDirection: 'row',
@@ -218,28 +209,25 @@ const styles = StyleSheet.create({
   },
   yAxisLabels: {
     justifyContent: 'space-between',
-    paddingRight: 8,
-    paddingVertical: 20,
+    paddingRight: Spacing.sm,
+    paddingVertical: Spacing.container,
     width: 40,
   },
   axisLabel: {
     fontSize: 11,
-    color: Colors.light.secondaryText,
-    fontWeight: '500',
+    fontWeight: FontWeight.medium,
   },
   chartArea: {
     flex: 1,
     position: 'relative',
-    backgroundColor: Colors.light.background,
-    borderRadius: 12,
-    padding: 20,
+    borderRadius: Radius.md,
+    padding: Spacing.container,
   },
   gridLine: {
     position: 'absolute',
     left: 0,
     right: 0,
     height: 1,
-    backgroundColor: Colors.light.borderLight,
     top: 0,
   },
   dataPoint: {
@@ -259,11 +247,9 @@ const styles = StyleSheet.create({
     height: chartHeight,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: Colors.light.background,
-    borderRadius: 12,
+    borderRadius: Radius.md,
   },
   emptyChartText: {
-    fontSize: 14,
-    color: Colors.light.secondaryText,
+    fontSize: FontSize.body,
   },
 });

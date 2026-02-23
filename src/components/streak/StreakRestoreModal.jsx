@@ -139,7 +139,7 @@ export function StreakRestoreModal({ visible, onClose, lostStreak = 0, missedDat
             <View style={styles.iconGlow} />
             <Text style={styles.icon}>🔥</Text>
             <View style={[styles.brokenIndicator, { backgroundColor: colors.cardBackground }]}>
-              <Ionicons name="close-circle" size={28} color="#EF4444" />
+              <Ionicons name="close-circle" size={28} color={colors.error} />
             </View>
           </View>
 

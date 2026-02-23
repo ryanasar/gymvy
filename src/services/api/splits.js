@@ -92,7 +92,6 @@ export const syncSplitProgress = async (splitId, progress) => {
     await apiClient.put(`/splits/${splitId}/progress`, progress);
   } catch (error) {
     // Non-critical — don't block the UI
-    console.warn('Failed to sync split progress:', error.message);
   }
 };
 

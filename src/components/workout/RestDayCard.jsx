@@ -141,7 +141,7 @@ const styles = StyleSheet.create({
   },
   postRestDayButton: {
     paddingVertical: 16,
-    borderRadius: 16,
+    borderRadius: 20,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 8,
@@ -160,6 +160,6 @@ const styles = StyleSheet.create({
 
   optionsButton: {
     padding: 4,
-    borderRadius: 8,
+    borderRadius: 20,
   },
 });

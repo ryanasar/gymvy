@@ -265,7 +265,6 @@ export async function cancelWorkout(userId, workoutId) {
     if (databaseId) {
       const { deleteWorkoutSession } = await import('@/services/api/workoutSessions');
       await deleteWorkoutSession(databaseId);
-      console.log('[WorkoutHelpers] Deleted cancelled workout from backend:', databaseId);
     }
   } catch (error) {
     // 404 is fine - means nothing to delete

@@ -326,12 +326,10 @@ export default AddExerciseModal;
 const styles = StyleSheet.create({
   addExerciseModalContainer: {
     flex: 1,
-    backgroundColor: Colors.light.background,
   },
   exerciseTypeTabs: {
     flexDirection: 'row',
     borderBottomWidth: 1,
-    borderBottomColor: Colors.light.borderLight,
   },
   exerciseTypeTab: {
     flex: 1,
@@ -343,9 +341,7 @@ const styles = StyleSheet.create({
     borderBottomWidth: 2,
     borderBottomColor: 'transparent',
   },
-  exerciseTypeTabActive: {
-    borderBottomColor: Colors.light.primary,
-  },
+  exerciseTypeTabActive: {},
   exerciseTypeTabText: {
     fontSize: 15,
     fontWeight: '600',
@@ -354,8 +350,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingTop: 16,
     paddingBottom: 12,
-    backgroundColor: Colors.light.cardBackground,
-    shadowColor: Colors.light.shadow,
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.05,
     shadowRadius: 2,
@@ -370,39 +364,33 @@ const styles = StyleSheet.create({
   addExerciseModalTitle: {
     fontSize: 24,
     fontWeight: '700',
-    color: Colors.light.text,
   },
   addExerciseModalCloseButton: {
     padding: 4,
   },
   addExerciseModalSaveButton: {
-    backgroundColor: Colors.light.primary,
     paddingVertical: 12,
-    borderRadius: 10,
+    borderRadius: 20,
     alignItems: 'center',
   },
   addExerciseModalSaveText: {
     fontSize: 16,
     fontWeight: '600',
-    color: Colors.light.onPrimary,
   },
   addExerciseSearchContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: Colors.light.cardBackground,
     marginHorizontal: 16,
     marginVertical: 12,
     paddingHorizontal: 12,
     paddingVertical: 10,
-    borderRadius: 12,
+    borderRadius: 16,
     borderWidth: 1,
-    borderColor: Colors.light.borderLight,
     gap: 8,
   },
   addExerciseSearchInput: {
     flex: 1,
     fontSize: 16,
-    color: Colors.light.text,
   },
   addExerciseFilterSection: {
     paddingBottom: 12,
@@ -415,7 +403,6 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   addExerciseFilterPill: {
-    backgroundColor: Colors.light.borderLight + '80',
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: 20,
@@ -423,9 +410,6 @@ const styles = StyleSheet.create({
     borderColor: 'transparent',
   },
   addExerciseFilterPillActive: {
-    backgroundColor: Colors.light.primary,
-    borderColor: Colors.light.primary,
-    shadowColor: Colors.light.primary,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.2,
     shadowRadius: 4,
@@ -434,19 +418,14 @@ const styles = StyleSheet.create({
   addExerciseFilterPillText: {
     fontSize: 14,
     fontWeight: '600',
-    color: Colors.light.text,
   },
-  addExerciseFilterPillTextActive: {
-    color: Colors.light.onPrimary,
-  },
+  addExerciseFilterPillTextActive: {},
   addExerciseSelectedConfig: {
-    backgroundColor: Colors.light.cardBackground,
     marginHorizontal: 16,
     marginBottom: 12,
     padding: 12,
-    borderRadius: 12,
+    borderRadius: 16,
     borderWidth: 1,
-    borderColor: Colors.light.primary + '40',
   },
   addExerciseSelectedBadge: {
     flexDirection: 'row',
@@ -457,7 +436,6 @@ const styles = StyleSheet.create({
   addExerciseSelectedName: {
     fontSize: 16,
     fontWeight: '600',
-    color: Colors.light.text,
     flex: 1,
     marginRight: 8,
   },
@@ -471,7 +449,6 @@ const styles = StyleSheet.create({
   addExerciseConfigLabel: {
     fontSize: 12,
     fontWeight: '600',
-    color: Colors.light.secondaryText,
     marginBottom: 4,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
@@ -479,13 +456,11 @@ const styles = StyleSheet.create({
   addExerciseConfigInput: {
     backgroundColor: 'transparent',
     borderWidth: 1,
-    borderColor: Colors.light.borderLight,
-    borderRadius: 8,
+    borderRadius: 16,
     paddingHorizontal: 12,
     paddingVertical: 10,
     fontSize: 16,
     fontWeight: '600',
-    color: Colors.light.text,
     textAlign: 'center',
   },
   addExerciseList: {
@@ -498,9 +473,8 @@ const styles = StyleSheet.create({
   },
   addExerciseCardWrapper: {},
   addExerciseSelectedWrapper: {
-    borderRadius: 14,
+    borderRadius: 16,
     borderWidth: 2,
-    borderColor: Colors.light.primary,
     marginBottom: 8,
     position: 'relative',
   },
@@ -511,13 +485,11 @@ const styles = StyleSheet.create({
     width: 24,
     height: 24,
     borderRadius: 12,
-    backgroundColor: Colors.light.primary,
     alignItems: 'center',
     justifyContent: 'center',
   },
   addExerciseNoResults: {
     fontSize: 15,
-    color: Colors.light.secondaryText,
     textAlign: 'center',
     paddingVertical: 40,
   },
@@ -549,7 +521,7 @@ const styles = StyleSheet.create({
     gap: 6,
     paddingHorizontal: 20,
     paddingVertical: 12,
-    borderRadius: 10,
+    borderRadius: 20,
   },
   createFirstButtonText: {
     fontSize: 15,

@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
-import { Colors } from '@/constants/colors';
 import { useThemeColors } from '@/hooks/useThemeColors';
 
 const SplitInformation = ({ splitData, updateSplitData }) => {
@@ -149,7 +148,6 @@ export default SplitInformation;
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.light.background,
   },
   content: {
     padding: 20,
@@ -157,12 +155,10 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 22,
     fontWeight: '700',
-    color: Colors.light.text,
     marginBottom: 8,
   },
   sectionDescription: {
     fontSize: 14,
-    color: Colors.light.secondaryText,
     marginBottom: 20,
     lineHeight: 20,
   },
@@ -172,18 +168,14 @@ const styles = StyleSheet.create({
   label: {
     fontSize: 16,
     fontWeight: '600',
-    color: Colors.light.text,
     marginBottom: 8,
   },
   textInput: {
-    backgroundColor: Colors.light.cardBackground,
     borderWidth: 1,
-    borderColor: Colors.light.border,
-    borderRadius: 12,
+    borderRadius: 16,
     paddingHorizontal: 16,
     paddingVertical: 14,
     fontSize: 16,
-    color: Colors.light.text,
   },
   descriptionInput: {
     height: 80,
@@ -198,16 +190,12 @@ const styles = StyleSheet.create({
   emojiButton: {
     width: '15%',
     aspectRatio: 1.2,
-    backgroundColor: Colors.light.cardBackground,
     borderWidth: 2,
-    borderColor: Colors.light.border,
-    borderRadius: 12,
+    borderRadius: 16,
     justifyContent: 'center',
     alignItems: 'center',
   },
   emojiButtonSelected: {
-    borderColor: Colors.light.primary,
-    backgroundColor: Colors.light.primary + '20',
   },
   emojiText: {
     fontSize: 24,
@@ -220,32 +208,24 @@ const styles = StyleSheet.create({
   dayButton: {
     paddingHorizontal: 16,
     paddingVertical: 12,
-    backgroundColor: Colors.light.cardBackground,
     borderWidth: 2,
-    borderColor: Colors.light.border,
-    borderRadius: 12,
+    borderRadius: 16,
   },
   dayButtonSelected: {
-    borderColor: Colors.light.primary,
-    backgroundColor: Colors.light.primary,
   },
   dayButtonText: {
     fontSize: 14,
     fontWeight: '600',
-    color: Colors.light.text,
   },
   dayButtonTextSelected: {
-    color: Colors.light.onPrimary,
   },
   toggleContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    backgroundColor: Colors.light.cardBackground,
     padding: 16,
-    borderRadius: 12,
+    borderRadius: 16,
     borderWidth: 1,
-    borderColor: Colors.light.border,
   },
   toggleInfo: {
     flex: 1,
@@ -253,29 +233,24 @@ const styles = StyleSheet.create({
   toggleTitle: {
     fontSize: 16,
     fontWeight: '600',
-    color: Colors.light.text,
     marginBottom: 4,
   },
   toggleDescription: {
     fontSize: 14,
-    color: Colors.light.secondaryText,
   },
   toggle: {
     width: 50,
     height: 28,
     borderRadius: 14,
-    backgroundColor: Colors.light.borderLight,
     justifyContent: 'center',
     paddingHorizontal: 2,
   },
   toggleActive: {
-    backgroundColor: Colors.light.primary,
   },
   toggleButton: {
     width: 24,
     height: 24,
     borderRadius: 12,
-    backgroundColor: Colors.light.onPrimary,
     alignSelf: 'flex-start',
   },
   toggleButtonActive: {

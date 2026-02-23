@@ -190,9 +190,6 @@ export async function migrateUserStorage(userId) {
           if (!existingData) {
             // Migrate data to new user-specific key
             await AsyncStorage.setItem(newKey, legacyData);
-            console.log(`[migrateUserStorage] Migrated ${legacy} -> ${newKey}`);
-          } else {
-            console.log(`[migrateUserStorage] Skipping ${legacy} - new key already has data`);
           }
 
           // Remove legacy key after successful migration
@@ -200,12 +197,8 @@ export async function migrateUserStorage(userId) {
           keysProcessed++;
         }
       } catch (keyError) {
-        console.warn(`[migrateUserStorage] Error migrating ${legacy}:`, keyError.message);
+        // Silent fail
       }
-    }
-
-    if (keysProcessed > 0) {
-      console.log(`[migrateUserStorage] Migration complete. Keys processed: ${keysProcessed}`);
     }
 
     return { migrated: keysProcessed > 0, keysProcessed };

@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Alert, ActivityIndicator } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useThemeColors } from '@/hooks/useThemeColors';
-import { Colors } from '@/constants/colors';
 import OptionsMenu from '@/components/ui/OptionsMenu';
 import ExerciseList from '@/components/ui/ExerciseList';
 
@@ -18,7 +17,7 @@ const IndividualWorkoutCompletedCard = ({ workoutData, onPostWorkout, onUncomple
     {
       label: 'Un-complete Workout',
       icon: 'arrow-undo-outline',
-      color: '#EF4444',
+      color: colors.error,
       onPress: () => {
         setShowOptionsMenu(false);
         Alert.alert(
@@ -102,11 +101,9 @@ export default IndividualWorkoutCompletedCard;
 
 const styles = StyleSheet.create({
   workoutCard: {
-    backgroundColor: Colors.light.cardBackground,
     borderRadius: 20,
     padding: 18,
     marginBottom: 16,
-    shadowColor: Colors.light.shadow,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.08,
     shadowRadius: 16,
@@ -135,7 +132,6 @@ const styles = StyleSheet.create({
   workoutTitle: {
     fontSize: 22,
     fontWeight: '700',
-    color: Colors.light.text,
     flex: 1,
   },
   headerActions: {
@@ -146,16 +142,14 @@ const styles = StyleSheet.create({
   exerciseCount: {
     fontSize: 14,
     fontWeight: '600',
-    color: Colors.light.secondaryText,
   },
   optionsButton: {
     padding: 4,
-    borderRadius: 8,
+    borderRadius: 20,
   },
   sourceLabel: {
     fontSize: 13,
     fontWeight: '600',
-    color: Colors.light.primary,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
   },
@@ -166,7 +160,7 @@ const styles = StyleSheet.create({
   postWorkoutButton: {
     backgroundColor: '#4CAF50',
     paddingVertical: 16,
-    borderRadius: 16,
+    borderRadius: 20,
     shadowColor: '#4CAF50',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,

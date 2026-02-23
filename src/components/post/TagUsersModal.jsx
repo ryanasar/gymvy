@@ -12,7 +12,6 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import Avatar from '@/components/ui/Avatar';
-import { Colors } from '@/constants/colors';
 import { useThemeColors } from '@/hooks/useThemeColors';
 import { searchUsers } from '@/services/api/users';
 
@@ -266,7 +265,6 @@ const TagUsersModal = ({ visible, onClose, selectedUsers = [], onUsersSelected, 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.light.background,
   },
   header: {
     flexDirection: 'row',
@@ -274,21 +272,17 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: 16,
     paddingVertical: 14,
-    backgroundColor: Colors.light.cardBackground,
     borderBottomWidth: 1,
-    borderBottomColor: Colors.light.borderLight,
   },
   closeButton: {
     minWidth: 60,
   },
   cancelText: {
     fontSize: 16,
-    color: Colors.light.secondaryText,
   },
   headerTitle: {
     fontSize: 18,
     fontWeight: '700',
-    color: Colors.light.text,
   },
   doneButton: {
     minWidth: 60,
@@ -297,17 +291,14 @@ const styles = StyleSheet.create({
   doneText: {
     fontSize: 16,
     fontWeight: '600',
-    color: Colors.light.primary,
   },
   searchContainer: {
     padding: 16,
-    backgroundColor: Colors.light.cardBackground,
   },
   searchInputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: Colors.light.borderLight + '40',
-    borderRadius: 12,
+    borderRadius: 20,
     paddingHorizontal: 12,
     paddingVertical: 10,
     gap: 8,
@@ -315,12 +306,10 @@ const styles = StyleSheet.create({
   searchInput: {
     flex: 1,
     fontSize: 16,
-    color: Colors.light.text,
     paddingVertical: 0,
   },
   selectedContainer: {
     borderBottomWidth: 1,
-    borderBottomColor: Colors.light.borderLight,
     paddingVertical: 12,
   },
   selectedList: {
@@ -330,8 +319,7 @@ const styles = StyleSheet.create({
   selectedUserChip: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: Colors.light.primary + '15',
-    borderRadius: 16,
+    borderRadius: 999,
     paddingVertical: 6,
     paddingLeft: 12,
     paddingRight: 8,
@@ -341,7 +329,6 @@ const styles = StyleSheet.create({
   selectedUserText: {
     fontSize: 14,
     fontWeight: '500',
-    color: Colors.light.primary,
   },
   loadingContainer: {
     flex: 1,
@@ -356,7 +343,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 20,
     paddingVertical: 12,
-    backgroundColor: Colors.light.cardBackground,
   },
   avatarContainer: {
     marginRight: 12,
@@ -372,7 +358,6 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: Colors.light.borderLight,
   },
   avatarText: {
     fontSize: 18,
@@ -385,17 +370,15 @@ const styles = StyleSheet.create({
   userName: {
     fontSize: 16,
     fontWeight: '600',
-    color: Colors.light.text,
     marginBottom: 2,
   },
   username: {
     fontSize: 14,
-    color: Colors.light.secondaryText,
   },
   checkbox: {
     width: 24,
     height: 24,
-    borderRadius: 12,
+    borderRadius: 999,
     borderWidth: 2,
     justifyContent: 'center',
     alignItems: 'center',
@@ -409,13 +392,11 @@ const styles = StyleSheet.create({
   emptyTitle: {
     fontSize: 18,
     fontWeight: '600',
-    color: Colors.light.text,
     marginTop: 16,
     marginBottom: 8,
   },
   emptySubtext: {
     fontSize: 14,
-    color: Colors.light.secondaryText,
     textAlign: 'center',
     lineHeight: 20,
   },

@@ -48,7 +48,7 @@ export default function TabsLayout() {
           borderTopWidth: 1,
           borderTopColor: colors.borderLight,
           height: 100,
-          paddingBottom: 25,
+          paddingBottom: 24,
           paddingTop: 10,
         },
         tabBarActiveTintColor: colors.tabIconSelected,
@@ -74,7 +74,7 @@ export default function TabsLayout() {
                 color={color}
               />
               {unreadCount > 0 && (
-                <View style={styles.badge}>
+                <View style={[styles.badge, { backgroundColor: colors.error }]}>
                   <Text style={styles.badgeText}>
                     {unreadCount > 99 ? '99+' : unreadCount}
                   </Text>
@@ -149,7 +149,6 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: -4,
     right: -8,
-    backgroundColor: '#EF4444',
     borderRadius: 10,
     minWidth: 18,
     height: 18,

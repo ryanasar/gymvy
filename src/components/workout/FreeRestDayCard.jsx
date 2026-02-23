@@ -170,6 +170,6 @@ const styles = StyleSheet.create({
   },
   optionsButton: {
     padding: 4,
-    borderRadius: 8,
+    borderRadius: 20,
   },
 });

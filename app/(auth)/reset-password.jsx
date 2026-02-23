@@ -159,7 +159,7 @@ export default function ResetPasswordScreen() {
             />
 
             {error ? (
-              <Text style={styles.errorText}>{error}</Text>
+              <Text style={[styles.errorText, { color: colors.error }]}>{error}</Text>
             ) : null}
 
             <TouchableOpacity
@@ -218,7 +218,7 @@ const styles = StyleSheet.create({
     lineHeight: 22,
   },
   input: {
-    borderRadius: 8,
+    borderRadius: 16,
     borderWidth: 1,
     paddingHorizontal: 16,
     paddingVertical: 14,
@@ -227,7 +227,7 @@ const styles = StyleSheet.create({
   },
   primaryButton: {
     paddingVertical: 16,
-    borderRadius: 8,
+    borderRadius: 20,
     marginBottom: 16,
   },
   primaryButtonDisabled: {
@@ -239,7 +239,6 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   errorText: {
-    color: '#ef4444',
     fontSize: 14,
     textAlign: 'center',
     marginBottom: 16,

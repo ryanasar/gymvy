@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { Alert, StyleSheet, Text, TouchableOpacity, View, Pressable, Dimensions } from 'react-native';
+import { Alert, StyleSheet, Text, TouchableOpacity, View, Pressable } from 'react-native';
 import { Image } from 'expo-image';
 import { deletePost, likePost, unlikePost } from '@/services/api/posts';
 import { reportPost } from '@/services/api/reports';
@@ -16,8 +16,6 @@ import Badge from '@/components/ui/Badge';
 import CommentModal from '@/components/common/CommentModal';
 import SocialActions from '@/components/common/SocialActions';
 import ZoomableImageModal from '@/components/ui/ZoomableImageModal';
-
-const SCREEN_WIDTH = Dimensions.get('window').width;
 
 // Mapping from detailed muscle keys to simplified display names
 const MUSCLE_DISPLAY_MAP = {
@@ -560,12 +558,10 @@ export default Activity;
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: Colors.light.cardBackground,
     borderRadius: 20,
     marginBottom: 20,
     borderWidth: 0,
     overflow: 'hidden',
-    shadowColor: Colors.light.shadow,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.08,
     shadowRadius: 16,
@@ -637,7 +633,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 18,
     paddingVertical: 16,
     borderBottomWidth: 0.5,
-    borderBottomColor: Colors.light.borderLight + '30',
+    borderBottomColor: '#00000010',
   },
   menuItemDanger: {
     borderBottomWidth: 0,
@@ -686,7 +682,7 @@ const styles = StyleSheet.create({
     width: '100%',
     height: 340,
     borderRadius: 16,
-    backgroundColor: Colors.light.borderLight + '20',
+    backgroundColor: '#00000008',
   },
   metadataSection: {
     paddingHorizontal: 18,

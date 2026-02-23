@@ -95,7 +95,7 @@ const styles = StyleSheet.create({
   },
   modal: {
     width: '100%',
-    borderRadius: 16,
+    borderRadius: 20,
     padding: 24,
     minWidth: 300,
   },
@@ -111,7 +111,7 @@ const styles = StyleSheet.create({
   inputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    borderRadius: 12,
+    borderRadius: 16,
     borderWidth: 1,
     paddingHorizontal: 16,
     paddingVertical: 14,
@@ -134,7 +134,7 @@ const styles = StyleSheet.create({
   button: {
     flex: 1,
     paddingVertical: 14,
-    borderRadius: 12,
+    borderRadius: 20,
     alignItems: 'center',
   },
   cancelButton: {},

@@ -140,7 +140,7 @@ const RestDayPostModal = ({ visible, onClose, onPostCreated, splitName, splitEmo
             await MediaLibrary.saveToLibraryAsync(photoUri);
           }
         } catch (saveError) {
-          console.warn('Could not save to camera roll:', saveError);
+          // Could not save to camera roll
         }
       }
     } catch (error) {
@@ -312,7 +312,6 @@ const RestDayPostModal = ({ visible, onClose, onPostCreated, splitName, splitEmo
         });
       } catch (dailyActivityError) {
         // Don't fail the post if DailyActivity creation fails
-        console.warn('Failed to create DailyActivity for rest day:', dailyActivityError);
       }
 
       // Reset form
@@ -602,7 +601,7 @@ const styles = StyleSheet.create({
     gap: 6,
     paddingHorizontal: 14,
     paddingVertical: 10,
-    borderRadius: 20,
+    borderRadius: 16,
     borderWidth: 1,
   },
   activityChipText: {
@@ -612,7 +611,7 @@ const styles = StyleSheet.create({
 
   // Image Upload
   uploadButton: {
-    borderRadius: 12,
+    borderRadius: 16,
     padding: 32,
     alignItems: 'center',
     borderWidth: 2,
@@ -632,13 +631,13 @@ const styles = StyleSheet.create({
   },
   imageContainer: {
     position: 'relative',
-    borderRadius: 12,
+    borderRadius: 16,
     overflow: 'hidden',
   },
   selectedImage: {
     width: '100%',
     height: 320,
-    borderRadius: 12,
+    borderRadius: 16,
   },
   removeImageButton: {
     position: 'absolute',
@@ -659,7 +658,7 @@ const styles = StyleSheet.create({
 
   // Tag Users
   tagButton: {
-    borderRadius: 12,
+    borderRadius: 16,
     padding: 16,
     alignItems: 'center',
     borderWidth: 1,

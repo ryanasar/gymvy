@@ -3,13 +3,13 @@ import { View, TouchableOpacity, StyleSheet } from 'react-native';
 import { useThemeColors } from '@/hooks/useThemeColors';
 import { Radius, Spacing, Shadows } from '@/constants/theme';
 
-const Card = ({ children, variant = 'elevated', padding = Spacing.lg, style, onPress }) => {
+const Card = ({ children, variant = 'elevated', padding = Spacing.card, style, onPress }) => {
   const colors = useThemeColors();
 
   const cardStyle = [
     styles.base,
     { backgroundColor: colors.cardBackground, padding },
-    variant === 'elevated' && { ...Shadows.md, shadowColor: colors.shadow },
+    variant === 'elevated' && { ...Shadows.card, shadowColor: colors.shadow },
     variant === 'outlined' && { borderWidth: 1, borderColor: colors.borderLight },
     variant === 'flat' && { shadowOpacity: 0 },
     style,
@@ -28,7 +28,7 @@ const Card = ({ children, variant = 'elevated', padding = Spacing.lg, style, onP
 
 const styles = StyleSheet.create({
   base: {
-    borderRadius: Radius.lg,
+    borderRadius: Radius.xl,
     marginBottom: Spacing.lg,
   },
 });

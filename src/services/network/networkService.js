@@ -62,7 +62,6 @@ function updateNetworkState(online) {
   isOnline = online;
 
   if (wasOnline !== isOnline) {
-    console.log('[NetworkService] Network state changed:', isOnline ? 'online' : 'offline');
     notifyListeners(isOnline);
   }
 }
@@ -79,7 +78,6 @@ export async function initNetworkService() {
   // Get initial state
   const initialOnline = await performNetworkCheck();
   updateNetworkState(initialOnline);
-  console.log('[NetworkService] Initial network state:', isOnline ? 'online' : 'offline');
 
   // Set up periodic checks
   checkIntervalId = setInterval(async () => {

@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { useThemeColors } from '@/hooks/useThemeColors';
-import { Spacing, FontSize, FontWeight } from '@/constants/theme';
+import { Spacing, FontSize, FontWeight, Radius } from '@/constants/theme';
 
 const ScreenHeader = ({ title, subtitle, leftAction, rightAction, style }) => {
   const colors = useThemeColors();
@@ -39,8 +39,9 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   title: {
-    fontSize: 28,
-    fontWeight: '700',
+    fontSize: FontSize.xxxl,
+    fontWeight: FontWeight.bold,
+    letterSpacing: 0.4,
   },
   subtitle: {
     fontSize: FontSize.body,

@@ -8,10 +8,12 @@ import { View, Text, StyleSheet, Animated, Platform } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNetwork } from '@/contexts/NetworkContext';
 import { useSync } from '@/contexts/SyncContext';
+import { useThemeColors } from '@/hooks/useThemeColors';
 
 export function OfflineBanner() {
   const { isOffline, isInitialized } = useNetwork();
   const sync = useSync();
+  const colors = useThemeColors();
   const insets = useSafeAreaInsets();
   const [visible, setVisible] = useState(false);
   const translateY = React.useRef(new Animated.Value(-100)).current;
@@ -50,14 +52,15 @@ export function OfflineBanner() {
       style={[
         styles.container,
         {
+          backgroundColor: colors.warning + '20',
           paddingTop: insets.top + 4,
           transform: [{ translateY }],
         },
       ]}
     >
       <View style={styles.content}>
-        <View style={styles.dot} />
-        <Text style={styles.text}>
+        <View style={[styles.dot, { backgroundColor: colors.warning }]} />
+        <Text style={[styles.text, { color: colors.text }]}>
           Offline mode{pendingText}
         </Text>
       </View>
@@ -71,7 +74,7 @@ const styles = StyleSheet.create({
     top: 0,
     left: 0,
     right: 0,
-    backgroundColor: '#374151',
+    // backgroundColor set dynamically via colors.warning + '20'
     zIndex: 9999,
     paddingBottom: 8,
     paddingHorizontal: 16,
@@ -96,11 +99,11 @@ const styles = StyleSheet.create({
     width: 8,
     height: 8,
     borderRadius: 4,
-    backgroundColor: '#FCD34D',
+    // backgroundColor set dynamically
     marginRight: 8,
   },
   text: {
-    color: '#FFFFFF',
+    // color set dynamically
     fontSize: 13,
     fontWeight: '500',
   },

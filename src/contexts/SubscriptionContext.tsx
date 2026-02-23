@@ -69,9 +69,6 @@ export const SubscriptionProvider = ({ children }: { children: React.ReactNode }
         const apiKey = Platform.OS === 'ios' ? REVENUECAT_IOS_API_KEY : REVENUECAT_ANDROID_API_KEY;
 
         if (!apiKey) {
-          if (__DEV__) {
-            console.warn('[Subscription] RevenueCat API key not found. Subscriptions disabled.');
-          }
           return;
         }
 
@@ -85,8 +82,6 @@ export const SubscriptionProvider = ({ children }: { children: React.ReactNode }
 
         // Fetch initial offerings
         await fetchOfferings();
-
-        console.log('[Subscription] RevenueCat initialized successfully');
       } catch (err) {
         console.error('[Subscription] Failed to initialize RevenueCat:', err);
         setError('Failed to initialize subscriptions');
@@ -106,7 +101,6 @@ export const SubscriptionProvider = ({ children }: { children: React.ReactNode }
         const userId = String(user.id);
         const { customerInfo } = await Purchases.logIn(userId);
         updateSubscriptionStatus(customerInfo);
-        console.log('[Subscription] User identified:', userId);
       } catch (err) {
         console.error('[Subscription] Failed to identify user:', err);
       }
@@ -120,7 +114,6 @@ export const SubscriptionProvider = ({ children }: { children: React.ReactNode }
     if (!isInitialized) return;
 
     const customerInfoUpdateListener = (info: CustomerInfo) => {
-      console.log('[Subscription] Customer info updated');
       updateSubscriptionStatus(info);
     };
 
@@ -205,12 +198,10 @@ export const SubscriptionProvider = ({ children }: { children: React.ReactNode }
         }
       }
 
-      console.log('[Subscription] Purchase successful');
       return true;
     } catch (err: any) {
       // User cancelled is not an error
       if (err.userCancelled) {
-        console.log('[Subscription] User cancelled purchase');
         return false;
       }
 
@@ -237,7 +228,6 @@ export const SubscriptionProvider = ({ children }: { children: React.ReactNode }
       updateSubscriptionStatus(info);
 
       const restored = !!info.entitlements.active[PREMIUM_ENTITLEMENT_ID];
-      console.log('[Subscription] Restore completed, premium:', restored);
       return restored;
     } catch (err: any) {
       console.error('[Subscription] Restore failed:', err);

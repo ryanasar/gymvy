@@ -1,23 +1,21 @@
+import { useEffect } from 'react';
 import { useAuth } from '@/lib/auth';
 import { Redirect } from 'expo-router';
-import { View, ActivityIndicator } from 'react-native';
-import { Image } from 'expo-image';
+import * as SplashScreen from 'expo-splash-screen';
+
+SplashScreen.preventAutoHideAsync();
 
 export default function Index() {
   const { user, isLoading } = useAuth();
 
+  useEffect(() => {
+    if (!isLoading) {
+      SplashScreen.hideAsync();
+    }
+  }, [isLoading]);
+
   if (isLoading) {
-    return (
-      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#FFFFFF' }}>
-        <Image
-          source={require('../assets/images/logo-transparent.png')}
-          style={{ width: 200, height: 200, marginBottom: 20 }}
-          contentFit="contain"
-          transition={200}
-        />
-        <ActivityIndicator size="large" color="#FFFFFF" />
-      </View>
-    );
+    return null;
   }
 
   // Not logged in - go to auth

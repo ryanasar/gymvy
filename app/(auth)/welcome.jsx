@@ -49,8 +49,8 @@ export default function WelcomeScreen() {
         <Text style={[styles.subtitle, { color: colors.secondaryText }]}>Your personal fitness companion</Text>
 
         {isOffline && (
-          <View style={styles.offlineWarning}>
-            <Text style={styles.offlineText}>You are offline</Text>
+          <View style={[styles.offlineWarning, { backgroundColor: colors.warning + '20' }]}>
+            <Text style={[styles.offlineText, { color: colors.warning }]}>You are offline</Text>
           </View>
         )}
 
@@ -138,7 +138,7 @@ const styles = StyleSheet.create({
   googleButton: {
     borderWidth: 1,
     paddingVertical: 18,
-    borderRadius: 8,
+    borderRadius: 20,
     marginBottom: 16,
     flexDirection: 'row',
     alignItems: 'center',
@@ -160,7 +160,7 @@ const styles = StyleSheet.create({
   },
   appleButton: {
     paddingVertical: 18,
-    borderRadius: 8,
+    borderRadius: 20,
     marginBottom: 16,
     flexDirection: 'row',
     alignItems: 'center',
@@ -192,7 +192,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'transparent',
     borderWidth: 1,
     paddingVertical: 14,
-    borderRadius: 8,
+    borderRadius: 20,
     marginBottom: 16,
   },
   emailButtonText: {
@@ -217,8 +217,7 @@ const styles = StyleSheet.create({
     textDecorationLine: 'underline',
   },
   offlineWarning: {
-    backgroundColor: '#374151',
-    borderRadius: 8,
+    borderRadius: 16,
     padding: 12,
     marginBottom: 16,
     flexDirection: 'row',
@@ -226,7 +225,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   offlineText: {
-    color: '#FCD34D',
     fontSize: 14,
     fontWeight: '500',
   },

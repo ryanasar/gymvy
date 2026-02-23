@@ -14,7 +14,6 @@ import IndividualWorkoutCompletedCard from '@/components/workout/IndividualWorko
 import SavedWorkoutPicker from '@/components/workout/SavedWorkoutPicker';
 import SavedWorkoutDetailCard from '@/components/workout/SavedWorkoutDetailCard';
 import TabBar from '@/components/ui/TabBar';
-import { Colors } from '@/constants/colors';
 import { useWorkout } from '@/contexts/WorkoutContext';
 import { useSync } from '@/contexts/SyncContext';
 import { useAuth } from '@/lib/auth';
@@ -24,6 +23,7 @@ import { isFreeRestDayAvailable, clearFreeRestDayUsageForToday } from '@/service
 import { markRestDay } from '@/services/api/dailyActivity';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useThemeColors } from '@/hooks/useThemeColors';
+import { useResponsiveLayout } from '@/hooks/useResponsiveLayout';
 import { getSavedWorkouts } from '@/services/api/savedWorkouts';
 import { useWorkoutCompletion } from '@/hooks/workout/useWorkoutCompletion';
 import { calculateWorkoutCardCollapse } from '@/utils/workout/workoutCalculations';
@@ -37,6 +37,10 @@ const WORKOUT_TABS = [
 
 const WorkoutScreen = () => {
   const colors = useThemeColors();
+  const { contentMaxWidth } = useResponsiveLayout();
+  const responsiveStyle = contentMaxWidth
+    ? { maxWidth: contentMaxWidth, alignSelf: 'center', width: '100%' }
+    : undefined;
   const router = useRouter();
   const params = useLocalSearchParams();
   const { user } = useAuth();
@@ -305,10 +309,8 @@ const WorkoutScreen = () => {
             dayNumber: todaysWorkout.dayNumber || null,
             plannedWorkoutName: todaysWorkout.dayName || 'Rest Day',
           });
-          console.log('[Workout Tab] Rest day synced to backend');
         } catch (backendError) {
           // Don't fail if backend call fails
-          console.warn('[Workout Tab] Failed to sync rest day to backend:', backendError.message);
         }
 
         // Track that we've handled this specific rest day
@@ -459,7 +461,7 @@ const WorkoutScreen = () => {
         </View>
         <ScrollView
           style={styles.scrollView}
-          contentContainerStyle={styles.contentContainer}
+          contentContainerStyle={[styles.contentContainer, responsiveStyle]}
           showsVerticalScrollIndicator={false}
           refreshControl={
             <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} tintColor={colors.primary} />
@@ -502,7 +504,7 @@ const WorkoutScreen = () => {
 
         <ScrollView
           style={styles.scrollView}
-          contentContainerStyle={styles.noSplitScrollContent}
+          contentContainerStyle={[styles.noSplitScrollContent, responsiveStyle]}
           refreshControl={
             <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} tintColor={colors.primary} />
           }
@@ -702,6 +704,7 @@ const WorkoutScreen = () => {
 
         <ScrollView
           style={styles.scrollView}
+          contentContainerStyle={responsiveStyle}
           showsVerticalScrollIndicator={false}
           refreshControl={
             <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} tintColor={colors.primary} />
@@ -748,6 +751,7 @@ const WorkoutScreen = () => {
 
         <ScrollView
           style={styles.scrollView}
+          contentContainerStyle={responsiveStyle}
           showsVerticalScrollIndicator={false}
           refreshControl={
             <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} tintColor={colors.primary} />
@@ -860,6 +864,7 @@ const WorkoutScreen = () => {
 
       <ScrollView
         style={styles.scrollView}
+        contentContainerStyle={responsiveStyle}
         showsVerticalScrollIndicator={false}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} tintColor={colors.primary} />
@@ -989,14 +994,11 @@ export default WorkoutScreen;
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.light.background,
   },
   headerContainer: {
     paddingHorizontal: 20,
     paddingTop: 60,
     paddingBottom: 20,
-    backgroundColor: Colors.light.cardBackground,
-    shadowColor: Colors.light.shadow,
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.03,
     shadowRadius: 2,
@@ -1006,9 +1008,9 @@ const styles = StyleSheet.create({
     backgroundColor: '#4CAF50',
   },
   title: {
-    fontSize: 28,
+    fontSize: 34,
     fontWeight: '700',
-    color: Colors.light.text,
+    letterSpacing: 0.4,
   },
   titleCompleted: {
     color: '#FFFFFF',
@@ -1031,11 +1033,9 @@ const styles = StyleSheet.create({
 
   // Workout Card (matching Activity card styling)
   workoutCard: {
-    backgroundColor: Colors.light.cardBackground,
     borderRadius: 20,
     padding: 18,
     marginBottom: 16,
-    shadowColor: Colors.light.shadow,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.08,
     shadowRadius: 16,
@@ -1059,7 +1059,6 @@ const styles = StyleSheet.create({
   splitName: {
     fontSize: 13,
     fontWeight: '600',
-    color: Colors.light.primary,
     marginTop: 4,
     marginBottom: 6,
     textTransform: 'uppercase',
@@ -1075,18 +1074,15 @@ const styles = StyleSheet.create({
   workoutTitle: {
     fontSize: 22,
     fontWeight: '700',
-    color: Colors.light.text,
     flex: 1,
   },
   exerciseCount: {
     fontSize: 14,
     fontWeight: '600',
-    color: Colors.light.secondaryText,
   },
   cycleInfo: {
     fontSize: 13,
     fontWeight: '500',
-    color: Colors.light.secondaryText,
   },
 
   // Exercises List
@@ -1096,7 +1092,6 @@ const styles = StyleSheet.create({
   exerciseItem: {
     paddingVertical: 8,
     borderBottomWidth: 1,
-    borderBottomColor: Colors.light.borderLight + '40',
   },
   exerciseContent: {
     gap: 4,
@@ -1104,12 +1099,10 @@ const styles = StyleSheet.create({
   exerciseName: {
     fontSize: 16,
     fontWeight: '700',
-    color: Colors.light.text,
     lineHeight: 20,
   },
   exerciseDetailText: {
     fontSize: 13,
-    color: Colors.light.secondaryText,
     fontWeight: '500',
   },
 
@@ -1125,7 +1118,6 @@ const styles = StyleSheet.create({
   showMoreText: {
     fontSize: 13,
     fontWeight: '600',
-    color: Colors.light.primary,
   },
 
   // Empty state
@@ -1145,7 +1137,6 @@ const styles = StyleSheet.create({
     width: 96,
     height: 96,
     borderRadius: 48,
-    backgroundColor: `${Colors.light.primary}15`,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 24,
@@ -1153,20 +1144,17 @@ const styles = StyleSheet.create({
   emptyStateTitle: {
     fontSize: 24,
     fontWeight: '700',
-    color: Colors.light.text,
     textAlign: 'center',
     marginBottom: 12,
     letterSpacing: -0.5,
   },
   emptyStateMessage: {
     fontSize: 16,
-    color: Colors.light.secondaryText,
     textAlign: 'center',
     lineHeight: 24,
     marginBottom: 32,
   },
   emptyStateCTA: {
-    backgroundColor: Colors.light.primary,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
@@ -1174,7 +1162,6 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
     paddingHorizontal: 32,
     borderRadius: 16,
-    shadowColor: Colors.light.primary,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.25,
     shadowRadius: 8,
@@ -1200,7 +1187,7 @@ const styles = StyleSheet.create({
     gap: 8,
     paddingVertical: 12,
     paddingHorizontal: 16,
-    borderRadius: 10,
+    borderRadius: 20,
     marginBottom: 12,
   },
   noExercisesWarningText: {
@@ -1211,10 +1198,8 @@ const styles = StyleSheet.create({
 
   // Primary CTA - Start Workout Button
   startWorkoutButton: {
-    backgroundColor: Colors.light.primary,
     paddingVertical: 16,
     borderRadius: 16,
-    shadowColor: Colors.light.primary,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 8,
@@ -1225,7 +1210,6 @@ const styles = StyleSheet.create({
     shadowOpacity: 0,
   },
   startWorkoutText: {
-    color: Colors.light.onPrimary,
     fontSize: 18,
     fontWeight: '700',
     textAlign: 'center',
@@ -1238,7 +1222,6 @@ const styles = StyleSheet.create({
   secondaryActionButton: {
     backgroundColor: 'transparent',
     borderWidth: 1.5,
-    borderColor: Colors.light.borderLight,
     paddingVertical: 14,
     borderRadius: 16,
   },
@@ -1246,7 +1229,6 @@ const styles = StyleSheet.create({
     opacity: 0.5,
   },
   secondaryActionText: {
-    color: Colors.light.secondaryText,
     fontSize: 16,
     fontWeight: '600',
     textAlign: 'center',
@@ -1288,7 +1270,7 @@ const styles = StyleSheet.create({
   // Options Button (3-dot menu)
   optionsButton: {
     padding: 4,
-    borderRadius: 8,
+    borderRadius: 20,
   },
 
   // Options Menu Backdrop (invisible overlay to dismiss)
@@ -1306,10 +1288,8 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: 60,
     right: 20,
-    backgroundColor: Colors.light.cardBackground,
-    borderRadius: 12,
+    borderRadius: 20,
     padding: 8,
-    shadowColor: Colors.light.shadow,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.15,
     shadowRadius: 12,
@@ -1325,20 +1305,18 @@ const styles = StyleSheet.create({
     gap: 12,
     paddingVertical: 12,
     paddingHorizontal: 12,
-    borderRadius: 8,
+    borderRadius: 20,
   },
 
   // Options Menu Item Text
   optionsMenuItemText: {
     fontSize: 15,
     fontWeight: '600',
-    color: Colors.light.text,
   },
 
   // Modal Container
   modalContainer: {
     flex: 1,
-    backgroundColor: Colors.light.background,
   },
 
   // Modal Header
@@ -1349,8 +1327,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingTop: 16,
     paddingBottom: 16,
-    backgroundColor: Colors.light.cardBackground,
-    shadowColor: Colors.light.shadow,
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.05,
     shadowRadius: 2,
@@ -1361,7 +1337,6 @@ const styles = StyleSheet.create({
   modalTitle: {
     fontSize: 24,
     fontWeight: '700',
-    color: Colors.light.text,
   },
 
   // Modal Close Button
@@ -1382,7 +1357,6 @@ const styles = StyleSheet.create({
   // Modal Subtitle
   modalSubtitle: {
     fontSize: 14,
-    color: Colors.light.secondaryText,
     paddingHorizontal: 20,
     paddingTop: 8,
     paddingBottom: 16,
@@ -1392,12 +1366,10 @@ const styles = StyleSheet.create({
   dayPickerCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: Colors.light.background,
     borderRadius: 16,
     padding: 16,
     marginBottom: 12,
     borderWidth: 0,
-    shadowColor: Colors.light.shadow,
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.06,
     shadowRadius: 8,
@@ -1426,14 +1398,12 @@ const styles = StyleSheet.create({
   dayPickerName: {
     fontSize: 16,
     fontWeight: '600',
-    color: Colors.light.text,
     marginBottom: 2,
   },
 
   // Day Picker Exercises
   dayPickerExercises: {
     fontSize: 13,
-    color: Colors.light.secondaryText,
     fontWeight: '500',
   },
 
@@ -1442,7 +1412,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
-    backgroundColor: Colors.light.borderLight + '40',
     paddingHorizontal: 10,
     paddingVertical: 5,
     borderRadius: 16,
@@ -1453,7 +1422,6 @@ const styles = StyleSheet.create({
   restDayBadgeText: {
     fontSize: 12,
     fontWeight: '600',
-    color: Colors.light.secondaryText,
   },
 
   // No-Split Freestyle Workout UI
@@ -1465,11 +1433,9 @@ const styles = StyleSheet.create({
   freestyleCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: Colors.light.cardBackground,
     borderRadius: 20,
     padding: 18,
     borderWidth: 0,
-    shadowColor: Colors.light.shadow,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.08,
     shadowRadius: 16,
@@ -1478,7 +1444,7 @@ const styles = StyleSheet.create({
   freestyleIconContainer: {
     width: 44,
     height: 44,
-    borderRadius: 12,
+    borderRadius: 20,
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 12,
@@ -1489,12 +1455,10 @@ const styles = StyleSheet.create({
   freestyleTitle: {
     fontSize: 16,
     fontWeight: '600',
-    color: Colors.light.text,
     marginBottom: 2,
   },
   freestyleSubtitle: {
     fontSize: 13,
-    color: Colors.light.secondaryText,
   },
   savedWorkoutsSection: {
     marginTop: 28,
@@ -1502,7 +1466,6 @@ const styles = StyleSheet.create({
   savedWorkoutsSectionTitle: {
     fontSize: 14,
     fontWeight: '600',
-    color: Colors.light.secondaryText,
     marginBottom: 12,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
@@ -1511,51 +1474,11 @@ const styles = StyleSheet.create({
     marginTop: 36,
     alignItems: 'center',
   },
-  dividerWithText: {
-    width: '100%',
-    borderTopWidth: 1,
-    borderTopColor: Colors.light.borderLight,
-    marginBottom: 24,
-    position: 'relative',
-    alignItems: 'center',
-  },
-  dividerText: {
-    position: 'absolute',
-    top: -10,
-    paddingHorizontal: 16,
-    fontSize: 13,
-    fontWeight: '500',
-    color: Colors.light.secondaryText,
-    backgroundColor: Colors.light.background,
-  },
-  createSplitButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-    paddingVertical: 14,
-    paddingHorizontal: 24,
-    borderRadius: 12,
-    borderWidth: 1.5,
-    borderColor: Colors.light.borderLight,
-  },
-  createSplitText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: Colors.light.text,
-  },
-  createSplitHint: {
-    fontSize: 13,
-    color: Colors.light.secondaryText,
-    marginTop: 12,
-    textAlign: 'center',
-  },
-
   // No Split Card styles
   noSplitCard: {
     borderRadius: 20,
     borderWidth: 0,
     padding: 28,
-    shadowColor: Colors.light.shadow,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.08,
     shadowRadius: 16,

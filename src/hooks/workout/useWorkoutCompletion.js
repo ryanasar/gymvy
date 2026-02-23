@@ -30,7 +30,6 @@ export const useWorkoutCompletion = ({
             try {
               const { deleteWorkoutSession } = require('@/services/api/workoutSessions');
               const result = await deleteWorkoutSession(databaseId);
-              console.log('[Workout Completion] Deleted workout from backend:', databaseId);
 
               // Update local PR store with recalculated PRs
               if (result?.updatedPRs && userId) {
@@ -98,9 +97,9 @@ export const useWorkoutCompletion = ({
           await updatePendingCount();
 
           // Fire-and-forget sync — don't block completion for network call
-          syncPendingWorkouts(userId).catch(e =>
-            console.warn('[Workout Completion] Sync failed, will retry later:', e.message)
-          );
+          syncPendingWorkouts(userId).catch(e => {
+            // Sync failed, will retry later
+          });
 
           await markWorkoutCompleted(workout.id, isRestDay);
 

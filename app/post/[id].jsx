@@ -149,7 +149,7 @@ const styles = StyleSheet.create({
   retryButton: {
     paddingHorizontal: 24,
     paddingVertical: 12,
-    borderRadius: 8,
+    borderRadius: 20,
   },
   retryButtonText: {
     fontSize: 16,

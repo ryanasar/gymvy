@@ -16,7 +16,6 @@ import {
 import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
-import { Colors } from '@/constants/colors';
 import { useThemeColors } from '@/hooks/useThemeColors';
 import Avatar from '@/components/ui/Avatar';
 import { updateProfile } from '@/services/api/profile';
@@ -291,7 +290,7 @@ const EditProfileModal = ({ visible, onClose, userId, currentBio, currentAvatarU
             <Text style={[styles.changePhotoText, { color: colors.secondaryText }]}>Tap to change photo</Text>
             {(avatarSource || currentAvatarUrl) && selectedImage !== 'remove' && (
               <TouchableOpacity onPress={handleRemoveImage} style={styles.removePhotoButton}>
-                <Text style={styles.removePhotoText}>Remove photo</Text>
+                <Text style={[styles.removePhotoText, { color: colors.error }]}>Remove photo</Text>
               </TouchableOpacity>
             )}
           </View>
@@ -355,7 +354,6 @@ export default EditProfileModal;
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.light.background,
   },
   header: {
     flexDirection: 'row',
@@ -364,8 +362,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingTop: 16,
     paddingBottom: 16,
-    backgroundColor: Colors.light.cardBackground,
-    shadowColor: Colors.light.shadow,
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.05,
     shadowRadius: 2,
@@ -378,7 +374,6 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 18,
     fontWeight: '700',
-    color: Colors.light.text,
   },
   saveButton: {
     alignItems: 'flex-end',
@@ -386,10 +381,8 @@ const styles = StyleSheet.create({
   saveButtonText: {
     fontSize: 17,
     fontWeight: '600',
-    color: Colors.light.primary,
   },
   saveButtonTextDisabled: {
-    color: Colors.light.secondaryText,
   },
   content: {
     flex: 1,
@@ -413,14 +406,12 @@ const styles = StyleSheet.create({
     width: 120,
     height: 120,
     borderRadius: 60,
-    backgroundColor: Colors.light.primary,
     justifyContent: 'center',
     alignItems: 'center',
   },
   avatarInitial: {
     fontSize: 48,
     fontWeight: '700',
-    color: Colors.light.onPrimary,
   },
   avatarEditBadge: {
     position: 'absolute',
@@ -429,11 +420,9 @@ const styles = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: Colors.light.primary,
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 3,
-    borderColor: Colors.light.background,
   },
   avatarLoadingOverlay: {
     position: 'absolute',
@@ -449,7 +438,6 @@ const styles = StyleSheet.create({
   changePhotoText: {
     fontSize: 14,
     fontWeight: '500',
-    color: Colors.light.secondaryText,
   },
   removePhotoButton: {
     marginTop: 8,
@@ -459,7 +447,6 @@ const styles = StyleSheet.create({
   removePhotoText: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#EF4444',
   },
   section: {
     marginBottom: 24,
@@ -467,31 +454,23 @@ const styles = StyleSheet.create({
   label: {
     fontSize: 16,
     fontWeight: '600',
-    color: Colors.light.text,
     marginBottom: 8,
   },
   nameInput: {
-    backgroundColor: Colors.light.cardBackground,
-    borderRadius: 12,
+    borderRadius: 16,
     borderWidth: 1,
-    borderColor: Colors.light.borderLight,
     padding: 14,
     fontSize: 15,
-    color: Colors.light.text,
   },
   bioInput: {
-    backgroundColor: Colors.light.cardBackground,
-    borderRadius: 12,
+    borderRadius: 16,
     borderWidth: 1,
-    borderColor: Colors.light.borderLight,
     padding: 14,
     fontSize: 15,
-    color: Colors.light.text,
     minHeight: 120,
   },
   charCount: {
     fontSize: 13,
-    color: Colors.light.secondaryText,
     textAlign: 'right',
     marginTop: 6,
   },

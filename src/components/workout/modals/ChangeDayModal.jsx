@@ -84,7 +84,6 @@ export default ChangeDayModal;
 const styles = StyleSheet.create({
   modalContainer: {
     flex: 1,
-    backgroundColor: Colors.light.background,
   },
   modalHeader: {
     flexDirection: 'row',
@@ -93,8 +92,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingTop: 60,
     paddingBottom: 16,
-    backgroundColor: Colors.light.cardBackground,
-    shadowColor: Colors.light.shadow,
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.05,
     shadowRadius: 2,
@@ -103,7 +100,6 @@ const styles = StyleSheet.create({
   modalTitle: {
     fontSize: 24,
     fontWeight: '700',
-    color: Colors.light.text,
   },
   modalCloseButton: {
     padding: 4,
@@ -116,7 +112,6 @@ const styles = StyleSheet.create({
   },
   modalSubtitle: {
     fontSize: 14,
-    color: Colors.light.secondaryText,
     paddingHorizontal: 20,
     paddingTop: 8,
     paddingBottom: 16,
@@ -124,12 +119,10 @@ const styles = StyleSheet.create({
   dayPickerCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: Colors.light.background,
-    borderRadius: 12,
+    borderRadius: 16,
     padding: 16,
     marginBottom: 12,
     borderWidth: 1,
-    borderColor: Colors.light.borderLight,
   },
   dayPickerCardContent: {
     flexDirection: 'row',
@@ -146,27 +139,23 @@ const styles = StyleSheet.create({
   dayPickerName: {
     fontSize: 16,
     fontWeight: '600',
-    color: Colors.light.text,
     marginBottom: 2,
   },
   dayPickerExercises: {
     fontSize: 13,
-    color: Colors.light.secondaryText,
     fontWeight: '500',
   },
   restDayBadge: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
-    backgroundColor: Colors.light.borderLight + '40',
     paddingHorizontal: 10,
     paddingVertical: 5,
-    borderRadius: 12,
+    borderRadius: 16,
     marginRight: 8,
   },
   restDayBadgeText: {
     fontSize: 12,
     fontWeight: '600',
-    color: Colors.light.secondaryText,
   },
 });

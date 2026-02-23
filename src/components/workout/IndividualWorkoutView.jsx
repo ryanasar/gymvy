@@ -5,7 +5,6 @@ import { useRouter } from 'expo-router';
 import IndividualWorkoutCompletedCard from './IndividualWorkoutCompletedCard';
 import SavedWorkoutPicker from './SavedWorkoutPicker';
 import SavedWorkoutDetailCard from './SavedWorkoutDetailCard';
-import { Colors } from '@/constants/colors';
 import { useThemeColors } from '@/hooks/useThemeColors';
 import { buildBadges } from '@/constants/badges';
 
@@ -142,11 +141,9 @@ const styles = StyleSheet.create({
   freestyleCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: Colors.light.cardBackground,
     borderRadius: 20,
     padding: 18,
     borderWidth: 0,
-    shadowColor: Colors.light.shadow,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.08,
     shadowRadius: 16,
@@ -155,7 +152,7 @@ const styles = StyleSheet.create({
   freestyleIconContainer: {
     width: 44,
     height: 44,
-    borderRadius: 12,
+    borderRadius: 16,
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 12,
@@ -166,12 +163,10 @@ const styles = StyleSheet.create({
   freestyleTitle: {
     fontSize: 16,
     fontWeight: '600',
-    color: Colors.light.text,
     marginBottom: 2,
   },
   freestyleSubtitle: {
     fontSize: 13,
-    color: Colors.light.secondaryText,
   },
   savedWorkoutsSection: {
     marginTop: 28,
@@ -179,7 +174,6 @@ const styles = StyleSheet.create({
   savedWorkoutsSectionTitle: {
     fontSize: 14,
     fontWeight: '600',
-    color: Colors.light.secondaryText,
     marginBottom: 12,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
@@ -194,7 +188,6 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     borderWidth: 0,
     width: '100%',
-    shadowColor: Colors.light.shadow,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.08,
     shadowRadius: 16,
@@ -216,7 +209,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 12,
     paddingHorizontal: 20,
-    borderRadius: 16,
+    borderRadius: 20,
     gap: 6,
   },
   createWorkoutButtonText: {

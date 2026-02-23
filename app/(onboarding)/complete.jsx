@@ -426,7 +426,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     paddingVertical: 18,
-    borderRadius: 16,
+    borderRadius: 20,
     marginBottom: 20,
     shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.25,

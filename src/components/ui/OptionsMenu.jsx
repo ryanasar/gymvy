@@ -91,9 +91,9 @@ const styles = StyleSheet.create({
   },
   menu: {
     position: 'absolute',
-    borderRadius: Radius.lg,
+    borderRadius: Radius.xl,
     padding: Spacing.sm,
-    ...Shadows.lg,
+    ...Shadows.overlay,
     elevation: 8,
     minWidth: 200,
     zIndex: 1000,

@@ -1,6 +1,5 @@
 import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { ScrollView, StyleSheet, RefreshControl, View } from 'react-native';
-import { Colors } from '@/constants/colors';
 import { getWorkoutSessionsByUserId } from '@/services/api/workoutSessions';
 import { getPostsByUserId } from '@/services/api/posts';
 import { getCalendarData } from '@/services/api/dailyActivity';
@@ -133,7 +132,6 @@ const ProgressTab = ({ userId, onRefresh, embedded = false, prefetchedCalendarDa
           }
         } catch (dailyActivityError) {
           // If DailyActivity API fails, fall back to old method
-          console.log('[ProgressTab] DailyActivity API not available, falling back to sessions/posts');
         }
 
         // Fallback: fetch from workout sessions and posts (legacy method)
@@ -318,7 +316,6 @@ export default ProgressTab;
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.light.background,
   },
   embeddedContainer: {
     paddingHorizontal: 8,
@@ -336,7 +333,6 @@ const styles = StyleSheet.create({
   sectionLabel: {
     fontSize: 20,
     fontWeight: '700',
-    color: Colors.light.text,
     marginBottom: 16,
   },
 });

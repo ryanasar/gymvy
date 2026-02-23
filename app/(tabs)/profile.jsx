@@ -14,11 +14,16 @@ import FollowListModal from '@/components/profile/FollowListModal';
 import EditProfileModal from '@/components/profile/EditProfileModal';
 import BlockedUsersModal from '@/components/profile/BlockedUsersModal';
 import { useThemeColors } from '@/hooks/useThemeColors';
+import { useResponsiveLayout } from '@/hooks/useResponsiveLayout';
 import { deleteProfile } from '@/services/api/profile';
 import TabBar from '@/components/ui/TabBar';
 
 const ProfileScreen = () => {
   const colors = useThemeColors();
+  const { contentMaxWidth } = useResponsiveLayout();
+  const responsiveStyle = contentMaxWidth
+    ? { maxWidth: contentMaxWidth, alignSelf: 'center', width: '100%' }
+    : undefined;
   const router = useRouter();
   const [selectedTab, setSelectedTab] = useState('Progress');
   const [modalVisible, setModalVisible] = useState(false);
@@ -128,6 +133,7 @@ const ProfileScreen = () => {
 
       <ScrollView
         style={{ flex: 1 }}
+        contentContainerStyle={responsiveStyle}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} tintColor={colors.text} />
         }
@@ -221,7 +227,8 @@ const styles = StyleSheet.create({
     elevation: 1,
   },
   title: {
-    fontSize: 28,
+    fontSize: 34,
     fontWeight: '700',
+    letterSpacing: 0.4,
   },
 });

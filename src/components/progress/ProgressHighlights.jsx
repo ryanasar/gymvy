@@ -1,8 +1,9 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
-import { Colors } from '@/constants/colors';
+import { useThemeColors } from '@/hooks/useThemeColors';
 
 const ProgressHighlights = ({ highlights = [] }) => {
+  const colors = useThemeColors();
   const defaultHighlights = [
     {
       icon: '🏋️‍♂️',
@@ -37,22 +38,22 @@ const ProgressHighlights = ({ highlights = [] }) => {
   ];
 
   const HighlightItem = ({ icon, title, value }) => (
-    <View style={styles.highlightItem}>
-      <View style={styles.highlightIconContainer}>
+    <View style={[styles.highlightItem, { backgroundColor: colors.background, borderColor: colors.borderLight }]}>
+      <View style={[styles.highlightIconContainer, { backgroundColor: colors.primary + '15' }]}>
         <Text style={styles.highlightIcon}>{icon}</Text>
       </View>
       <View style={styles.highlightContent}>
-        <Text style={styles.highlightTitle}>{title}</Text>
-        <Text style={styles.highlightValue}>{value}</Text>
+        <Text style={[styles.highlightTitle, { color: colors.text }]}>{title}</Text>
+        <Text style={[styles.highlightValue, { color: colors.primary }]}>{value}</Text>
       </View>
     </View>
   );
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: colors.cardBackground, shadowColor: colors.shadow }]}>
       <View style={styles.header}>
-        <Text style={styles.title}>Highlights</Text>
-        <Text style={styles.subtitle}>Your best lifts and milestones</Text>
+        <Text style={[styles.title, { color: colors.text }]}>Highlights</Text>
+        <Text style={[styles.subtitle, { color: colors.secondaryText }]}>Your best lifts and milestones</Text>
       </View>
 
       <View style={styles.highlightsList}>
@@ -73,11 +74,9 @@ export default ProgressHighlights;
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: Colors.light.cardBackground,
-    borderRadius: 16,
-    padding: 16,
+    borderRadius: 20,
+    padding: 18,
     marginBottom: 16,
-    shadowColor: Colors.light.shadow,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.05,
     shadowRadius: 4,
@@ -89,12 +88,10 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 18,
     fontWeight: '700',
-    color: Colors.light.text,
     marginBottom: 4,
   },
   subtitle: {
     fontSize: 14,
-    color: Colors.light.secondaryText,
   },
   highlightsList: {
     gap: 12,
@@ -104,16 +101,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 12,
     paddingHorizontal: 12,
-    backgroundColor: Colors.light.background,
-    borderRadius: 12,
+    borderRadius: 16,
     borderWidth: 1,
-    borderColor: Colors.light.borderLight,
   },
   highlightIconContainer: {
     width: 48,
     height: 48,
     borderRadius: 24,
-    backgroundColor: Colors.light.primary + '15',
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 12,
@@ -127,12 +121,10 @@ const styles = StyleSheet.create({
   highlightTitle: {
     fontSize: 14,
     fontWeight: '600',
-    color: Colors.light.text,
     marginBottom: 4,
   },
   highlightValue: {
     fontSize: 16,
     fontWeight: '700',
-    color: Colors.light.primary,
   },
 });

@@ -29,7 +29,6 @@ export async function getCalendarData(userId) {
   try {
     const isOnline = await checkNetworkStatus();
     if (!isOnline) {
-      console.warn('[CalendarStorage] Offline - returning empty calendar');
       return {};
     }
 
@@ -56,12 +55,10 @@ export async function markTodayCompleted(userId, isRestDay = false, isFreeRestDa
   // This function is a no-op for workouts.
   // Rest days should be handled by the rest day flow which calls the backend directly.
   if (!isRestDay && !isFreeRestDay) {
-    console.log('[CalendarStorage] markTodayCompleted: workouts are handled by WorkoutSession creation');
     return;
   }
 
   // For rest days, the caller should use the backend API directly
-  console.log('[CalendarStorage] markTodayCompleted: rest days should use backend API directly');
 }
 
 /**
@@ -83,7 +80,6 @@ export async function unmarkTodayCompleted(userId) {
     }
 
     await deleteDailyActivityByDate(userId, today);
-    console.log('[CalendarStorage] Deleted dailyActivity from backend for:', today);
   } catch (error) {
     // deleteDailyActivityByDate already handles 404
     if (error.response?.status !== 404) {
@@ -119,7 +115,6 @@ export async function getCalendarDataForDisplay(userId) {
   try {
     const isOnline = await checkNetworkStatus();
     if (!isOnline) {
-      console.warn('[CalendarStorage] Offline - returning empty calendar for display');
       return [];
     }
 
@@ -153,7 +148,7 @@ export async function getCalendarDataForDisplay(userId) {
  * @deprecated No longer needed - calendar is backend-only
  */
 export async function backfillCalendarFromBackend() {
-  console.warn('[CalendarStorage] backfillCalendarFromBackend is deprecated - calendar is backend-only');
+  // Deprecated - calendar is backend-only
 }
 
 /**
@@ -161,7 +156,7 @@ export async function backfillCalendarFromBackend() {
  * @deprecated No longer needed - calendar is backend-only
  */
 export async function syncCalendarWithBackend() {
-  console.warn('[CalendarStorage] syncCalendarWithBackend is deprecated - calendar is backend-only');
+  // Deprecated - calendar is backend-only
   return null;
 }
 
@@ -170,5 +165,5 @@ export async function syncCalendarWithBackend() {
  * @deprecated No local storage to clear - calendar is backend-only
  */
 export async function clearCalendarData() {
-  console.warn('[CalendarStorage] clearCalendarData is deprecated - calendar is backend-only');
+  // Deprecated - calendar is backend-only
 }

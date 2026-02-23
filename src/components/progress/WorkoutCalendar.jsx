@@ -1,6 +1,5 @@
 import React, { useState, useRef } from 'react';
 import { View, Text, StyleSheet, useColorScheme, Pressable } from 'react-native';
-import { Colors } from '@/constants/colors';
 import { useThemeColors } from '@/hooks/useThemeColors';
 import DayDetailPopup from './DayDetailPopup';
 
@@ -373,17 +372,14 @@ export default WorkoutCalendar;
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: Colors.light.cardBackground,
-    borderRadius: 16,
-    padding: 16,
+    borderRadius: 20,
+    padding: 18,
     marginBottom: 16,
-    borderWidth: 1,
-    borderColor: Colors.light.border,
-    shadowColor: Colors.light.shadow,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.15,
-    shadowRadius: 12,
-    elevation: 5,
+    borderWidth: 0,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 16,
+    elevation: 3,
   },
   header: {
     marginBottom: 16,
@@ -391,12 +387,10 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 20,
     fontWeight: '700',
-    color: Colors.light.text,
     marginBottom: 4,
   },
   subtitle: {
     fontSize: 13,
-    color: '#6E6E6E',
     fontWeight: '500',
   },
   calendarContainer: {
@@ -415,7 +409,6 @@ const styles = StyleSheet.create({
   weekdayText: {
     fontSize: 12,
     fontWeight: '700',
-    color: '#9A9A9A',
     textTransform: 'uppercase',
     letterSpacing: 0.5,
   },
@@ -430,10 +423,8 @@ const styles = StyleSheet.create({
   day: {
     width: 36,
     height: 36,
-    borderRadius: 8,
-    backgroundColor: Colors.light.borderLight,
+    borderRadius: 12,
     borderWidth: 1.5,
-    borderColor: Colors.light.border,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -441,34 +432,9 @@ const styles = StyleSheet.create({
     backgroundColor: 'transparent',
     borderColor: 'transparent',
   },
-  dayCompleted: {
-    backgroundColor: Colors.light.primary,
-    borderColor: Colors.light.primary,
-  },
-  dayRestCompleted: {
-    backgroundColor: Colors.light.primary + '60', // 60% opacity for lighter shade
-    borderColor: Colors.light.primary + '80', // 80% opacity for border
-  },
-  dayToday: {
-    borderWidth: 3,
-    borderColor: Colors.light.text,
-    shadowColor: Colors.light.text,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.15,
-    shadowRadius: 4,
-    elevation: 3,
-  },
   dayNumber: {
     fontSize: 13,
     fontWeight: '600',
-    color: Colors.light.secondaryText,
-  },
-  dayNumberCompleted: {
-    color: Colors.light.onPrimary,
-    fontWeight: '700',
-  },
-  dayNumberToday: {
-    fontWeight: '700',
   },
   statsContainer: {
     flexDirection: 'row',
@@ -478,7 +444,6 @@ const styles = StyleSheet.create({
     paddingTop: 16,
     paddingBottom: 4,
     borderTopWidth: 1,
-    borderTopColor: Colors.light.border,
   },
   statItem: {
     flex: 1,
@@ -488,14 +453,12 @@ const styles = StyleSheet.create({
   statValue: {
     fontSize: 24,
     fontWeight: '700',
-    color: Colors.light.primary,
     marginBottom: 4,
     letterSpacing: -0.5,
   },
   statLabel: {
     fontSize: 11,
     fontWeight: '700',
-    color: '#6E6E6E',
     textAlign: 'center',
     textTransform: 'uppercase',
     letterSpacing: 0.5,
@@ -504,6 +467,5 @@ const styles = StyleSheet.create({
   statDivider: {
     width: 1,
     height: 44,
-    backgroundColor: Colors.light.borderLight,
   },
 });

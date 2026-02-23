@@ -394,7 +394,7 @@ const styles = StyleSheet.create({
     fontWeight: '400',
   },
   input: {
-    borderRadius: 14,
+    borderRadius: 16,
     paddingHorizontal: 16,
     paddingVertical: 16,
     fontSize: 16,
@@ -445,7 +445,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     paddingVertical: 16,
-    borderRadius: 14,
+    borderRadius: 20,
     gap: 8,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.2,
@@ -463,7 +463,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     borderWidth: 1.5,
     paddingVertical: 16,
-    borderRadius: 14,
+    borderRadius: 20,
     gap: 6,
   },
   secondaryButtonText: {

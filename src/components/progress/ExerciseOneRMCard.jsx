@@ -61,7 +61,7 @@ const styles = StyleSheet.create({
     height: 120,
     justifyContent: 'center',
     alignItems: 'center',
-    borderRadius: 12,
+    borderRadius: 16,
   },
   emptyText: {
     fontSize: 14,

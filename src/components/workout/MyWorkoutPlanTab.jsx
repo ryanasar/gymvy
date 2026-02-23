@@ -1,28 +1,30 @@
 import React from 'react';
 import { View, Text, ActivityIndicator, FlatList, StyleSheet, TouchableOpacity } from 'react-native';
 import WorkoutPlan from '@/components/common/WorkoutPlan';
-import { Colors } from '@/constants/colors';
+import { useThemeColors } from '@/hooks/useThemeColors';
+import { Radius, Spacing, FontSize, FontWeight } from '@/constants/theme';
 
 const WorkoutPlansTab = ({ workoutPlans }) => {
+    const colors = useThemeColors();
     if (!workoutPlans || workoutPlans.length === 0) {
       return (
         <View style={styles.center}>
-            <Text>No splits</Text>
+            <Text style={{ color: colors.secondaryText }}>No splits</Text>
         </View>
     );
     }
-    
+
     return (
       <View style={styles.todayContainer}>
-        <Text style={styles.sectionTitle}>Today's Workout</Text>
+        <Text style={[styles.sectionTitle, { color: colors.text }]}>Today's Workout</Text>
         <FlatList
           data={workoutPlans}
           keyExtractor={(item) => item.id.toString()}
           renderItem={({ item }) => <WorkoutPlan plan={item} />}
           contentContainerStyle={{ paddingBottom: 100 }}
         />
-        <TouchableOpacity style={styles.startButton}>
-          <Text style={styles.startButtonText}>Start Workout</Text>
+        <TouchableOpacity style={[styles.startButton, { backgroundColor: colors.primary }]}>
+          <Text style={[styles.startButtonText, { color: colors.onPrimary }]}>Start Workout</Text>
         </TouchableOpacity>
       </View>
     );
@@ -33,29 +35,25 @@ export default WorkoutPlansTab;
 const styles = StyleSheet.create({
   center: {
     alignItems: 'center',
-    marginTop: 20,
+    marginTop: Spacing.container,
   },
   todayContainer: {
-    padding: 16,
-    backgroundColor: Colors.light.background,
+    padding: Spacing.lg,
   },
   sectionTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: Colors.light.text,
-    marginBottom: 8,
+    fontSize: FontSize.lg,
+    fontWeight: FontWeight.semibold,
+    marginBottom: Spacing.sm,
   },
   startButton: {
-    backgroundColor: Colors.light.tint,
-    paddingVertical: 10,
-    paddingHorizontal: 16,
-    borderRadius: 8,
+    paddingVertical: Spacing.md,
+    paddingHorizontal: Spacing.lg,
+    borderRadius: Radius.xl,
     alignItems: 'center',
-    marginTop: 12,
+    marginTop: Spacing.md,
   },
   startButtonText: {
-    color: 'white',
-    fontSize: 16,
-    fontWeight: '600',
+    fontSize: FontSize.md,
+    fontWeight: FontWeight.semibold,
   },
 });

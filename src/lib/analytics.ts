@@ -18,8 +18,6 @@ export const getPostHogInstance = () => posthog;
 const track = (event: string, properties?: Record<string, any>) => {
   if (posthog) {
     posthog.capture(event, properties);
-  } else {
-    console.warn('[Analytics] PostHog not initialized, skipping event:', event);
   }
 };
 

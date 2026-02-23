@@ -266,7 +266,7 @@ const styles = StyleSheet.create({
     gap: 6,
     paddingVertical: 8,
     paddingHorizontal: 12,
-    borderRadius: 12,
+    borderRadius: 16,
   },
   reorderButtonText: {
     fontSize: 14,
@@ -313,7 +313,7 @@ const styles = StyleSheet.create({
     gap: 4,
     paddingHorizontal: 10,
     paddingVertical: 4,
-    borderRadius: 12,
+    borderRadius: 999,
   },
   statusText: {
     fontSize: 12,
@@ -342,7 +342,7 @@ const styles = StyleSheet.create({
   infoBox: {
     flexDirection: 'row',
     alignItems: 'center',
-    borderRadius: 16,
+    borderRadius: 20,
     padding: 16,
     marginTop: 24,
   },
@@ -396,7 +396,7 @@ const styles = StyleSheet.create({
   reorderItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    borderRadius: 16,
+    borderRadius: 20,
     padding: 12,
     marginBottom: 8,
     shadowOffset: { width: 0, height: 1 },

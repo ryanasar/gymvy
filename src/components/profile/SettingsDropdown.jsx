@@ -230,7 +230,7 @@ const styles = StyleSheet.create({
     paddingRight: 20,
   },
   dropdown: {
-    borderRadius: Radius.lg,
+    borderRadius: 20,
     ...Shadows.lg,
     minWidth: 180,
     overflow: 'hidden',
@@ -257,7 +257,7 @@ const styles = StyleSheet.create({
   },
   deleteModal: {
     width: '100%',
-    borderRadius: 20,
+    borderRadius: 24,
     padding: Spacing.xl,
     ...Shadows.lg,
   },
@@ -307,7 +307,7 @@ const styles = StyleSheet.create({
   cancelButton: {
     flex: 1,
     paddingVertical: Spacing.md,
-    borderRadius: Radius.md,
+    borderRadius: 20,
     borderWidth: 1.5,
     alignItems: 'center',
     justifyContent: 'center',
@@ -319,7 +319,7 @@ const styles = StyleSheet.create({
   confirmDeleteButton: {
     flex: 1,
     paddingVertical: Spacing.md,
-    borderRadius: Radius.md,
+    borderRadius: 20,
     alignItems: 'center',
     justifyContent: 'center',
   },

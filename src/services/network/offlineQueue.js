@@ -78,7 +78,6 @@ export async function queueAction(type, payload, userId) {
     queue.push(action);
     await AsyncStorage.setItem(OFFLINE_QUEUE_KEY, JSON.stringify(queue));
 
-    console.log('[OfflineQueue] Action queued:', { type, id: action.id });
     return action;
   } catch (error) {
     console.error('[OfflineQueue] Failed to queue action:', error);
@@ -127,7 +126,6 @@ export async function updateAction(actionId, updates) {
 export async function clearQueue() {
   try {
     await AsyncStorage.removeItem(OFFLINE_QUEUE_KEY);
-    console.log('[OfflineQueue] Queue cleared');
   } catch (error) {
     console.error('[OfflineQueue] Failed to clear queue:', error);
   }
@@ -177,7 +175,6 @@ export function isBlockedOffline(actionType) {
 export async function processQueue(handlers) {
   const online = await checkNetworkStatus();
   if (!online) {
-    console.log('[OfflineQueue] Cannot process queue - still offline');
     return { processed: 0, failed: 0, errors: [] };
   }
 
@@ -185,8 +182,6 @@ export async function processQueue(handlers) {
   if (queue.length === 0) {
     return { processed: 0, failed: 0, errors: [] };
   }
-
-  console.log('[OfflineQueue] Processing queue:', queue.length, 'actions');
 
   let processed = 0;
   let failed = 0;
@@ -198,7 +193,6 @@ export async function processQueue(handlers) {
     const handler = handlers[action.type];
 
     if (!handler) {
-      console.warn('[OfflineQueue] No handler for action type:', action.type);
       // Remove unknown actions
       await removeAction(action.id);
       continue;
@@ -208,7 +202,6 @@ export async function processQueue(handlers) {
       await handler(action.payload, action.userId);
       await removeAction(action.id);
       processed++;
-      console.log('[OfflineQueue] Action processed:', action.id);
     } catch (error) {
       const newRetryCount = action.retryCount + 1;
 

@@ -9,15 +9,19 @@ import SplitCard from '@/components/program/SplitCard';
 import SavedWorkoutsTab from '@/components/program/SavedWorkoutsTab';
 import ScreenHeader from '@/components/ui/ScreenHeader';
 import TabBar from '@/components/ui/TabBar';
-import { Colors } from '@/constants/colors';
 import { useSync } from '@/contexts/SyncContext';
 import { useWorkout } from '@/contexts/WorkoutContext';
 import { usePreload } from '@/contexts/PreloadContext';
 import { clearLocalSplit } from '@/utils/clearLocalSplit';
 import { useThemeColors } from '@/hooks/useThemeColors';
+import { useResponsiveLayout } from '@/hooks/useResponsiveLayout';
 
 const ProgramScreen = () => {
   const colors = useThemeColors();
+  const { contentMaxWidth } = useResponsiveLayout();
+  const responsiveStyle = contentMaxWidth
+    ? { maxWidth: contentMaxWidth, alignSelf: 'center', width: '100%' }
+    : undefined;
   const router = useRouter();
   const params = useLocalSearchParams();
   const { user } = useAuth();
@@ -283,15 +287,10 @@ const ProgramScreen = () => {
   const clearLocalSplitData = async () => {
     try {
       await clearLocalSplit(user?.id);
-      console.log('[Program] Cleared local split data');
     } catch (error) {
       console.error('[Program] Error clearing local split:', error);
     }
   };
-
-  const renderSplitCard = ({ item }) => (
-    <SplitCard split={item} onPress={() => handleSplitPress(item)} />
-  );
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
@@ -317,6 +316,7 @@ const ProgramScreen = () => {
       ) : (
       <ScrollView
         style={styles.scrollView}
+        contentContainerStyle={responsiveStyle}
         showsVerticalScrollIndicator={false}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} tintColor={colors.primary} />
@@ -432,18 +432,11 @@ export default ProgramScreen;
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.light.background,
   },
   headerContainer: {
     paddingHorizontal: 20,
     paddingTop: 60,
     paddingBottom: 16,
-    backgroundColor: Colors.light.cardBackground,
-    shadowColor: Colors.light.shadow,
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
-    elevation: 1,
   },
   scrollView: {
     flex: 1,
@@ -459,21 +452,18 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   sectionTitle: {
-    fontSize: 22,
+    fontSize: 34,
     fontWeight: '700',
-    color: Colors.light.text,
+    letterSpacing: 0.4,
     marginBottom: 4,
   },
   sectionSubtitle: {
     fontSize: 14,
     fontWeight: '500',
-    color: '#6E6E6E',
   },
   activeProgramCard: {
-    backgroundColor: Colors.light.cardBackground,
     borderRadius: 20,
     padding: 18,
-    shadowColor: Colors.light.shadow,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.08,
     shadowRadius: 16,
@@ -488,7 +478,6 @@ const styles = StyleSheet.create({
     width: 56,
     height: 56,
     borderRadius: 28,
-    backgroundColor: `${Colors.light.primary}15`,
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 16,
@@ -502,41 +491,34 @@ const styles = StyleSheet.create({
   activeProgramName: {
     fontSize: 20,
     fontWeight: '700',
-    color: Colors.light.text,
     marginBottom: 8,
     letterSpacing: -0.3,
   },
   activeProgramDescription: {
     fontSize: 15,
-    color: '#6E6E6E',
     fontWeight: '500',
     marginBottom: 6,
   },
   activeProgramSubDescription: {
     fontSize: 13,
-    color: '#9A9A9A',
     fontWeight: '400',
   },
   activeProgramDivider: {
     height: 1,
-    backgroundColor: Colors.light.borderLight,
     marginVertical: 20,
   },
   activeProgramActions: {
     gap: 12,
   },
   primaryActionButton: {
-    backgroundColor: Colors.light.primary,
     paddingVertical: 16,
-    borderRadius: 16,
-    shadowColor: Colors.light.primary,
+    borderRadius: 20,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.2,
     shadowRadius: 8,
     elevation: 4,
   },
   primaryActionButtonText: {
-    color: Colors.light.onPrimary,
     fontSize: 16,
     fontWeight: '700',
     textAlign: 'center',
@@ -548,36 +530,29 @@ const styles = StyleSheet.create({
   },
   secondaryActionButton: {
     flex: 1,
-    backgroundColor: Colors.light.cardBackground,
     paddingVertical: 12,
-    borderRadius: 16,
+    borderRadius: 20,
     borderWidth: 1.5,
-    borderColor: Colors.light.border,
   },
   secondaryActionButtonText: {
     fontSize: 14,
     fontWeight: '600',
-    color: Colors.light.text,
     textAlign: 'center',
   },
   splitsContainer: {
     gap: 12,
   },
   createSplitButton: {
-    backgroundColor: Colors.light.cardBackground,
     paddingVertical: 14,
-    borderRadius: 16,
+    borderRadius: 20,
     marginBottom: 16,
     borderWidth: 2,
-    borderColor: Colors.light.primary,
-    shadowColor: Colors.light.shadow,
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.05,
     shadowRadius: 4,
     elevation: 2,
   },
   createSplitButtonText: {
-    color: Colors.light.primary,
     fontWeight: '700',
     fontSize: 15,
     textAlign: 'center',
@@ -585,20 +560,17 @@ const styles = StyleSheet.create({
   },
   noActiveSplit: {
     fontSize: 16,
-    color: Colors.light.secondaryText,
     textAlign: 'center',
     fontStyle: 'italic',
     paddingVertical: 32,
   },
   loadingText: {
     fontSize: 16,
-    color: Colors.light.secondaryText,
     textAlign: 'center',
     paddingVertical: 20,
   },
   noSplitsText: {
     fontSize: 14,
-    color: Colors.light.secondaryText,
     textAlign: 'center',
     fontStyle: 'italic',
     paddingVertical: 20,

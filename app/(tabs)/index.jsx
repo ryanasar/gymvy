@@ -10,10 +10,15 @@ import { getFollowingPosts } from '@/services/api/posts';
 import Activity from '@/components/common/Activity';
 import EmptyState from '@/components/common/EmptyState';
 import { useThemeColors } from '@/hooks/useThemeColors';
+import { useResponsiveLayout } from '@/hooks/useResponsiveLayout';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
 
 export default function HomeScreen() {
   const colors = useThemeColors();
+  const { contentMaxWidth } = useResponsiveLayout();
+  const responsiveStyle = contentMaxWidth
+    ? { maxWidth: contentMaxWidth, alignSelf: 'center', width: '100%' }
+    : undefined;
   const router = useRouter();
   const { user } = useAuth();
   const { manualSync } = useSync();
@@ -165,7 +170,7 @@ export default function HomeScreen() {
             >
               <Ionicons name="notifications-outline" size={24} color={colors.text} />
               {unreadCount > 0 && (
-                <View style={[styles.notificationBadge, { borderColor: colors.cardBackground }]}>
+                <View style={[styles.notificationBadge, { borderColor: colors.cardBackground, backgroundColor: colors.error }]}>
                   <Text style={styles.notificationBadgeText}>
                     {unreadCount > 99 ? '99+' : unreadCount}
                   </Text>
@@ -201,7 +206,7 @@ export default function HomeScreen() {
           >
             <Ionicons name="notifications-outline" size={24} color={colors.text} />
             {unreadCount > 0 && (
-              <View style={[styles.notificationBadge, { borderColor: colors.cardBackground }]}>
+              <View style={[styles.notificationBadge, { borderColor: colors.cardBackground, backgroundColor: colors.error }]}>
                 <Text style={styles.notificationBadgeText}>
                   {unreadCount > 99 ? '99+' : unreadCount}
                 </Text>
@@ -231,7 +236,7 @@ export default function HomeScreen() {
         ListFooterComponent={renderFooter}
         onEndReached={loadMorePosts}
         onEndReachedThreshold={0.5}
-        contentContainerStyle={posts.length === 0 ? styles.emptyListContainer : styles.listContainer}
+        contentContainerStyle={[posts.length === 0 ? styles.emptyListContainer : styles.listContainer, responsiveStyle]}
         initialNumToRender={10}
         windowSize={10}
         maxToRenderPerBatch={10}
@@ -257,8 +262,9 @@ const styles = StyleSheet.create({
     elevation: 0,
   },
   title: {
-    fontSize: 28,
+    fontSize: 34,
     fontWeight: '700',
+    letterSpacing: 0.4,
   },
   headerIcons: {
     flexDirection: 'row',
@@ -273,7 +279,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: -2,
     right: -2,
-    backgroundColor: '#EF4444',
+    // backgroundColor set dynamically via colors.error
     borderRadius: 10,
     minWidth: 18,
     height: 18,
@@ -287,12 +293,6 @@ const styles = StyleSheet.create({
     fontSize: 10,
     fontWeight: '700',
   },
-  loadingContainer: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 100,
-  },
   listContainer: {
     paddingHorizontal: 6,
     paddingTop: 6,
@@ -300,19 +300,6 @@ const styles = StyleSheet.create({
   },
   emptyListContainer: {
     flexGrow: 1,
-  },
-  emptyContainer: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: 40,
-    paddingVertical: 100,
-  },
-  emptyTitle: {
-    fontSize: 15,
-    fontWeight: '500',
-    textAlign: 'center',
-    lineHeight: 22,
   },
   footerLoader: {
     paddingVertical: 20,

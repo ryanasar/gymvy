@@ -15,7 +15,6 @@ import {
   View,
 } from 'react-native';
 import { Image } from 'expo-image';
-import { Colors } from '@/constants/colors';
 import { useThemeColors } from '@/hooks/useThemeColors';
 import { useAuth } from '@/lib/auth';
 import { useSync } from '@/contexts/SyncContext';
@@ -136,7 +135,6 @@ const CreatePostScreen = () => {
           setUploadedImagePath(uploadResult.path);
           return uploadResult;
         })().catch((err) => {
-          console.warn('[CreatePost] Background upload failed, will retry on post:', err.message);
           return null;
         });
 
@@ -147,7 +145,7 @@ const CreatePostScreen = () => {
             await MediaLibrary.saveToLibraryAsync(photoUri);
           }
         } catch (saveError) {
-          console.warn('Could not save to camera roll:', saveError);
+          // Silently ignore camera roll save errors
         }
       }
     } catch (error) {
@@ -189,7 +187,6 @@ const CreatePostScreen = () => {
           setUploadedImagePath(uploadResult.path);
           return uploadResult;
         })().catch((err) => {
-          console.warn('[CreatePost] Background upload failed, will retry on post:', err.message);
           return null;
         });
       }
@@ -303,13 +300,11 @@ const CreatePostScreen = () => {
             databaseWorkoutSessionId = await storage.getWorkoutDatabaseId(user.id, workoutSessionId);
 
             if (!databaseWorkoutSessionId) {
-              console.log('[CreatePost] Workout not synced yet, waiting for sync...');
-
               // Await sync completion (if sync is in progress, this waits for it)
               try {
                 await manualSync();
               } catch (error) {
-                console.warn('[CreatePost] Sync error:', error);
+                // Silently ignore sync errors, will check for database ID below
               }
 
               // Check if ID is now available after sync
@@ -317,7 +312,7 @@ const CreatePostScreen = () => {
 
               // If still not available, poll briefly as a fallback
               if (!databaseWorkoutSessionId) {
-                const maxWaitMs = 5000;
+                const maxWaitMs = 10000;
                 const pollIntervalMs = 500;
                 const startTime = Date.now();
 
@@ -331,8 +326,11 @@ const CreatePostScreen = () => {
               if (!databaseWorkoutSessionId) {
                 Alert.alert(
                   'Sync Failed',
-                  'Could not sync your workout. Please check your internet connection and try again.',
-                  [{ text: 'OK', onPress: () => setIsPosting(false) }]
+                  'Could not sync your workout. Please check your connection and try again.',
+                  [
+                    { text: 'Retry', onPress: () => { setIsPosting(false); isPostingRef.current = false; handlePost(); } },
+                    { text: 'Cancel', style: 'cancel', onPress: () => { setIsPosting(false); isPostingRef.current = false; } },
+                  ]
                 );
                 return;
               }
@@ -567,7 +565,6 @@ export default CreatePostScreen;
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.light.background,
   },
   header: {
     flexDirection: 'row',
@@ -576,9 +573,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingTop: 60,
     paddingBottom: 16,
-    backgroundColor: Colors.light.cardBackground,
     borderBottomWidth: 1,
-    borderBottomColor: Colors.light.borderLight,
   },
   headerButton: {
     minWidth: 60,
@@ -586,11 +581,9 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 18,
     fontWeight: '700',
-    color: Colors.light.text,
   },
   cancelText: {
     fontSize: 16,
-    color: Colors.light.secondaryText,
   },
   postButton: {
     alignItems: 'flex-end',
@@ -598,10 +591,8 @@ const styles = StyleSheet.create({
   postText: {
     fontSize: 16,
     fontWeight: '600',
-    color: Colors.light.primary,
   },
   postTextDisabled: {
-    color: Colors.light.placeholder,
   },
   scrollView: {
     flex: 1,
@@ -612,12 +603,10 @@ const styles = StyleSheet.create({
 
   // Workout Card
   workoutCard: {
-    backgroundColor: '#4CAF50' + '15',
-    borderRadius: 16,
-    padding: 20,
+    borderRadius: 20,
+    padding: 18,
     marginBottom: 24,
     borderWidth: 2,
-    borderColor: '#4CAF50',
   },
   workoutCardHeader: {
     flexDirection: 'row',
@@ -628,15 +617,13 @@ const styles = StyleSheet.create({
   workoutCardTitle: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#2E7D32',
     textTransform: 'uppercase',
     letterSpacing: 0.5,
   },
   completeBadge: {
-    backgroundColor: '#4CAF50',
     width: 24,
     height: 24,
-    borderRadius: 12,
+    borderRadius: 999,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -648,33 +635,27 @@ const styles = StyleSheet.create({
   workoutName: {
     fontSize: 22,
     fontWeight: '700',
-    color: Colors.light.text,
     marginBottom: 4,
   },
   workoutDetails: {
     fontSize: 14,
-    color: Colors.light.secondaryText,
     marginBottom: 16,
   },
   exercisesSummary: {
-    backgroundColor: Colors.light.cardBackground + '80',
-    borderRadius: 12,
+    borderRadius: 16,
     padding: 12,
   },
   exercisesSummaryTitle: {
     fontSize: 14,
     fontWeight: '600',
-    color: Colors.light.text,
     marginBottom: 8,
   },
   exercisePreview: {
     fontSize: 13,
-    color: Colors.light.secondaryText,
     marginBottom: 4,
   },
   exerciseMore: {
     fontSize: 13,
-    color: Colors.light.primary,
     fontWeight: '500',
     marginTop: 4,
   },
@@ -686,11 +667,9 @@ const styles = StyleSheet.create({
   sectionLabel: {
     fontSize: 16,
     fontWeight: '600',
-    color: Colors.light.text,
     marginBottom: 12,
   },
   optionalText: {
-    color: Colors.light.placeholder,
     fontWeight: '400',
     fontSize: 14,
   },
@@ -701,17 +680,13 @@ const styles = StyleSheet.create({
     paddingTop: 12,
     paddingBottom: Platform.OS === 'ios' ? 34 : 16,
     borderTopWidth: 1,
-    borderTopColor: Colors.light.borderLight,
-    backgroundColor: Colors.light.cardBackground,
   },
   descriptionInput: {
-    backgroundColor: Colors.light.borderLight + '30',
     borderRadius: 20,
     paddingHorizontal: 16,
     paddingTop: 12,
     paddingBottom: 12,
     fontSize: 15,
-    color: Colors.light.text,
     maxHeight: 100,
     minHeight: 44,
   },
@@ -723,13 +698,11 @@ const styles = StyleSheet.create({
 
   // Image Upload
   uploadButton: {
-    backgroundColor: Colors.light.cardBackground,
-    borderRadius: 12,
+    borderRadius: 16,
     padding: 32,
     alignItems: 'center',
     borderWidth: 2,
     borderStyle: 'dashed',
-    borderColor: Colors.light.border,
   },
   uploadIcon: {
     fontSize: 48,
@@ -738,22 +711,20 @@ const styles = StyleSheet.create({
   uploadText: {
     fontSize: 16,
     fontWeight: '600',
-    color: Colors.light.text,
     marginBottom: 4,
   },
   uploadSubtext: {
     fontSize: 13,
-    color: Colors.light.secondaryText,
   },
   imageContainer: {
     position: 'relative',
-    borderRadius: 12,
+    borderRadius: 16,
     overflow: 'hidden',
   },
   selectedImage: {
     width: '100%',
     height: 320,
-    borderRadius: 12,
+    borderRadius: 16,
   },
   removeImageButton: {
     position: 'absolute',
@@ -762,7 +733,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0, 0, 0, 0.6)',
     width: 32,
     height: 32,
-    borderRadius: 16,
+    borderRadius: 999,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -774,17 +745,14 @@ const styles = StyleSheet.create({
 
   // Tag Users
   tagButton: {
-    backgroundColor: Colors.light.cardBackground,
-    borderRadius: 12,
+    borderRadius: 16,
     padding: 16,
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: Colors.light.border,
   },
   tagButtonText: {
     fontSize: 15,
     fontWeight: '600',
-    color: Colors.light.primary,
   },
   taggedUsersContainer: {
     flexDirection: 'row',
@@ -795,8 +763,7 @@ const styles = StyleSheet.create({
   taggedUser: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: Colors.light.primary + '15',
-    borderRadius: 20,
+    borderRadius: 999,
     paddingVertical: 6,
     paddingLeft: 12,
     paddingRight: 8,
@@ -805,11 +772,9 @@ const styles = StyleSheet.create({
   taggedUserText: {
     fontSize: 14,
     fontWeight: '500',
-    color: Colors.light.primary,
   },
   removeTagText: {
     fontSize: 16,
-    color: Colors.light.primary,
     fontWeight: '600',
   },
 });

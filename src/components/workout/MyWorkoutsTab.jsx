@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, ActivityIndicator, FlatList, StyleSheet, TouchableOpacity } from 'react-native';
 import { router } from 'expo-router';
-import { Colors } from '@/constants/colors';
+import { useThemeColors } from '@/hooks/useThemeColors';
 import { exercises as exerciseDatabaseSource } from '@/data/exercises/exerciseDatabase';
 
 /**
@@ -23,6 +23,7 @@ const isCardioExercise = (exercise) => {
 };
 
 const WorkoutItem = ({ workout }) => {
+  const colors = useThemeColors();
   const [expanded, setExpanded] = useState(false);
 
   const formatDate = (dateString) => {
@@ -128,11 +129,13 @@ const getDifficultyColor = (difficulty) => {
     case 'beginner': return '#4CAF50';
     case 'intermediate': return '#FF9800';
     case 'advanced': return '#F44336';
-    default: return Colors.light.secondary;
+    default: return '#6B7280';
   }
 };
 
 const WorkoutsTab = ({ workouts }) => {
+  const colors = useThemeColors();
+
   const handleCreateWorkout = () => {
     router.push('/workout/make-workout');
   };
@@ -176,12 +179,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: 4,
   },
   createButton: {
-    backgroundColor: Colors.light.primary,
-    borderRadius: 12,
+    borderRadius: 16,
     paddingVertical: 14,
     paddingHorizontal: 20,
     alignItems: 'center',
-    shadowColor: Colors.light.primary,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.2,
     shadowRadius: 4,
@@ -201,29 +202,24 @@ const styles = StyleSheet.create({
   emptyText: {
     fontSize: 18,
     fontWeight: '600',
-    color: Colors.light.text,
     marginBottom: 8,
   },
   emptySubtext: {
     fontSize: 14,
-    color: Colors.light.secondaryText,
     textAlign: 'center',
   },
   todayContainer: {
     padding: 16,
-    backgroundColor: Colors.light.background,
   },
   sectionTitle: {
     fontSize: 18,
     fontWeight: '600',
-    color: Colors.light.text,
     marginBottom: 8,
   },
   startButton: {
-    backgroundColor: Colors.light.tint,
     paddingVertical: 10,
     paddingHorizontal: 16,
-    borderRadius: 8,
+    borderRadius: 20,
     alignItems: 'center',
     marginTop: 12,
   },
@@ -233,12 +229,9 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   workoutItem: {
-    backgroundColor: Colors.light.cardBackground,
-    borderRadius: 12,
+    borderRadius: 16,
     marginBottom: 12,
     borderWidth: 1,
-    borderColor: Colors.light.borderLight,
-    shadowColor: Colors.light.shadow,
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.05,
     shadowRadius: 2,
@@ -257,17 +250,14 @@ const styles = StyleSheet.create({
   workoutTitle: {
     fontSize: 18,
     fontWeight: '600',
-    color: Colors.light.text,
     flex: 1,
   },
   workoutDate: {
     fontSize: 14,
-    color: Colors.light.secondaryText,
     fontWeight: '500',
   },
   workoutNotes: {
     fontSize: 14,
-    color: Colors.light.secondaryText,
     marginBottom: 8,
     lineHeight: 20,
   },
@@ -278,16 +268,13 @@ const styles = StyleSheet.create({
   },
   statText: {
     fontSize: 13,
-    color: Colors.light.primary,
     fontWeight: '500',
   },
   expandIndicator: {
     fontSize: 12,
-    color: Colors.light.secondaryText,
     fontWeight: '600',
   },
   expandedContent: {
-    backgroundColor: Colors.light.background,
     paddingHorizontal: 16,
     paddingBottom: 16,
   },
@@ -295,12 +282,10 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   exerciseItem: {
-    backgroundColor: Colors.light.cardBackground,
-    borderRadius: 8,
+    borderRadius: 16,
     padding: 12,
     marginBottom: 8,
     borderWidth: 1,
-    borderColor: Colors.light.borderLight,
   },
   exerciseHeader: {
     flexDirection: 'row',
@@ -311,13 +296,12 @@ const styles = StyleSheet.create({
   exerciseName: {
     fontSize: 16,
     fontWeight: '600',
-    color: Colors.light.text,
     flex: 1,
   },
   difficultyBadge: {
     paddingHorizontal: 6,
     paddingVertical: 2,
-    borderRadius: 8,
+    borderRadius: 20,
   },
   difficultyText: {
     color: 'white',
@@ -332,27 +316,22 @@ const styles = StyleSheet.create({
   },
   exerciseDetail: {
     fontSize: 13,
-    color: Colors.light.text,
     fontWeight: '500',
   },
   exerciseEquipment: {
     fontSize: 12,
-    color: Colors.light.secondaryText,
     fontStyle: 'italic',
   },
   noExercisesText: {
     fontSize: 14,
-    color: Colors.light.secondaryText,
     textAlign: 'center',
     padding: 20,
   },
   startWorkoutButton: {
-    backgroundColor: Colors.light.primary,
-    borderRadius: 8,
+    borderRadius: 20,
     paddingVertical: 12,
     paddingHorizontal: 16,
     alignItems: 'center',
-    shadowColor: Colors.light.primary,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.2,
     shadowRadius: 4,

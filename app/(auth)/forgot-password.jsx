@@ -112,7 +112,7 @@ export default function ForgotPasswordScreen() {
             />
 
             {error ? (
-              <Text style={styles.errorText}>{error}</Text>
+              <Text style={[styles.errorText, { color: colors.error }]}>{error}</Text>
             ) : null}
 
             <TouchableOpacity
@@ -176,7 +176,7 @@ const styles = StyleSheet.create({
     lineHeight: 22,
   },
   input: {
-    borderRadius: 8,
+    borderRadius: 16,
     borderWidth: 1,
     paddingHorizontal: 16,
     paddingVertical: 14,
@@ -185,7 +185,7 @@ const styles = StyleSheet.create({
   },
   primaryButton: {
     paddingVertical: 16,
-    borderRadius: 8,
+    borderRadius: 20,
     marginBottom: 16,
   },
   primaryButtonDisabled: {
@@ -203,7 +203,7 @@ const styles = StyleSheet.create({
     gap: 8,
     paddingVertical: 14,
     paddingHorizontal: 24,
-    borderRadius: 8,
+    borderRadius: 20,
     borderWidth: 1.5,
     width: '100%',
   },
@@ -212,7 +212,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
   errorText: {
-    color: '#ef4444',
     fontSize: 14,
     textAlign: 'center',
     marginBottom: 16,

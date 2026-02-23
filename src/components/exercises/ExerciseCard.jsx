@@ -1,6 +1,5 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
-import { Colors } from '@/constants/colors';
 import { useThemeColors } from '@/hooks/useThemeColors';
 import { getMuscleInfo } from '@/data/exercises/muscleGroups';
 import Badge from '@/components/ui/Badge';
@@ -126,11 +125,9 @@ export default ExerciseCard;
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: Colors.light.cardBackground,
     borderRadius: 20,
     padding: 18,
     marginBottom: 12,
-    shadowColor: Colors.light.shadow,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.08,
     shadowRadius: 16,
@@ -153,7 +150,6 @@ const styles = StyleSheet.create({
   exerciseName: {
     fontSize: 18,
     fontWeight: '700',
-    color: Colors.light.text,
     flex: 1,
     marginRight: 8,
   },
@@ -165,13 +161,12 @@ const styles = StyleSheet.create({
   },
   equipment: {
     fontSize: 14,
-    color: Colors.light.secondaryText,
     fontWeight: '500',
   },
   difficultyBadge: {
     paddingHorizontal: 8,
     paddingVertical: 4,
-    borderRadius: 12,
+    borderRadius: 16,
   },
   difficultyText: {
     fontSize: 12,
@@ -185,7 +180,6 @@ const styles = StyleSheet.create({
   muscleLabel: {
     fontSize: 12,
     fontWeight: '600',
-    color: Colors.light.text,
     marginBottom: 4,
   },
   muscleList: {
@@ -195,7 +189,6 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   secondaryMuscle: {
-    backgroundColor: Colors.light.borderLight,
     paddingHorizontal: 8,
     paddingVertical: 2,
     borderRadius: 999,
@@ -203,6 +196,5 @@ const styles = StyleSheet.create({
   secondaryMuscleText: {
     fontSize: 11,
     fontWeight: '500',
-    color: Colors.light.secondaryText,
   },
 });

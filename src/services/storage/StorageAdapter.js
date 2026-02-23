@@ -101,8 +101,6 @@ export class AsyncStorageAdapter {
    * @returns {Promise<void>}
    */
   async completeWorkout(userId, workoutId) {
-    console.log('[StorageAdapter] completeWorkout called:', { userId, workoutId, userIdType: typeof userId });
-
     // Normalize userId to string for consistent storage key generation
     const normalizedUserId = String(userId);
 
@@ -111,7 +109,6 @@ export class AsyncStorageAdapter {
       const activeWorkout = await this.getActiveWorkout(normalizedUserId);
 
       if (!activeWorkout || activeWorkout.id !== workoutId) {
-        console.warn('[StorageAdapter] No matching active workout found');
         return;
       }
 
@@ -126,8 +123,6 @@ export class AsyncStorageAdapter {
         this.addToCompletedHistory(normalizedUserId, activeWorkout),
         this.clearActiveWorkout(normalizedUserId),
       ]);
-
-      console.log('[StorageAdapter] Workout completed successfully:', workoutId);
     } catch (error) {
       console.error('[StorageAdapter] Failed to complete workout:', error);
       throw error;
@@ -194,6 +189,26 @@ export class AsyncStorageAdapter {
     } catch (error) {
       console.error('[StorageAdapter] Failed to mark workout synced:', error);
       throw error;
+    }
+  }
+
+  /**
+   * Update a pending workout's fields (e.g. syncAttempts counter)
+   * @param {string|number} userId - User ID for scoped storage
+   * @param {string} workoutId
+   * @param {Object} updates - Fields to merge into the workout object
+   * @returns {Promise<void>}
+   */
+  async updatePendingWorkout(userId, workoutId, updates) {
+    const normalizedUserId = String(userId);
+
+    try {
+      const pending = await this.getPendingWorkouts(normalizedUserId);
+      const updated = pending.map(w => w.id === workoutId ? { ...w, ...updates } : w);
+      const key = getUserStorageKey(STORAGE_KEYS.PENDING_WORKOUTS, normalizedUserId);
+      await AsyncStorage.setItem(key, JSON.stringify(updated));
+    } catch (error) {
+      console.error('[StorageAdapter] Failed to update pending workout:', error);
     }
   }
 
@@ -477,7 +492,6 @@ export class AsyncStorageAdapter {
       const index = workouts.findIndex(w => w.id === workoutId);
 
       if (index === -1) {
-        console.warn('[StorageAdapter] Saved workout not found:', workoutId);
         return null;
       }
 
@@ -587,7 +601,6 @@ export class AsyncStorageAdapter {
       const key = getUserStorageKey(STORAGE_KEYS.PENDING_WORKOUTS, normalizedUserId);
       await AsyncStorage.setItem(key, JSON.stringify(filtered));
       const removed = pending.length - filtered.length;
-      if (removed > 0) console.log(`[StorageAdapter] Removed ${removed} pending rest day(s) for ${dateStr}`);
       return removed;
     } catch (error) {
       console.error('[StorageAdapter] Failed to remove pending rest days:', error);
@@ -606,7 +619,6 @@ export class AsyncStorageAdapter {
     try {
       const userKeys = Object.values(STORAGE_KEYS).map(key => getUserStorageKey(key, userId));
       await AsyncStorage.multiRemove(userKeys);
-      console.log('[StorageAdapter] All user data cleared for:', userId);
     } catch (error) {
       console.error('[StorageAdapter] Failed to clear all user data:', error);
       throw error;

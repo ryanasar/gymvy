@@ -265,6 +265,9 @@ export const WorkoutProvider = ({ children }) => {
           }
 
           if (dateToCheck && dateToCheck < today) {
+            // Write lastCheckDate FIRST to prevent double-advancement on crash
+            await AsyncStorage.setItem('lastCheckDate', today);
+
             const wasLastDayCompleted = savedCompletionDate === dateToCheck;
             const freeRestDayDate = await AsyncStorage.getItem('freeRestDayDate');
             const wasFreeRestDay = freeRestDayDate === dateToCheck;
@@ -314,8 +317,6 @@ export const WorkoutProvider = ({ children }) => {
             setTodaysWorkoutCompleted(true);
             setCompletedSessionId(savedSessionId === 'free-rest-day' ? 'free-rest-day' : parseInt(savedSessionId));
           }
-
-          await AsyncStorage.setItem('lastCheckDate', today);
         }
 
         // Restore individual workout completion state if completed today
@@ -537,6 +538,9 @@ export const WorkoutProvider = ({ children }) => {
         const today = getLocalDateString();
 
         if (savedLastCheckDate && savedLastCheckDate < today) {
+          // Write lastCheckDate FIRST to prevent double-advancement on crash
+          await AsyncStorage.setItem('lastCheckDate', today);
+
           const wasLastDayCompleted = savedCompletionDate === savedLastCheckDate;
           const freeRestDayDate = await AsyncStorage.getItem('freeRestDayDate');
           const wasFreeRestDay = freeRestDayDate === savedLastCheckDate;
@@ -586,7 +590,6 @@ export const WorkoutProvider = ({ children }) => {
           setCompletedSessionId(null);
           setCompletedSplitWorkout(null);
           await AsyncStorage.multiRemove(['completedSessionId', 'completedSplitWorkout', 'completedSplitWorkoutDate']);
-          await AsyncStorage.setItem('lastCheckDate', today);
         }
       } catch (error) {
         console.error('[WorkoutContext] Error checking date change:', error);
@@ -786,7 +789,7 @@ export const WorkoutProvider = ({ children }) => {
           isPlanned: false,
         });
       } catch (error) {
-        console.warn('Failed to sync free rest day to backend:', error.message);
+        // Failed to sync free rest day to backend - non-critical
       }
 
       // Update context state
@@ -1044,7 +1047,7 @@ export const WorkoutProvider = ({ children }) => {
             exerciseMap[String(ex.id)] = { ...ex, isCustom: true };
           });
         } catch (err) {
-          console.warn('[WorkoutContext] Failed to fetch custom exercises:', err.message);
+          // Failed to fetch custom exercises - non-critical
         }
       }
 

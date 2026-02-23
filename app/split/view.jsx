@@ -10,7 +10,6 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { Colors } from '@/constants/colors';
 import { useThemeColors } from '@/hooks/useThemeColors';
 import EmptyState from '@/components/common/EmptyState';
 import { createSplit } from '@/services/api/splits';
@@ -124,7 +123,7 @@ const ViewSplitScreen = () => {
                 customExerciseIdMap[String(oldId)] = String(newId);
               });
             } catch (err) {
-              console.warn('[ViewSplit] Backend copy failed:', err.message);
+              // Backend copy failed
             }
           }
         } else {
@@ -421,7 +420,6 @@ export default ViewSplitScreen;
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.light.background,
   },
   headerContainer: {
     flexDirection: 'row',
@@ -430,8 +428,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingTop: 60,
     paddingBottom: 16,
-    backgroundColor: Colors.light.cardBackground,
-    shadowColor: Colors.light.shadow,
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.05,
     shadowRadius: 2,
@@ -446,7 +442,6 @@ const styles = StyleSheet.create({
   },
   backButtonText: {
     fontSize: 28,
-    color: Colors.light.text,
     fontWeight: '300',
   },
   headerTitleContainer: {
@@ -462,7 +457,6 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 18,
     fontWeight: '700',
-    color: Colors.light.text,
   },
   placeholder: {
     width: 40,
@@ -474,7 +468,7 @@ const styles = StyleSheet.create({
     gap: 4,
     paddingVertical: 8,
     paddingHorizontal: 12,
-    borderRadius: 12,
+    borderRadius: 999,
     minWidth: 40,
     justifyContent: 'center',
     zIndex: 1,
@@ -492,11 +486,9 @@ const styles = StyleSheet.create({
 
   // Split Header Card
   splitHeaderCard: {
-    backgroundColor: Colors.light.cardBackground,
     borderRadius: 20,
     padding: 18,
     marginBottom: 20,
-    shadowColor: Colors.light.shadow,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.08,
     shadowRadius: 16,
@@ -516,18 +508,15 @@ const styles = StyleSheet.create({
   splitName: {
     fontSize: 17,
     fontWeight: '700',
-    color: Colors.light.text,
     marginBottom: 2,
   },
   splitDescription: {
     fontSize: 13,
-    color: Colors.light.secondaryText,
     fontWeight: '500',
     marginBottom: 4,
   },
   workoutNamesList: {
     fontSize: 12,
-    color: Colors.light.secondaryText,
     fontWeight: '500',
     lineHeight: 16,
     marginTop: 2,
@@ -540,15 +529,12 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 20,
     fontWeight: '700',
-    color: Colors.light.text,
     marginBottom: 16,
   },
   workoutDayCard: {
-    backgroundColor: Colors.light.cardBackground,
     borderRadius: 20,
     padding: 18,
     marginBottom: 16,
-    shadowColor: Colors.light.shadow,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.08,
     shadowRadius: 16,
@@ -563,23 +549,20 @@ const styles = StyleSheet.create({
     marginBottom: 0,
   },
   dayNumberBadge: {
-    backgroundColor: Colors.light.primary,
     paddingHorizontal: 10,
     paddingVertical: 4,
-    borderRadius: 12,
+    borderRadius: 999,
     marginRight: 12,
   },
   dayNumberText: {
     fontSize: 12,
     fontWeight: '700',
-    color: Colors.light.onPrimary,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
   },
   workoutDayName: {
     fontSize: 18,
     fontWeight: '700',
-    color: Colors.light.text,
     flex: 1,
   },
   saveWorkoutButton: {
@@ -588,7 +571,7 @@ const styles = StyleSheet.create({
     gap: 4,
     paddingVertical: 6,
     paddingHorizontal: 10,
-    borderRadius: 12,
+    borderRadius: 999,
     marginLeft: 8,
   },
   saveWorkoutButtonText: {
@@ -601,7 +584,6 @@ const styles = StyleSheet.create({
   exercisesTitle: {
     fontSize: 14,
     fontWeight: '600',
-    color: Colors.light.secondaryText,
     marginBottom: 12,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
@@ -612,12 +594,10 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
     paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: Colors.light.borderLight + '40',
   },
   exerciseName: {
     fontSize: 15,
     fontWeight: '600',
-    color: Colors.light.text,
     flex: 1,
     marginRight: 12,
     lineHeight: 20,
@@ -630,11 +610,9 @@ const styles = StyleSheet.create({
   },
   exerciseDetail: {
     fontSize: 12,
-    color: Colors.light.secondaryText,
-    backgroundColor: Colors.light.borderLight + '60',
     paddingHorizontal: 8,
     paddingVertical: 3,
-    borderRadius: 12,
+    borderRadius: 999,
     fontWeight: '500',
   },
   emptyContainer: {
@@ -643,7 +621,6 @@ const styles = StyleSheet.create({
   },
   emptyText: {
     fontSize: 16,
-    color: Colors.light.secondaryText,
     textAlign: 'center',
   },
   errorContainer: {
@@ -653,6 +630,5 @@ const styles = StyleSheet.create({
   },
   errorText: {
     fontSize: 16,
-    color: Colors.light.secondaryText,
   },
 });

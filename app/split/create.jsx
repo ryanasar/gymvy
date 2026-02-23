@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Alert, Keyboard } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { Colors } from '@/constants/colors';
 import { useThemeColors } from '@/hooks/useThemeColors';
 import { useWorkout } from '@/contexts/WorkoutContext';
 import { useAuth } from '@/lib/auth';
@@ -479,7 +478,6 @@ export default CreateSplitScreen;
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.light.background,
   },
   header: {
     flexDirection: 'row',
@@ -488,8 +486,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingTop: 60,
     paddingBottom: 20,
-    backgroundColor: Colors.light.cardBackground,
-    shadowColor: Colors.light.shadow,
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.05,
     shadowRadius: 2,
@@ -497,25 +493,21 @@ const styles = StyleSheet.create({
   },
   cancelButton: {
     fontSize: 16,
-    color: Colors.light.primary,
     fontWeight: '500',
   },
   saveButton: {
     fontSize: 16,
-    color: Colors.light.primary,
     fontWeight: '600',
   },
   title: {
     fontSize: 20,
     fontWeight: '700',
-    color: Colors.light.text,
   },
   placeholder: {
     width: 60, // Balance the cancel button
   },
   stepTabsContainer: {
     flexDirection: 'row',
-    backgroundColor: Colors.light.cardBackground,
     paddingHorizontal: 8,
   },
   stepTab: {
@@ -557,10 +549,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: 24,
     paddingVertical: 20,
-    backgroundColor: Colors.light.background,
     borderTopWidth: 1,
-    borderTopColor: Colors.light.borderLight,
-    shadowColor: Colors.light.shadow,
     shadowOffset: { width: 0, height: -1 },
     shadowOpacity: 0.05,
     shadowRadius: 4,
@@ -569,37 +558,29 @@ const styles = StyleSheet.create({
   mainPreviousButton: {
     paddingVertical: 14,
     paddingHorizontal: 28,
-    borderRadius: 16,
+    borderRadius: 20,
     borderWidth: 2,
-    borderColor: Colors.light.border,
-    backgroundColor: Colors.light.cardBackground,
   },
   mainPreviousButtonText: {
     fontSize: 16,
     fontWeight: '600',
-    color: Colors.light.text,
   },
   mainNextButton: {
-    backgroundColor: Colors.light.primary,
     paddingVertical: 16,
     paddingHorizontal: 32,
-    borderRadius: 16,
-    shadowColor: Colors.light.primary,
+    borderRadius: 20,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.2,
     shadowRadius: 4,
     elevation: 3,
   },
   mainNextButtonDisabled: {
-    backgroundColor: Colors.light.borderLight,
     shadowOpacity: 0,
   },
   mainNextButtonText: {
     fontSize: 16,
     fontWeight: '700',
-    color: Colors.light.onPrimary,
   },
   mainNextButtonTextDisabled: {
-    color: Colors.light.secondaryText,
   },
 });

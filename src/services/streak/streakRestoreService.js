@@ -138,7 +138,6 @@ export async function restoreStreak(userId, missedDate) {
       restReason: 'streak_restore',
     });
 
-    console.log('[StreakRestore] Streak restored for date:', missedDate);
     return true;
   } catch (error) {
     console.error('[StreakRestore] Error restoring streak:', error);

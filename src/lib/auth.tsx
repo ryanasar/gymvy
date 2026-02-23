@@ -125,7 +125,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       const refreshToken = params.get('refresh_token');
 
       if (accessToken && refreshToken) {
-        console.log('[Auth] Deep link received with tokens, setting session');
         try {
           const { error } = await supabase.auth.setSession({
             access_token: accessToken,
@@ -171,7 +170,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const refreshSession = React.useCallback(async (): Promise<boolean> => {
     const online = await checkNetworkStatus();
     if (!online) {
-      console.log('[Auth] Cannot refresh session - offline');
       return false;
     }
 
@@ -189,7 +187,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       setIsTokenExpired(false);
       setIsOfflineSession(false);
 
-      console.log('[Auth] Session refreshed successfully');
       return true;
     } catch (error) {
       console.error('[Auth] Error refreshing session:', error);
@@ -352,7 +349,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
               try {
                 await migrateUserStorage(userData.id);
               } catch (migrationError) {
-                console.warn('[Auth] Storage migration failed:', migrationError);
+                // Storage migration failed, continue
               }
             }
           } catch (error) {
@@ -364,10 +361,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       } else {
         // No online session - check for offline session
         const storedSession = await getStoredSession();
-        if (storedSession.hasValidSession) {
-          // There was a previous session - user needs to login again
-          console.log('[Auth] No active session, but found stored session - user needs to re-login');
-        }
         setAuthUser(null);
         setUser(null);
       }
@@ -386,24 +379,16 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       const storedSession = await getStoredSession();
 
       if (!storedSession.hasValidSession || !storedSession.userData) {
-        console.log('[Auth] No valid offline session found');
         setAuthUser(null);
         setUser(null);
         return;
       }
-
-      console.log('[Auth] Restoring offline session');
 
       // Restore user data from secure storage
       setUser(storedSession.userData);
       setAuthUser(storedSession.authUserData as AuthUser | null);
       setIsTokenExpired(storedSession.isTokenExpired);
       setIsOfflineSession(true);
-
-      console.log('[Auth] Offline session restored successfully', {
-        userId: storedSession.userId,
-        tokenExpired: storedSession.isTokenExpired,
-      });
     } catch (error) {
       console.error('[Auth] Error restoring offline session:', error);
       setAuthUser(null);
@@ -437,7 +422,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         }
 
         // Seed local PR store from backend (non-blocking)
-        fetchAndSeedPRs(user.id).catch(e => console.warn('[Auth] PR seeding failed:', e));
+        fetchAndSeedPRs(user.id).catch(e => {});
       }).catch((error) => {
         console.error('[Auth] Error fetching user data:', error);
       });
@@ -510,15 +495,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
               console.error('[Auth] Error setting session:', sessionError);
               throw sessionError;
             }
-            console.log('[Auth] Session set successfully');
           } else {
             console.error('[Auth] Missing tokens in callback URL');
             throw new Error('Authentication failed - no tokens received');
           }
-        } else if (result.type === 'cancel') {
-          console.log('[Auth] User cancelled Google sign-in');
-        } else {
-          console.log('[Auth] Google OAuth result type:', result.type);
         }
       }
     } catch (e: any) {
@@ -594,15 +574,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
               console.error('[Auth] Error setting session:', sessionError);
               throw sessionError;
             }
-            console.log('[Auth] Session set successfully');
           } else {
             console.error('[Auth] Missing tokens in callback URL');
             throw new Error('Authentication failed - no tokens received');
           }
-        } else if (result.type === 'cancel') {
-          console.log('[Auth] User cancelled Apple sign-in');
-        } else {
-          console.log('[Auth] Apple OAuth result type:', result.type);
         }
       }
     } catch (e: any) {
@@ -642,7 +617,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         try {
           await supabase.auth.signOut({ scope: 'global' });
         } catch (e) {
-          console.warn('[Auth] Supabase signout failed (may be offline):', e);
+          // Supabase signout failed (may be offline)
         }
       }
 

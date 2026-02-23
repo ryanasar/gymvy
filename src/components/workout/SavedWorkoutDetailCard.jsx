@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import { Colors } from '@/constants/colors';
 import { useThemeColors } from '@/hooks/useThemeColors';
 import OptionsMenu from '@/components/ui/OptionsMenu';
 import ExerciseList from '@/components/ui/ExerciseList';
@@ -34,7 +33,7 @@ const SavedWorkoutDetailCard = ({
     {
       label: 'Mark as Complete',
       icon: 'checkmark-circle-outline',
-      color: '#4CAF50',
+      color: colors.accent,
       onPress: () => {
         setShowOptionsMenu(false);
         onMarkComplete?.(workout);
@@ -149,11 +148,9 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   workoutCard: {
-    backgroundColor: Colors.light.cardBackground,
     borderRadius: 20,
     padding: 18,
     marginBottom: 16,
-    shadowColor: Colors.light.shadow,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.08,
     shadowRadius: 16,
@@ -177,7 +174,6 @@ const styles = StyleSheet.create({
   workoutTitle: {
     fontSize: 22,
     fontWeight: '700',
-    color: Colors.light.text,
     flex: 1,
   },
   headerActions: {
@@ -188,18 +184,16 @@ const styles = StyleSheet.create({
   exerciseCount: {
     fontSize: 14,
     fontWeight: '600',
-    color: Colors.light.secondaryText,
   },
   sourceLabel: {
     fontSize: 13,
     fontWeight: '600',
-    color: Colors.light.primary,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
   },
   optionsButton: {
     padding: 4,
-    borderRadius: 8,
+    borderRadius: 20,
   },
   actionButtons: {
     marginTop: 20,
@@ -211,7 +205,7 @@ const styles = StyleSheet.create({
     gap: 8,
     paddingVertical: 12,
     paddingHorizontal: 16,
-    borderRadius: 10,
+    borderRadius: 16,
     marginBottom: 12,
   },
   noExercisesWarningText: {
@@ -220,10 +214,8 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   startWorkoutButton: {
-    backgroundColor: Colors.light.primary,
     paddingVertical: 16,
-    borderRadius: 16,
-    shadowColor: Colors.light.primary,
+    borderRadius: 20,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 8,
@@ -234,7 +226,6 @@ const styles = StyleSheet.create({
     shadowOpacity: 0,
   },
   startWorkoutText: {
-    color: Colors.light.onPrimary,
     fontSize: 18,
     fontWeight: '700',
     textAlign: 'center',

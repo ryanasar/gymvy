@@ -42,36 +42,24 @@ export const PreloadProvider = ({ children }) => {
       return;
     }
 
-    console.log('[PreloadContext] Starting parallel data preload for user:', userId);
     setLoading(true);
 
     try {
       // Fetch all data in parallel
       const [calendar, splits, bodyWeight, sessions] = await Promise.all([
         getCalendarDataForDisplay(userId).catch(err => {
-          console.warn('[PreloadContext] Calendar fetch failed:', err.message);
           return [];
         }),
         getSplitsByUserId(userId).catch(err => {
-          console.warn('[PreloadContext] Splits fetch failed:', err.message);
           return [];
         }),
         getBodyWeightEntries(userId).catch(err => {
-          console.warn('[PreloadContext] Body weight fetch failed:', err.message);
           return [];
         }),
         getWorkoutSessionsByUserId(userId).catch(err => {
-          console.warn('[PreloadContext] Workout sessions fetch failed:', err.message);
           return [];
         }),
       ]);
-
-      console.log('[PreloadContext] Preload complete:', {
-        calendar: calendar.length,
-        splits: splits.length,
-        bodyWeight: bodyWeight?.length || 0,
-        sessions: sessions?.length || 0,
-      });
 
       if (isMountedRef.current) {
         setCalendarData(calendar);
@@ -100,7 +88,7 @@ export const PreloadProvider = ({ children }) => {
         setCalendarData(calendar);
       }
     } catch (error) {
-      console.warn('[PreloadContext] Calendar refresh failed:', error.message);
+      // Silently ignore calendar refresh errors
     } finally {
       if (isMountedRef.current) {
         setCalendarLoading(false);
@@ -119,7 +107,7 @@ export const PreloadProvider = ({ children }) => {
         setSplitsList(splits);
       }
     } catch (error) {
-      console.warn('[PreloadContext] Splits refresh failed:', error.message);
+      // Silently ignore splits refresh errors
     } finally {
       if (isMountedRef.current) {
         setSplitsLoading(false);
@@ -142,7 +130,7 @@ export const PreloadProvider = ({ children }) => {
         setWorkoutSessions(sessions || []);
       }
     } catch (error) {
-      console.warn('[PreloadContext] Progress refresh failed:', error.message);
+      // Silently ignore progress refresh errors
     } finally {
       if (isMountedRef.current) {
         setProgressLoading(false);

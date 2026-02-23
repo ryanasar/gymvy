@@ -42,17 +42,6 @@ function getLocalDateFromTimestamp(timestamp) {
  * @returns {object}
  */
 function convertWorkoutToApiFormat(workout, userId, exerciseMap, customExercises) {
-  // Debug: Log raw workout data
-  console.log('[Sync] Converting workout:', {
-    id: workout.id,
-    exerciseCount: workout.exercises?.length || 0,
-    exercises: workout.exercises?.map(e => ({
-      exerciseId: e.exerciseId,
-      exerciseName: e.exerciseName,
-      setCount: e.sets?.length || 0
-    }))
-  });
-
   // Check if exercises array exists
   if (!workout.exercises || !Array.isArray(workout.exercises)) {
     console.error('[Sync] Workout has no exercises array:', workout.id);
@@ -85,11 +74,6 @@ function convertWorkoutToApiFormat(workout, userId, exerciseMap, customExercises
     const hasSets = exercise.sets && exercise.sets.length > 0;
 
     if (!hasName || !hasSets) {
-      console.warn('[Sync] Filtering out invalid exercise:', {
-        exerciseId: exercise.exerciseId,
-        exerciseName: exercise.exerciseName,
-        setCount: exercise.sets?.length || 0
-      });
       return false;
     }
     return true;
@@ -180,12 +164,6 @@ export async function syncWorkout(userId, workout, preloaded) {
       // Standalone call — load fresh
       const exercises = await storage.getExercises();
 
-      console.log('[Sync] Exercise database loaded:', exercises.length, 'exercises');
-
-      if (!exercises || exercises.length === 0) {
-        console.warn('[Sync] Exercise database is empty! Cannot enrich workout with names.');
-      }
-
       exerciseMap = {};
       exercises.forEach(ex => {
         exerciseMap[String(ex.id)] = ex;
@@ -198,7 +176,7 @@ export async function syncWorkout(userId, workout, preloaded) {
           customExercises = await fetchUserCustomExercises(userId);
         }
       } catch (err) {
-        console.warn('[Sync] Failed to fetch custom exercises:', err.message);
+        // Failed to fetch custom exercises
       }
 
       // Add custom exercises to map
@@ -210,15 +188,8 @@ export async function syncWorkout(userId, workout, preloaded) {
     // Convert to new API format with flat sets array
     const apiData = convertWorkoutToApiFormat(workout, userId, exerciseMap, customExercises);
 
-    console.log('[Sync] API data prepared:', {
-      dayName: apiData.dayName,
-      setsCount: apiData.sets?.length || 0,
-      sets: apiData.sets?.slice(0, 2) // Log first 2 sets for debugging
-    });
-
     // Don't sync workouts with no valid sets
     if (!apiData.sets || apiData.sets.length === 0) {
-      console.warn('[Sync] Skipping workout with no valid sets:', workout.id);
       return {
         success: false,
         error: new Error('Workout has no valid sets'),
@@ -237,7 +208,7 @@ export async function syncWorkout(userId, workout, preloaded) {
   } catch (error) {
     // Check if it's a server error (5xx) - don't retry these
     const statusCode = error.response?.status;
-    const shouldRetry = !statusCode || statusCode < 500 || statusCode >= 600;
+    const shouldRetry = !statusCode || (statusCode >= 500 && statusCode < 600);
 
     console.error('[Sync] Failed to sync workout:', {
       workoutId: workout.id,
@@ -256,16 +227,12 @@ export async function syncWorkout(userId, workout, preloaded) {
  * @returns {Promise<{synced: number, failed: number, errors: any[]}>}
  */
 export async function syncPendingWorkouts(userId) {
-  console.log('[Sync] syncPendingWorkouts called with userId:', userId, 'type:', typeof userId);
-
   if (!userId) {
-    console.log('[Sync] Early return: no userId');
     return { synced: 0, failed: 0, errors: [] };
   }
 
   // Prevent duplicate concurrent syncs
   if (_syncInProgress) {
-    console.log('[Sync] Early return: sync already in progress');
     return { synced: 0, failed: 0, errors: [] };
   }
   _syncInProgress = true;
@@ -276,17 +243,13 @@ export async function syncPendingWorkouts(userId) {
 
   // Check network status first
   const isOnline = await checkNetworkStatus();
-  console.log('[Sync] Network status:', isOnline);
   if (!isOnline) {
-    console.log('[Sync] Early return: offline');
     return { synced: 0, failed: 0, errors: [] };
   }
 
   const pendingWorkouts = await storage.getPendingWorkouts(normalizedUserId);
-  console.log('[Sync] Pending workouts count:', pendingWorkouts.length);
 
   if (pendingWorkouts.length === 0) {
-    console.log('[Sync] Early return: no pending workouts');
     return { synced: 0, failed: 0, errors: [] };
   }
 
@@ -309,7 +272,7 @@ export async function syncPendingWorkouts(userId) {
       try {
         customExercises = await fetchUserCustomExercises(normalizedUserId);
       } catch (err) {
-        console.warn('[Sync] Failed to fetch custom exercises for batch:', err.message);
+        // Failed to fetch custom exercises for batch
       }
 
       // Add custom exercises to map
@@ -319,11 +282,9 @@ export async function syncPendingWorkouts(userId) {
 
       preloaded = { exerciseMap, customExercises };
     } catch (err) {
-      console.warn('[Sync] Failed to preload exercise data, will load per-workout:', err.message);
+      // Failed to preload exercise data, will load per-workout
     }
   }
-
-  console.log('[Sync] Starting to process', pendingWorkouts.length, 'pending workouts');
 
   for (const workout of pendingWorkouts) {
     // Sync rest days to DailyActivity table
@@ -343,7 +304,6 @@ export async function syncPendingWorkouts(userId) {
           dayNumber: workout.dayNumber || null,
         });
 
-        console.log('[Sync] Rest day synced successfully:', workout.id);
         await storage.markWorkoutSynced(normalizedUserId, workout.id);
         synced++;
       } catch (err) {
@@ -354,20 +314,25 @@ export async function syncPendingWorkouts(userId) {
       continue;
     }
 
-    console.log('[Sync] Syncing workout:', workout.id);
     const result = await syncWorkout(normalizedUserId, workout, preloaded);
 
     if (result.success) {
-      console.log('[Sync] Workout synced successfully:', workout.id);
       // Mark as synced and remove from pending queue
       await storage.markWorkoutSynced(normalizedUserId, workout.id);
       synced++;
     } else {
-      // If this is a server error (5xx) that shouldn't be retried,
-      // mark it as synced to prevent infinite retry loop
       if (result.shouldRetry === false) {
-        console.warn('[Sync] Marking workout as synced to prevent infinite retry:', workout.id);
+        // Non-retryable error (4xx / bad data) — remove from queue
         await storage.markWorkoutSynced(normalizedUserId, workout.id);
+      } else {
+        // Retryable error (5xx / network) — increment attempt counter
+        const attempts = (workout.syncAttempts || 0) + 1;
+        if (attempts >= 10) {
+          console.error('[Sync] Max retry attempts reached for workout:', workout.id);
+          await storage.markWorkoutSynced(normalizedUserId, workout.id);
+        } else {
+          await storage.updatePendingWorkout(normalizedUserId, workout.id, { syncAttempts: attempts });
+        }
       }
 
       failed++;

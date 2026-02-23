@@ -24,7 +24,7 @@ const Button = ({ title, onPress, variant = 'primary', size = 'md', loading, dis
         };
       case 'secondary':
         return {
-          container: { backgroundColor: 'transparent', borderWidth: 1.5, borderColor: colors.primary },
+          container: { backgroundColor: colors.primary + '15' },
           text: { color: colors.primary },
           iconColor: colors.primary,
         };
@@ -89,7 +89,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    borderRadius: Radius.lg,
+    borderRadius: Radius.xl,
   },
   text: {
     fontWeight: FontWeight.semibold,

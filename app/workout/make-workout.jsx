@@ -11,7 +11,7 @@ import {
   FlatList
 } from 'react-native';
 import { router } from 'expo-router';
-import { Colors } from '@/constants/colors';
+import { useThemeColors } from '@/hooks/useThemeColors';
 import { getAllExerciseTemplates } from '@/services/api/exerciseTemplates';
 import { createWorkout } from '@/services/api/workouts';
 import { createExercise } from '@/services/api/exercises';
@@ -26,6 +26,7 @@ const isCardioExercise = (exercise) => {
 };
 
 const MakeWorkoutScreen = () => {
+  const colors = useThemeColors();
   const { user, refreshWorkouts } = useAuth();
   const [workoutName, setWorkoutName] = useState('');
   const [workoutNotes, setWorkoutNotes] = useState('');
@@ -138,7 +139,7 @@ const MakeWorkoutScreen = () => {
       case 'beginner': return '#4CAF50';
       case 'intermediate': return '#FF9800';
       case 'advanced': return '#F44336';
-      default: return Colors.light.secondary;
+      default: return colors.secondary;
     }
   };
 
@@ -147,10 +148,10 @@ const MakeWorkoutScreen = () => {
     const cardioFields = item.cardioFields || ['duration', 'incline'];
 
     return (
-      <View style={styles.exerciseItem}>
+      <View style={[styles.exerciseItem, { backgroundColor: colors.cardBackground, borderColor: colors.borderLight }]}>
         <View style={styles.exerciseHeader}>
           <View style={styles.exerciseNameContainer}>
-            <Text style={styles.exerciseName}>{item.name}</Text>
+            <Text style={[styles.exerciseName, { color: colors.text }]}>{item.name}</Text>
             {item.difficulty && (
               <View style={[styles.difficultyBadgeSmall, { backgroundColor: getDifficultyColor(item.difficulty) }]}>
                 <Text style={styles.difficultyTextSmall}>{item.difficulty}</Text>
@@ -159,7 +160,7 @@ const MakeWorkoutScreen = () => {
           </View>
           <TouchableOpacity
             onPress={() => removeExercise(item.id)}
-            style={styles.removeButton}
+            style={[styles.removeButton, { backgroundColor: colors.error }]}
           >
             <Text style={styles.removeButtonText}>×</Text>
           </TouchableOpacity>
@@ -170,38 +171,41 @@ const MakeWorkoutScreen = () => {
             /* Cardio inputs */
             <>
               <View style={styles.inputGroup}>
-                <Text style={styles.inputLabel}>Duration (min)</Text>
+                <Text style={[styles.inputLabel, { color: colors.secondaryText }]}>Duration (min)</Text>
                 <TextInput
-                  style={styles.input}
+                  style={[styles.input, { backgroundColor: colors.background, borderColor: colors.borderLight, color: colors.text }]}
                   value={item.duration}
                   onChangeText={(value) => updateExercise(item.id, 'duration', value)}
                   keyboardType="numeric"
                   placeholder="30"
+                  placeholderTextColor={colors.placeholder}
                 />
               </View>
 
               {cardioFields.includes('incline') && (
                 <View style={styles.inputGroup}>
-                  <Text style={styles.inputLabel}>Incline (%)</Text>
+                  <Text style={[styles.inputLabel, { color: colors.secondaryText }]}>Incline (%)</Text>
                   <TextInput
-                    style={styles.input}
+                    style={[styles.input, { backgroundColor: colors.background, borderColor: colors.borderLight, color: colors.text }]}
                     value={item.incline}
                     onChangeText={(value) => updateExercise(item.id, 'incline', value)}
                     keyboardType="numeric"
                     placeholder="5"
+                    placeholderTextColor={colors.placeholder}
                   />
                 </View>
               )}
 
               {cardioFields.includes('speed') && (
                 <View style={styles.inputGroup}>
-                  <Text style={styles.inputLabel}>Speed</Text>
+                  <Text style={[styles.inputLabel, { color: colors.secondaryText }]}>Speed</Text>
                   <TextInput
-                    style={styles.input}
+                    style={[styles.input, { backgroundColor: colors.background, borderColor: colors.borderLight, color: colors.text }]}
                     value={item.speed}
                     onChangeText={(value) => updateExercise(item.id, 'speed', value)}
                     keyboardType="numeric"
                     placeholder="6"
+                    placeholderTextColor={colors.placeholder}
                   />
                 </View>
               )}
@@ -210,35 +214,38 @@ const MakeWorkoutScreen = () => {
             /* Strength inputs */
             <>
               <View style={styles.inputGroup}>
-                <Text style={styles.inputLabel}>Sets</Text>
+                <Text style={[styles.inputLabel, { color: colors.secondaryText }]}>Sets</Text>
                 <TextInput
-                  style={styles.setsInput}
+                  style={[styles.setsInput, { backgroundColor: colors.background, borderColor: colors.borderLight, color: colors.text }]}
                   value={item.sets.toString()}
                   onChangeText={(value) => updateExercise(item.id, 'sets', parseInt(value) || 1)}
                   keyboardType="numeric"
                   placeholder="1"
+                  placeholderTextColor={colors.placeholder}
                 />
               </View>
 
               <View style={styles.inputGroup}>
-                <Text style={styles.inputLabel}>Reps (optional)</Text>
+                <Text style={[styles.inputLabel, { color: colors.secondaryText }]}>Reps (optional)</Text>
                 <TextInput
-                  style={styles.input}
+                  style={[styles.input, { backgroundColor: colors.background, borderColor: colors.borderLight, color: colors.text }]}
                   value={item.reps}
                   onChangeText={(value) => updateExercise(item.id, 'reps', value)}
                   keyboardType="numeric"
                   placeholder="12"
+                  placeholderTextColor={colors.placeholder}
                 />
               </View>
 
               <View style={styles.inputGroup}>
-                <Text style={styles.inputLabel}>Weight (optional)</Text>
+                <Text style={[styles.inputLabel, { color: colors.secondaryText }]}>Weight (optional)</Text>
                 <TextInput
-                  style={styles.input}
+                  style={[styles.input, { backgroundColor: colors.background, borderColor: colors.borderLight, color: colors.text }]}
                   value={item.weight}
                   onChangeText={(value) => updateExercise(item.id, 'weight', value)}
                   keyboardType="numeric"
                   placeholder="45"
+                  placeholderTextColor={colors.placeholder}
                 />
               </View>
             </>
@@ -250,36 +257,38 @@ const MakeWorkoutScreen = () => {
 
   if (loading) {
     return (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color={Colors.light.primary} />
-        <Text style={styles.loadingText}>Loading exercise templates...</Text>
+      <View style={[styles.loadingContainer, { backgroundColor: colors.background }]}>
+        <ActivityIndicator size="large" color={colors.primary} />
+        <Text style={[styles.loadingText, { color: colors.secondaryText }]}>Loading exercise templates...</Text>
       </View>
     );
   }
 
   return (
-    <View style={styles.container}>
-      <View style={styles.header}>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
+      <View style={[styles.header, { backgroundColor: colors.cardBackground, shadowColor: colors.shadow }]}>
         <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-          <Text style={styles.backButtonText}>← Back</Text>
+          <Text style={[styles.backButtonText, { color: colors.primary }]}>← Back</Text>
         </TouchableOpacity>
-        <Text style={styles.title}>Create Workout</Text>
+        <Text style={[styles.title, { color: colors.text }]}>Create Workout</Text>
       </View>
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Workout Details</Text>
+          <Text style={[styles.sectionTitle, { color: colors.text }]}>Workout Details</Text>
 
           <TextInput
-            style={styles.nameInput}
+            style={[styles.nameInput, { backgroundColor: colors.cardBackground, borderColor: colors.borderLight, color: colors.text }]}
             placeholder="Workout name"
+            placeholderTextColor={colors.placeholder}
             value={workoutName}
             onChangeText={setWorkoutName}
           />
 
           <TextInput
-            style={styles.notesInput}
+            style={[styles.notesInput, { backgroundColor: colors.cardBackground, borderColor: colors.borderLight, color: colors.text }]}
             placeholder="Notes (optional)"
+            placeholderTextColor={colors.placeholder}
             value={workoutNotes}
             onChangeText={setWorkoutNotes}
             multiline
@@ -289,9 +298,9 @@ const MakeWorkoutScreen = () => {
 
         <View style={styles.section}>
           <View style={styles.exercisesSectionHeader}>
-            <Text style={styles.sectionTitle}>Exercises</Text>
+            <Text style={[styles.sectionTitle, { color: colors.text }]}>Exercises</Text>
             <TouchableOpacity
-              style={styles.addButton}
+              style={[styles.addButton, { backgroundColor: colors.primary }]}
               onPress={() => setShowExerciseModal(true)}
             >
               <Text style={styles.addButtonText}>+ Add Exercise</Text>
@@ -300,8 +309,8 @@ const MakeWorkoutScreen = () => {
 
           {selectedExercises.length === 0 ? (
             <View style={styles.noExercisesContainer}>
-              <Text style={styles.noExercisesText}>No exercises added yet</Text>
-              <Text style={styles.noExercisesSubtext}>Tap &quot;Add Exercise&quot; to get started</Text>
+              <Text style={[styles.noExercisesText, { color: colors.secondaryText }]}>No exercises added yet</Text>
+              <Text style={[styles.noExercisesSubtext, { color: colors.secondaryText }]}>Tap &quot;Add Exercise&quot; to get started</Text>
             </View>
           ) : (
             <FlatList
@@ -315,9 +324,9 @@ const MakeWorkoutScreen = () => {
         </View>
       </ScrollView>
 
-      <View style={styles.footer}>
+      <View style={[styles.footer, { backgroundColor: colors.cardBackground, borderTopColor: colors.borderLight }]}>
         <TouchableOpacity
-          style={[styles.createButton, creating && styles.disabledButton]}
+          style={[styles.createButton, { backgroundColor: colors.primary }, creating && { backgroundColor: colors.secondaryText }]}
           onPress={handleCreateWorkout}
           disabled={creating}
         >
@@ -342,7 +351,6 @@ const MakeWorkoutScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.light.background,
   },
   header: {
     flexDirection: 'row',
@@ -350,8 +358,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingTop: 60,
     paddingBottom: 16,
-    backgroundColor: Colors.light.cardBackground,
-    shadowColor: Colors.light.shadow,
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.05,
     shadowRadius: 2,
@@ -362,13 +368,11 @@ const styles = StyleSheet.create({
   },
   backButtonText: {
     fontSize: 16,
-    color: Colors.light.primary,
     fontWeight: '500',
   },
   title: {
     fontSize: 24,
     fontWeight: '700',
-    color: Colors.light.text,
   },
   content: {
     flex: 1,
@@ -380,29 +384,22 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 18,
     fontWeight: '600',
-    color: Colors.light.text,
     marginBottom: 12,
   },
   nameInput: {
-    backgroundColor: Colors.light.cardBackground,
-    borderRadius: 12,
+    borderRadius: 20,
     padding: 16,
     fontSize: 16,
-    color: Colors.light.text,
     marginBottom: 12,
     borderWidth: 1,
-    borderColor: Colors.light.borderLight,
   },
   notesInput: {
-    backgroundColor: Colors.light.cardBackground,
-    borderRadius: 12,
+    borderRadius: 20,
     padding: 16,
     fontSize: 16,
-    color: Colors.light.text,
     height: 80,
     textAlignVertical: 'top',
     borderWidth: 1,
-    borderColor: Colors.light.borderLight,
   },
   exercisesSectionHeader: {
     flexDirection: 'row',
@@ -411,10 +408,9 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   addButton: {
-    backgroundColor: Colors.light.primary,
     paddingHorizontal: 16,
     paddingVertical: 8,
-    borderRadius: 8,
+    borderRadius: 20,
   },
   addButtonText: {
     color: 'white',
@@ -427,20 +423,20 @@ const styles = StyleSheet.create({
   },
   noExercisesText: {
     fontSize: 16,
-    color: Colors.light.secondaryText,
     marginBottom: 4,
   },
   noExercisesSubtext: {
     fontSize: 14,
-    color: Colors.light.secondaryText,
   },
   exerciseItem: {
-    backgroundColor: Colors.light.cardBackground,
-    borderRadius: 12,
-    padding: 16,
+    borderRadius: 20,
+    padding: 18,
     marginBottom: 12,
-    borderWidth: 1,
-    borderColor: Colors.light.borderLight,
+    borderWidth: 0,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 16,
+    elevation: 3,
   },
   exerciseHeader: {
     flexDirection: 'row',
@@ -451,14 +447,12 @@ const styles = StyleSheet.create({
   exerciseName: {
     fontSize: 16,
     fontWeight: '600',
-    color: Colors.light.text,
     flex: 1,
   },
   removeButton: {
     width: 24,
     height: 24,
-    borderRadius: 12,
-    backgroundColor: Colors.light.error,
+    borderRadius: 16,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -476,43 +470,30 @@ const styles = StyleSheet.create({
   },
   inputLabel: {
     fontSize: 12,
-    color: Colors.light.secondaryText,
     marginBottom: 4,
     fontWeight: '500',
   },
   input: {
-    backgroundColor: Colors.light.background,
-    borderRadius: 8,
+    borderRadius: 16,
     padding: 12,
     fontSize: 16,
-    color: Colors.light.text,
     borderWidth: 1,
-    borderColor: Colors.light.borderLight,
   },
   setsInput: {
-    backgroundColor: Colors.light.background,
-    borderRadius: 8,
+    borderRadius: 16,
     padding: 12,
     fontSize: 16,
-    color: Colors.light.text,
     borderWidth: 1,
-    borderColor: Colors.light.borderLight,
     width: 60,
   },
   footer: {
     padding: 20,
-    backgroundColor: Colors.light.cardBackground,
     borderTopWidth: 1,
-    borderTopColor: Colors.light.borderLight,
   },
   createButton: {
-    backgroundColor: Colors.light.primary,
-    borderRadius: 12,
+    borderRadius: 16,
     paddingVertical: 16,
     alignItems: 'center',
-  },
-  disabledButton: {
-    backgroundColor: Colors.light.secondaryText,
   },
   createButtonText: {
     color: 'white',
@@ -523,12 +504,10 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: Colors.light.background,
   },
   loadingText: {
     marginTop: 12,
     fontSize: 16,
-    color: Colors.light.secondaryText,
   },
   exerciseNameContainer: {
     flexDirection: 'row',
@@ -539,7 +518,7 @@ const styles = StyleSheet.create({
   difficultyBadgeSmall: {
     paddingHorizontal: 6,
     paddingVertical: 2,
-    borderRadius: 8,
+    borderRadius: 20,
   },
   difficultyTextSmall: {
     color: 'white',

@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { FlatList, StyleSheet, View, RefreshControl } from 'react-native';
-import { Colors } from '@/constants/colors';
 import { useThemeColors } from '@/hooks/useThemeColors';
 import { useSync } from '@/contexts/SyncContext';
 import Activity from '@/components/common/Activity';
@@ -116,25 +115,25 @@ const styles = StyleSheet.create({
     paddingTop: 8,
   },
   skeletonCard: {
-    borderRadius: 12,
+    borderRadius: 16,
     padding: 16,
     marginBottom: 12,
   },
   skeletonHeader: {
     height: 14,
-    borderRadius: 7,
+    borderRadius: 16,
     width: '40%',
     marginBottom: 12,
   },
   skeletonBody: {
     height: 12,
-    borderRadius: 6,
+    borderRadius: 16,
     width: '100%',
     marginBottom: 8,
   },
   skeletonBodyShort: {
     height: 12,
-    borderRadius: 6,
+    borderRadius: 16,
     width: '70%',
   },
   embeddedContainer: {
@@ -153,12 +152,10 @@ const styles = StyleSheet.create({
   emptyIconContainer: {
     width: 64,
     height: 64,
-    backgroundColor: Colors.light.borderLight + '60',
     borderRadius: 32,
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 20,
-    shadowColor: Colors.light.shadow,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.08,
     shadowRadius: 4,
@@ -171,7 +168,6 @@ const styles = StyleSheet.create({
   emptyTitle: {
     fontSize: 18,
     fontWeight: '600',
-    color: Colors.light.text,
     marginBottom: 12,
     textAlign: 'center',
     letterSpacing: -0.2,

@@ -8,11 +8,12 @@ import {
   View,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { Colors } from '@/constants/colors';
+import { useThemeColors } from '@/hooks/useThemeColors';
 import EmptyState from '@/components/common/EmptyState';
 import ModalHeader from '@/components/ui/ModalHeader';
 
 const ChangeSplitModal = ({ visible, onClose, currentSplit, otherSplits, onSelectSplit }) => {
+  const colors = useThemeColors();
   return (
     <Modal
       visible={visible}
@@ -21,18 +22,18 @@ const ChangeSplitModal = ({ visible, onClose, currentSplit, otherSplits, onSelec
       onRequestClose={onClose}
     >
       <View style={styles.modalOverlay}>
-        <View style={styles.modalContainer}>
+        <View style={[styles.modalContainer, { backgroundColor: colors.cardBackground }]}>
           <ModalHeader title="Switch Active Split" onClose={onClose} style={{ borderBottomWidth: 0, paddingHorizontal: 24 }} />
 
           {/* Current Split Info */}
           {currentSplit && (
             <View style={styles.currentSplitSection}>
-              <Text style={styles.currentSplitLabel}>Currently Active:</Text>
-              <View style={styles.currentSplitCard}>
+              <Text style={[styles.currentSplitLabel, { color: colors.secondaryText }]}>Currently Active:</Text>
+              <View style={[styles.currentSplitCard, { backgroundColor: colors.background }]}>
                 <Text style={styles.currentSplitEmoji}>{currentSplit.emoji}</Text>
                 <View style={styles.currentSplitInfo}>
-                  <Text style={styles.currentSplitName}>{currentSplit.name}</Text>
-                  <Text style={styles.currentSplitDetails}>
+                  <Text style={[styles.currentSplitName, { color: colors.text }]}>{currentSplit.name}</Text>
+                  <Text style={[styles.currentSplitDetails, { color: colors.secondaryText }]}>
                     {currentSplit.totalDays} days
                   </Text>
                 </View>
@@ -42,32 +43,32 @@ const ChangeSplitModal = ({ visible, onClose, currentSplit, otherSplits, onSelec
 
           {/* Divider */}
           <View style={styles.divider}>
-            <View style={styles.dividerLine} />
-            <Ionicons name="swap-vertical" size={24} color={Colors.light.secondaryText} />
-            <View style={styles.dividerLine} />
+            <View style={[styles.dividerLine, { backgroundColor: colors.borderLight }]} />
+            <Ionicons name="swap-vertical" size={24} color={colors.secondaryText} />
+            <View style={[styles.dividerLine, { backgroundColor: colors.borderLight }]} />
           </View>
 
           {/* Other Splits List */}
-          <Text style={styles.selectLabel}>Select new active split:</Text>
+          <Text style={[styles.selectLabel, { color: colors.secondaryText }]}>Select new active split:</Text>
           <ScrollView style={styles.modalContent} showsVerticalScrollIndicator={false}>
             {otherSplits && otherSplits.length > 0 ? (
               otherSplits.map((split) => (
                 <TouchableOpacity
                   key={split.id}
-                  style={styles.splitOption}
+                  style={[styles.splitOption, { backgroundColor: colors.background }]}
                   onPress={() => onSelectSplit(split)}
                   activeOpacity={0.7}
                 >
                   <View style={styles.splitOptionContent}>
                     <Text style={styles.splitEmoji}>{split.emoji}</Text>
                     <View style={styles.splitInfo}>
-                      <Text style={styles.splitName}>{split.name}</Text>
-                      <Text style={styles.splitDetails}>
+                      <Text style={[styles.splitName, { color: colors.text }]}>{split.name}</Text>
+                      <Text style={[styles.splitDetails, { color: colors.secondaryText }]}>
                         {split.totalDays} days
                         {split.description ? ` • ${split.description}` : ''}
                       </Text>
                     </View>
-                    <Ionicons name="chevron-forward" size={20} color={Colors.light.secondaryText} />
+                    <Ionicons name="chevron-forward" size={20} color={colors.secondaryText} />
                   </View>
                 </TouchableOpacity>
               ))
@@ -81,8 +82,8 @@ const ChangeSplitModal = ({ visible, onClose, currentSplit, otherSplits, onSelec
           </ScrollView>
 
           {/* Cancel Button */}
-          <TouchableOpacity style={styles.cancelButton} onPress={onClose}>
-            <Text style={styles.cancelButtonText}>Cancel</Text>
+          <TouchableOpacity style={[styles.cancelButton, { backgroundColor: colors.borderLight }]} onPress={onClose}>
+            <Text style={[styles.cancelButtonText, { color: colors.text }]}>Cancel</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -99,7 +100,6 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
   },
   modalContainer: {
-    backgroundColor: Colors.light.cardBackground,
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
     maxHeight: '85%',
@@ -114,7 +114,6 @@ const styles = StyleSheet.create({
   currentSplitLabel: {
     fontSize: 13,
     fontWeight: '600',
-    color: Colors.light.secondaryText,
     marginBottom: 8,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
@@ -122,9 +121,9 @@ const styles = StyleSheet.create({
   currentSplitCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: Colors.light.background,
     borderRadius: 20,
     padding: 18,
+    borderWidth: 0,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.08,
@@ -141,12 +140,10 @@ const styles = StyleSheet.create({
   currentSplitName: {
     fontSize: 18,
     fontWeight: '700',
-    color: Colors.light.text,
     marginBottom: 4,
   },
   currentSplitDetails: {
     fontSize: 14,
-    color: Colors.light.secondaryText,
     fontWeight: '500',
   },
 
@@ -161,14 +158,12 @@ const styles = StyleSheet.create({
   dividerLine: {
     flex: 1,
     height: 1,
-    backgroundColor: Colors.light.borderLight,
   },
 
   // Select Label
   selectLabel: {
     fontSize: 13,
     fontWeight: '600',
-    color: Colors.light.secondaryText,
     marginBottom: 12,
     paddingHorizontal: 24,
     textTransform: 'uppercase',
@@ -181,15 +176,15 @@ const styles = StyleSheet.create({
     maxHeight: 300,
   },
   splitOption: {
-    backgroundColor: Colors.light.background,
-    borderRadius: 16,
-    padding: 16,
+    borderRadius: 20,
+    padding: 18,
     marginBottom: 12,
+    borderWidth: 0,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.06,
-    shadowRadius: 8,
-    elevation: 2,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 16,
+    elevation: 3,
   },
   splitOptionContent: {
     flexDirection: 'row',
@@ -205,12 +200,10 @@ const styles = StyleSheet.create({
   splitName: {
     fontSize: 16,
     fontWeight: '600',
-    color: Colors.light.text,
     marginBottom: 4,
   },
   splitDetails: {
     fontSize: 13,
-    color: Colors.light.secondaryText,
   },
 
   // Empty State
@@ -221,27 +214,23 @@ const styles = StyleSheet.create({
   emptyText: {
     fontSize: 16,
     fontWeight: '600',
-    color: Colors.light.text,
     marginTop: 16,
     marginBottom: 8,
   },
   emptySubtext: {
     fontSize: 14,
-    color: Colors.light.secondaryText,
   },
 
   // Cancel Button
   cancelButton: {
     marginHorizontal: 24,
     marginTop: 16,
-    backgroundColor: Colors.light.borderLight,
     paddingVertical: 14,
-    borderRadius: 16,
+    borderRadius: 20,
   },
   cancelButtonText: {
     fontSize: 16,
     fontWeight: '600',
-    color: Colors.light.text,
     textAlign: 'center',
   },
 });

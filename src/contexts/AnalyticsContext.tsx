@@ -65,9 +65,6 @@ const AnalyticsInitializer = ({ children }: { children: React.ReactNode }) => {
 export const AnalyticsProvider = ({ children }: { children: React.ReactNode }) => {
   // Don't initialize if no API key
   if (!POSTHOG_API_KEY) {
-    if (__DEV__) {
-      console.warn('[Analytics] PostHog API key not found. Add EXPO_PUBLIC_POSTHOG_API_KEY to your .env file.');
-    }
     return (
       <AnalyticsContext.Provider value={{ isInitialized: false }}>
         {children}

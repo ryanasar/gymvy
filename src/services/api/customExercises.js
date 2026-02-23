@@ -24,7 +24,6 @@ export const getCustomExercises = async (userId) => {
 
     const isOnline = await checkNetworkStatus();
     if (!isOnline) {
-      console.warn('[CustomExercisesApi] Offline - returning empty array');
       return [];
     }
 
@@ -50,7 +49,6 @@ export const getCustomExerciseById = async (userId, exerciseId) => {
 
     const isOnline = await checkNetworkStatus();
     if (!isOnline) {
-      console.warn('[CustomExercisesApi] Offline - cannot fetch exercise');
       return null;
     }
 

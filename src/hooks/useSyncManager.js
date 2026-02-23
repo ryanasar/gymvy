@@ -153,7 +153,6 @@ export function useSyncManager(options = {}) {
     const unsubscribe = subscribeToNetworkChanges((isOnline) => {
       if (isOnline && wasOffline) {
         // Network restored - trigger sync
-        console.log('[useSyncManager] Network restored, triggering sync');
         performSync();
       }
       wasOffline = !isOnline;

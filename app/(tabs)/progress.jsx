@@ -5,6 +5,7 @@ import { useAuth } from '@/lib/auth';
 import { useWorkout } from '@/contexts/WorkoutContext';
 import { usePreload } from '@/contexts/PreloadContext';
 import { useThemeColors } from '@/hooks/useThemeColors';
+import { useResponsiveLayout } from '@/hooks/useResponsiveLayout';
 import { storage } from '@/services/storage';
 import { addBodyWeightEntry } from '@/services/storage/bodyWeightStorage';
 import { createBodyWeightEntry } from '@/services/api/bodyWeight';
@@ -17,6 +18,10 @@ const BIG_THREE = ['Bench Press', 'Squat', 'Deadlift'];
 
 export default function ProgressScreen() {
   const colors = useThemeColors();
+  const { contentMaxWidth } = useResponsiveLayout();
+  const responsiveStyle = contentMaxWidth
+    ? { maxWidth: contentMaxWidth, alignSelf: 'center', width: '100%' }
+    : undefined;
   const { user } = useAuth();
   const { exerciseDatabase } = useWorkout();
   const { bodyWeightData: preloadedBodyWeight, workoutSessions: preloadedSessions, progressLoading, refreshProgress } = usePreload();
@@ -221,14 +226,21 @@ export default function ProgressScreen() {
     // Save locally
     await addBodyWeightEntry(user.id, weight);
 
-    // Fire-and-forget backend save
-    if (user?.id) {
+    // Optimistically update chart state immediately
+    const parsedWeight = parseFloat(weight);
+    if (parsedWeight >= 50 && parsedWeight <= 500) {
       const today = new Date();
-      createBodyWeightEntry(user.id, weight, today.toISOString()).catch(() => {});
+      const dateStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+      setBodyWeightData(prev => [...prev, { date: dateStr, weight: parsedWeight, timestamp: today.toISOString() }]);
     }
 
-    // Reload data
-    refreshProgress();
+    // Save to backend, then refresh to get canonical data
+    if (user?.id) {
+      const today = new Date();
+      createBodyWeightEntry(user.id, weight, today.toISOString())
+        .then(() => refreshProgress())
+        .catch(() => {});
+    }
   };
 
   const handleRefresh = async () => {
@@ -239,8 +251,6 @@ export default function ProgressScreen() {
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
-      {/* <StreakRestoreModal visible={true} onClose={() => {}} /> */}
-
       {/* Header */}
       <View style={[styles.headerContainer, { backgroundColor: colors.cardBackground, shadowColor: colors.shadow }]}>
         <Text style={[styles.title, { color: colors.text }]}>Progress</Text>
@@ -248,7 +258,7 @@ export default function ProgressScreen() {
 
       <ScrollView
         style={styles.scrollView}
-        contentContainerStyle={styles.scrollContent}
+        contentContainerStyle={[styles.scrollContent, responsiveStyle]}
         showsVerticalScrollIndicator={false}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} tintColor={colors.primary} />
@@ -316,8 +326,9 @@ const styles = StyleSheet.create({
     elevation: 1,
   },
   title: {
-    fontSize: 28,
+    fontSize: 34,
     fontWeight: '700',
+    letterSpacing: 0.4,
   },
   scrollView: {
     flex: 1,

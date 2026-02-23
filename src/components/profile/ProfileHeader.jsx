@@ -239,7 +239,7 @@ const styles = StyleSheet.create({
     borderWidth: 1.5,
     paddingVertical: 8,
     paddingHorizontal: 20,
-    borderRadius: 10,
+    borderRadius: 16,
     alignSelf: 'flex-start',
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.05,
@@ -254,7 +254,7 @@ const styles = StyleSheet.create({
   nudgeButton: {
     width: 36,
     height: 36,
-    borderRadius: 10,
+    borderRadius: 16,
     borderWidth: 1.5,
     justifyContent: 'center',
     alignItems: 'center',
@@ -265,7 +265,7 @@ const styles = StyleSheet.create({
   followButton: {
     paddingVertical: 8,
     paddingHorizontal: 20,
-    borderRadius: 10,
+    borderRadius: 16,
     alignSelf: 'flex-start',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.2,

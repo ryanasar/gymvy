@@ -195,7 +195,7 @@ const CreateSavedWorkoutScreen = () => {
             {item.name}
           </Text>
           <TouchableOpacity onPress={() => removeExercise(index)} style={styles.removeButton}>
-            <Ionicons name="close-circle" size={24} color="#EF4444" />
+            <Ionicons name="close-circle" size={24} color={colors.error} />
           </TouchableOpacity>
         </View>
 
@@ -278,7 +278,7 @@ const CreateSavedWorkoutScreen = () => {
       <View style={styles.exercisesHeader}>
         <Text style={[styles.sectionLabel, { color: colors.text }]}>Exercises</Text>
         <View style={[styles.counter, { backgroundColor: colors.cardBackground, borderColor: colors.border }]}>
-          <Text style={[styles.counterText, { color: colors.text }, selectedExercises.length >= 20 && { color: '#EF4444' }]}>
+          <Text style={[styles.counterText, { color: colors.text }, selectedExercises.length >= 20 && { color: colors.error }]}>
             {selectedExercises.length}/20
           </Text>
         </View>
@@ -468,7 +468,7 @@ const styles = StyleSheet.create({
   },
   textInput: {
     borderWidth: 1.5,
-    borderRadius: 12,
+    borderRadius: 20,
     paddingHorizontal: 16,
     paddingVertical: 14,
     fontSize: 16,
@@ -487,7 +487,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     paddingHorizontal: 12,
     paddingVertical: 6,
-    borderRadius: 8,
+    borderRadius: 20,
   },
   counterText: {
     fontSize: 14,
@@ -499,7 +499,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: 8,
     paddingVertical: 14,
-    borderRadius: 12,
+    borderRadius: 20,
     marginBottom: 16,
   },
   addExerciseText: {
@@ -507,7 +507,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   exerciseCard: {
-    borderRadius: 12,
+    borderRadius: 20,
     padding: 16,
     borderWidth: 1,
     marginBottom: 12,
@@ -524,7 +524,7 @@ const styles = StyleSheet.create({
   exerciseNumber: {
     width: 24,
     height: 24,
-    borderRadius: 12,
+    borderRadius: 20,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -559,7 +559,7 @@ const styles = StyleSheet.create({
   },
   smallInput: {
     borderWidth: 1,
-    borderRadius: 8,
+    borderRadius: 20,
     paddingHorizontal: 8,
     paddingVertical: 8,
     fontSize: 14,
@@ -605,7 +605,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     borderWidth: 1,
-    borderRadius: 12,
+    borderRadius: 20,
     paddingHorizontal: 16,
     paddingVertical: 12,
     gap: 12,

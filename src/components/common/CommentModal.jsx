@@ -13,7 +13,6 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import { Colors } from '@/constants/colors';
 import { useThemeColors } from '@/hooks/useThemeColors';
 import { createComment, getComments } from '@/services/api/posts';
 import { deleteComment } from '@/services/api/comments';
@@ -772,7 +771,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   input: {
-    borderRadius: 24,
+    borderRadius: 20,
     paddingHorizontal: 18,
     paddingVertical: 12,
     fontSize: 15,
@@ -788,7 +787,7 @@ const styles = StyleSheet.create({
   sendButton: {
     width: 44,
     height: 44,
-    borderRadius: 22,
+    borderRadius: 999,
     justifyContent: 'center',
     alignItems: 'center',
   },

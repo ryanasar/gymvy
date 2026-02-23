@@ -128,7 +128,7 @@ const ReorderExercisesModal = ({
                     onPress={() => onRemoveExercise(index)}
                     hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
                   >
-                    <Ionicons name="close-circle" size={24} color="#EF4444" />
+                    <Ionicons name="close-circle" size={24} color={colors.error} />
                   </TouchableOpacity>
                 </View>
               </ScaleDecorator>
@@ -145,7 +145,6 @@ export default ReorderExercisesModal;
 const styles = StyleSheet.create({
   gestureRoot: {
     flex: 1,
-    backgroundColor: Colors.light.background,
   },
   reorderModalHeader: {
     flexDirection: 'row',
@@ -154,23 +153,18 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingTop: 16,
     paddingBottom: 16,
-    backgroundColor: Colors.light.cardBackground,
     borderBottomWidth: 1,
-    borderBottomColor: Colors.light.borderLight,
   },
   reorderModalTitle: {
     fontSize: 18,
     fontWeight: '700',
-    color: Colors.light.text,
   },
   reorderCancelText: {
     fontSize: 16,
-    color: Colors.light.secondaryText,
     fontWeight: '500',
   },
   reorderDoneText: {
     fontSize: 16,
-    color: Colors.light.primary,
     fontWeight: '600',
   },
   reorderListContent: {
@@ -179,12 +173,10 @@ const styles = StyleSheet.create({
   reorderItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: Colors.light.cardBackground,
     padding: 16,
-    borderRadius: 12,
+    borderRadius: 16,
     marginBottom: 8,
     borderWidth: 1,
-    borderColor: Colors.light.borderLight,
   },
   reorderItemDragging: {
     shadowOffset: { width: 0, height: 8 },
@@ -209,13 +201,11 @@ const styles = StyleSheet.create({
     width: 4,
     height: 4,
     borderRadius: 2,
-    backgroundColor: Colors.light.secondaryText,
   },
   reorderExerciseNumber: {
     width: 28,
     height: 28,
-    borderRadius: 14,
-    backgroundColor: Colors.light.primary + '15',
+    borderRadius: 16,
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 12,
@@ -223,7 +213,6 @@ const styles = StyleSheet.create({
   reorderExerciseNumberText: {
     fontSize: 14,
     fontWeight: '700',
-    color: Colors.light.primary,
   },
   reorderExerciseInfo: {
     flex: 1,
@@ -231,12 +220,10 @@ const styles = StyleSheet.create({
   reorderExerciseName: {
     fontSize: 16,
     fontWeight: '600',
-    color: Colors.light.text,
     marginBottom: 2,
   },
   reorderExerciseDetails: {
     fontSize: 13,
-    color: Colors.light.secondaryText,
   },
   reorderRemoveButton: {
     padding: 4,
@@ -251,12 +238,10 @@ const styles = StyleSheet.create({
     marginTop: 8,
     marginBottom: 4,
     paddingVertical: 14,
-    borderRadius: 12,
-    backgroundColor: Colors.light.primary,
+    borderRadius: 20,
   },
   addExerciseButtonText: {
     fontSize: 16,
     fontWeight: '600',
-    color: Colors.light.onPrimary,
   },
 });

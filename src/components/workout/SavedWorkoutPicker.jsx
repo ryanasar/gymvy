@@ -1,7 +1,6 @@
 import React from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { Colors } from '@/constants/colors';
 import { useThemeColors } from '@/hooks/useThemeColors';
 
 /**
@@ -55,11 +54,9 @@ const styles = StyleSheet.create({
   workoutCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: Colors.light.cardBackground,
     borderRadius: 20,
     padding: 18,
     borderWidth: 0,
-    shadowColor: Colors.light.shadow,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.08,
     shadowRadius: 16,
@@ -68,7 +65,7 @@ const styles = StyleSheet.create({
   emojiContainer: {
     width: 44,
     height: 44,
-    borderRadius: 14,
+    borderRadius: 16,
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 12,
@@ -82,12 +79,10 @@ const styles = StyleSheet.create({
   name: {
     fontSize: 16,
     fontWeight: '600',
-    color: Colors.light.text,
     marginBottom: 2,
   },
   exerciseCount: {
     fontSize: 13,
-    color: Colors.light.secondaryText,
   },
 });
 

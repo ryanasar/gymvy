@@ -174,8 +174,6 @@ export const scheduleStreakLostNotification = async (streak, missedDate) => {
       trigger: { date: trigger },
       identifier: STREAK_LOST_IDENTIFIER,
     });
-
-    console.log('[PushNotification] Scheduled streak lost notification for:', trigger.toISOString());
   } catch (error) {
     console.error('[PushNotification] Error scheduling streak lost notification:', error);
   }

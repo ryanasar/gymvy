@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { useThemeColors } from '@/hooks/useThemeColors';
-import { Spacing, FontSize, FontWeight, Radius } from '@/constants/theme';
+import { Spacing, FontSize, FontWeight, Radius, Shadows } from '@/constants/theme';
 
 /**
  * StatCard - A reusable card component for displaying statistics with optional chart
@@ -39,7 +39,8 @@ const StatCard = ({
         styles.card,
         {
           backgroundColor: colors.cardBackground,
-          borderColor: colors.borderLight,
+          ...Shadows.card,
+          shadowColor: colors.shadow,
         },
         style,
       ]}
@@ -92,9 +93,8 @@ const StatCard = ({
 
 const styles = StyleSheet.create({
   card: {
-    borderRadius: Radius.lg,
-    padding: Spacing.lg,
-    borderWidth: 1,
+    borderRadius: Radius.xl,
+    padding: Spacing.card,
     marginBottom: Spacing.lg,
   },
   header: {

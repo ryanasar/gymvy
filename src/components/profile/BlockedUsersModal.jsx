@@ -154,7 +154,7 @@ const styles = StyleSheet.create({
   unblockButton: {
     paddingHorizontal: 16,
     paddingVertical: 8,
-    borderRadius: 8,
+    borderRadius: 20,
     borderWidth: 1,
   },
   unblockText: {

@@ -75,7 +75,7 @@ const SplitReview = ({ splitData }) => {
           icon="bed-outline"
           value={getRestDaysCount()}
           label="Rest"
-          color="#F59E0B"
+          color={colors.warning}
         />
         <StatCard
           icon="fitness-outline"
@@ -96,20 +96,21 @@ const SplitReview = ({ splitData }) => {
               styles.dayCard,
               {
                 backgroundColor: colors.cardBackground,
-                borderLeftColor: day.isRest ? '#F59E0B' : colors.primary,
+                shadowColor: colors.shadow,
+                borderLeftColor: day.isRest ? colors.warning : colors.primary,
               }
             ]}
           >
             <View style={styles.dayCardHeader}>
-              <View style={[styles.dayBadge, { backgroundColor: day.isRest ? '#F59E0B20' : colors.primary + '20' }]}>
-                <Text style={[styles.dayBadgeText, { color: day.isRest ? '#F59E0B' : colors.primary }]}>
+              <View style={[styles.dayBadge, { backgroundColor: day.isRest ? colors.warning + '20' : colors.primary + '20' }]}>
+                <Text style={[styles.dayBadgeText, { color: day.isRest ? colors.warning : colors.primary }]}>
                   Day {index + 1}
                 </Text>
               </View>
               {day.isRest && (
-                <View style={[styles.restIndicator, { backgroundColor: '#F59E0B20' }]}>
-                  <Ionicons name="bed-outline" size={14} color="#F59E0B" />
-                  <Text style={[styles.restIndicatorText, { color: '#F59E0B' }]}>Rest</Text>
+                <View style={[styles.restIndicator, { backgroundColor: colors.warning + '20' }]}>
+                  <Ionicons name="bed-outline" size={14} color={colors.warning} />
+                  <Text style={[styles.restIndicatorText, { color: colors.warning }]}>Rest</Text>
                 </View>
               )}
             </View>
@@ -284,7 +285,7 @@ const styles = StyleSheet.create({
   dayBadge: {
     paddingHorizontal: 10,
     paddingVertical: 4,
-    borderRadius: 12,
+    borderRadius: 16,
   },
   dayBadgeText: {
     fontSize: 12,
@@ -295,7 +296,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 10,
     paddingVertical: 4,
-    borderRadius: 12,
+    borderRadius: 16,
     gap: 4,
   },
   restIndicatorText: {

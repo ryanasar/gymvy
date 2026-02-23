@@ -1,8 +1,8 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
-import { Colors } from '@/constants/colors';
 import { useThemeColors } from '@/hooks/useThemeColors';
 import Badge from '@/components/ui/Badge';
+import { Radius, Spacing, Shadows } from '@/constants/theme';
 
 const SplitCard = ({ split, onPress, onDelete, showDelete = false }) => {
   const colors = useThemeColors();
@@ -64,14 +64,9 @@ export default SplitCard;
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: Colors.light.cardBackground,
-    borderRadius: 20,
-    padding: 18,
-    shadowColor: Colors.light.shadow,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.08,
-    shadowRadius: 16,
-    elevation: 3,
+    borderRadius: Radius.xl,
+    padding: Spacing.card,
+    ...Shadows.card,
   },
   activeCard: {
     shadowOpacity: 0.15,
@@ -88,7 +83,7 @@ const styles = StyleSheet.create({
   },
   emoji: {
     fontSize: 24,
-    marginRight: 12,
+    marginRight: Spacing.md,
   },
   splitText: {
     flex: 1,
@@ -101,35 +96,31 @@ const styles = StyleSheet.create({
   splitName: {
     fontSize: 16,
     fontWeight: '600',
-    color: Colors.light.text,
-    marginRight: 8,
+    marginRight: Spacing.sm,
   },
   splitDays: {
     fontSize: 14,
-    color: Colors.light.secondaryText,
   },
   workoutNames: {
     fontSize: 12,
-    color: Colors.light.secondaryText,
-    marginTop: 4,
+    marginTop: Spacing.xs,
     fontStyle: 'italic',
   },
   actions: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    gap: Spacing.sm,
   },
   deleteButton: {
-    padding: 4,
+    padding: Spacing.xs,
   },
   deleteButtonText: {
     fontSize: 18,
   },
   arrow: {
-    marginLeft: 4,
+    marginLeft: Spacing.xs,
   },
   arrowText: {
     fontSize: 16,
-    color: Colors.light.secondaryText,
   },
 });

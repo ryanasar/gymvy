@@ -1,14 +1,12 @@
 import React from 'react';
-import { View, Text, StyleSheet, Dimensions } from 'react-native';
+import { View, Text, StyleSheet, useWindowDimensions } from 'react-native';
 import Svg, { Path, Defs, LinearGradient, Stop, Circle } from 'react-native-svg';
+import { Layout } from '@/constants/theme';
 
-const { width: screenWidth } = Dimensions.get('window');
 const Y_AXIS_WIDTH = 44;
 const CHART_PADDING = 20;
 const CARD_HORIZONTAL_PADDING = 16; // StatCard padding
 const SCREEN_HORIZONTAL_PADDING = 8; // scrollContent padding
-// Chart width = screen - scrollPadding*2 - cardPadding*2 - yAxisWidth
-const defaultChartWidth = screenWidth - (SCREEN_HORIZONTAL_PADDING * 2) - (CARD_HORIZONTAL_PADDING * 2) - Y_AXIS_WIDTH;
 
 const formatDate = (dateStr) => {
   if (!dateStr) return '';
@@ -51,7 +49,9 @@ const createAreaPath = (points, chartHeight) => {
 };
 
 const SimpleLineChart = ({ data, lineColor, colors, chartHeight = 180 }) => {
-  const chartWidth = defaultChartWidth;
+  const { width: screenWidth } = useWindowDimensions();
+  const effectiveScreenWidth = Math.min(screenWidth, Layout.maxContentWidth);
+  const chartWidth = effectiveScreenWidth - (SCREEN_HORIZONTAL_PADDING * 2) - (CARD_HORIZONTAL_PADDING * 2) - Y_AXIS_WIDTH;
   const innerHeight = chartHeight - CHART_PADDING * 2;
 
   if (!data || data.length === 0) {

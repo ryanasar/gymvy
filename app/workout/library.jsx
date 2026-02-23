@@ -70,7 +70,7 @@ const WorkoutLibraryScreen = () => {
   };
 
   const renderWorkoutCard = ({ item }) => (
-    <View style={[styles.card, { backgroundColor: colors.cardBackground, borderColor: colors.borderLight }]}>
+    <View style={[styles.card, { backgroundColor: colors.cardBackground, shadowColor: colors.shadow }]}>
       <View style={styles.cardHeader}>
         <Text style={styles.emoji}>{item.emoji || '💪'}</Text>
         <View style={styles.cardInfo}>
@@ -87,7 +87,7 @@ const WorkoutLibraryScreen = () => {
           style={styles.deleteButton}
           hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
         >
-          <Ionicons name="trash-outline" size={20} color={colors.error || '#EF4444'} />
+          <Ionicons name="trash-outline" size={20} color={colors.error} />
         </TouchableOpacity>
       </View>
 
@@ -215,7 +215,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: 8,
     paddingVertical: 14,
-    borderRadius: 12,
+    borderRadius: 20,
     marginTop: 24,
   },
   createButtonText: {
@@ -226,10 +226,14 @@ const styles = StyleSheet.create({
     padding: 16,
   },
   card: {
-    borderRadius: 12,
-    padding: 16,
+    borderRadius: 20,
+    padding: 18,
     marginBottom: 12,
-    borderWidth: 1,
+    borderWidth: 0,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 16,
+    elevation: 3,
   },
   cardHeader: {
     flexDirection: 'row',
@@ -261,7 +265,7 @@ const styles = StyleSheet.create({
   exercisePreview: {
     marginTop: 12,
     padding: 12,
-    borderRadius: 8,
+    borderRadius: 20,
   },
   exercisePreviewText: {
     fontSize: 13,

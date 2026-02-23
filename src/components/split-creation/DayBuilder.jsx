@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, TextInput, StyleSheet, ScrollView, TouchableOpacity, Alert } from 'react-native';
-import { Colors } from '@/constants/colors';
 import { useThemeColors } from '@/hooks/useThemeColors';
 import { exercises } from '@/data/exercises/exerciseDatabase';
 import ExercisePickerScreen from '@/components/exercises/ExercisePickerScreen';
@@ -271,7 +270,7 @@ const DayBuilder = ({ splitData, updateSplitData }) => {
                   <Text style={[
                     styles.exerciseCounterText,
                     { color: colors.text },
-                    (currentDay.exercises?.length >= 20) && styles.exerciseCounterTextLimit
+                    (currentDay.exercises?.length >= 20) && { color: colors.error }
                   ]}>
                     {currentDay.exercises?.length || 0}/20
                   </Text>
@@ -393,22 +392,17 @@ export default DayBuilder;
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.light.background,
     margin: 16,
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: Colors.light.border,
     overflow: 'hidden',
-    shadowColor: Colors.light.shadow,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.08,
     shadowRadius: 8,
     elevation: 4,
   },
   combinedHeader: {
-    backgroundColor: Colors.light.cardBackground,
     borderBottomWidth: 1,
-    borderBottomColor: Colors.light.borderLight,
   },
   navRow: {
     flexDirection: 'row',
@@ -421,38 +415,30 @@ const styles = StyleSheet.create({
   navButton: {
     paddingHorizontal: 16,
     paddingVertical: 8,
-    borderRadius: 8,
-    backgroundColor: Colors.light.primary,
-    shadowColor: Colors.light.primary,
+    borderRadius: 20,
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.2,
     shadowRadius: 2,
     elevation: 2,
   },
   navButtonDisabled: {
-    backgroundColor: Colors.light.borderLight,
     shadowOpacity: 0,
   },
   navButtonText: {
     fontSize: 13,
     fontWeight: '600',
-    color: Colors.light.onPrimary,
   },
   navButtonTextDisabled: {
-    color: Colors.light.secondaryText,
   },
   navButtonSecondary: {
     paddingHorizontal: 16,
     paddingVertical: 8,
-    borderRadius: 8,
-    backgroundColor: Colors.light.cardBackground,
+    borderRadius: 20,
     borderWidth: 1,
-    borderColor: Colors.light.border,
   },
   navButtonSecondaryText: {
     fontSize: 13,
     fontWeight: '600',
-    color: Colors.light.text,
   },
   navButtonPlaceholder: {
     width: 56,
@@ -460,21 +446,17 @@ const styles = StyleSheet.create({
   },
   dayIndicator: {
     alignItems: 'center',
-    backgroundColor: Colors.light.primary + '10',
     paddingHorizontal: 16,
     paddingVertical: 8,
-    borderRadius: 12,
+    borderRadius: 16,
     borderWidth: 1,
-    borderColor: Colors.light.primary + '20',
   },
   dayNumber: {
     fontSize: 18,
     fontWeight: '700',
-    color: Colors.light.primary,
   },
   dayProgress: {
     fontSize: 11,
-    color: Colors.light.primary,
     marginTop: 2,
     fontWeight: '600',
   },
@@ -490,20 +472,16 @@ const styles = StyleSheet.create({
     width: 32,
     height: 32,
     borderRadius: 16,
-    backgroundColor: Colors.light.borderLight,
     justifyContent: 'center',
     alignItems: 'center',
   },
   progressDotActive: {
-    backgroundColor: Colors.light.primary,
   },
   progressDotCompleted: {
-    backgroundColor: Colors.light.primary + '80',
   },
   progressDotText: {
     fontSize: 12,
     fontWeight: '600',
-    color: Colors.light.onPrimary,
   },
   content: {
     flex: 1,
@@ -532,29 +510,23 @@ const styles = StyleSheet.create({
   sectionLabel: {
     fontSize: 18,
     fontWeight: '700',
-    color: Colors.light.text,
   },
   sectionRequiredIndicator: {
     fontSize: 11,
     fontWeight: '600',
-    color: Colors.light.primary,
-    backgroundColor: Colors.light.primary + '15',
     paddingHorizontal: 6,
     paddingVertical: 2,
-    borderRadius: 4,
+    borderRadius: 16,
   },
   sectionOptionalIndicator: {
     fontSize: 11,
     fontWeight: '500',
-    color: Colors.light.secondaryText,
-    backgroundColor: Colors.light.borderLight,
     paddingHorizontal: 6,
     paddingVertical: 2,
-    borderRadius: 4,
+    borderRadius: 16,
   },
   sectionDescription: {
     fontSize: 13,
-    color: Colors.light.secondaryText,
     marginBottom: 16,
     lineHeight: 18,
   },
@@ -565,8 +537,7 @@ const styles = StyleSheet.create({
   },
   dayTypeToggleCard: {
     flexDirection: 'row',
-    backgroundColor: Colors.light.borderLight,
-    borderRadius: 10,
+    borderRadius: 16,
     padding: 3,
     gap: 2,
   },
@@ -577,12 +548,10 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingVertical: 8,
     paddingHorizontal: 12,
-    borderRadius: 7,
+    borderRadius: 16,
     gap: 6,
   },
   dayTypeOptionActive: {
-    backgroundColor: Colors.light.cardBackground,
-    shadowColor: Colors.light.shadow,
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.1,
     shadowRadius: 2,
@@ -594,19 +563,14 @@ const styles = StyleSheet.create({
   dayTypeText: {
     fontSize: 14,
     fontWeight: '600',
-    color: Colors.light.secondaryText,
   },
   dayTypeTextActive: {
-    color: Colors.light.text,
   },
 
   // Workout Name Card
   workoutNameCard: {
-    backgroundColor: Colors.light.cardBackground,
-    borderRadius: 12,
+    borderRadius: 16,
     borderWidth: 1,
-    borderColor: Colors.light.border,
-    shadowColor: Colors.light.shadow,
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.05,
     shadowRadius: 4,
@@ -616,17 +580,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 16,
     fontSize: 16,
-    color: Colors.light.text,
     fontWeight: '500',
   },
 
   // Description Card
   descriptionCard: {
-    backgroundColor: Colors.light.cardBackground,
-    borderRadius: 12,
+    borderRadius: 16,
     borderWidth: 1,
-    borderColor: Colors.light.border,
-    shadowColor: Colors.light.shadow,
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.05,
     shadowRadius: 4,
@@ -636,18 +596,14 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 16,
     fontSize: 15,
-    color: Colors.light.text,
     height: 90,
     textAlignVertical: 'top',
   },
   restDayContainer: {
     alignItems: 'center',
     paddingVertical: 48,
-    backgroundColor: Colors.light.cardBackground,
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: Colors.light.borderLight,
-    shadowColor: Colors.light.shadow,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.04,
     shadowRadius: 8,
@@ -660,12 +616,10 @@ const styles = StyleSheet.create({
   restDayTitle: {
     fontSize: 24,
     fontWeight: '700',
-    color: Colors.light.text,
     marginBottom: 8,
   },
   restDayDescription: {
     fontSize: 16,
-    color: Colors.light.secondaryText,
     textAlign: 'center',
     lineHeight: 22,
     paddingHorizontal: 20,
@@ -678,56 +632,43 @@ const styles = StyleSheet.create({
   },
   addExerciseButton: {
     flex: 1,
-    backgroundColor: Colors.light.primary,
     paddingHorizontal: 20,
     paddingVertical: 12,
-    borderRadius: 10,
-    shadowColor: Colors.light.primary,
+    borderRadius: 20,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.2,
     shadowRadius: 4,
     elevation: 2,
   },
   addExerciseButtonDisabled: {
-    backgroundColor: Colors.light.borderLight,
     shadowOpacity: 0,
   },
   addExerciseText: {
-    color: Colors.light.onPrimary,
     fontSize: 15,
     fontWeight: '600',
     textAlign: 'center',
   },
   addExerciseTextDisabled: {
-    color: Colors.light.secondaryText,
   },
   exerciseCounter: {
-    backgroundColor: Colors.light.cardBackground,
     borderWidth: 1,
-    borderColor: Colors.light.border,
     paddingHorizontal: 12,
     paddingVertical: 12,
-    borderRadius: 10,
+    borderRadius: 16,
     minWidth: 60,
     alignItems: 'center',
   },
   exerciseCounterText: {
     fontSize: 14,
     fontWeight: '700',
-    color: Colors.light.text,
   },
-  exerciseCounterTextLimit: {
-    color: '#EF4444',
-  },
+  exerciseCounterTextLimit: {},
   exercisesList: {
     gap: 20, // Improved spacing between exercise cards
   },
   exerciseCard: {
-    backgroundColor: Colors.light.cardBackground,
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: Colors.light.borderLight,
-    shadowColor: Colors.light.shadow,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.06,
     shadowRadius: 8,
@@ -743,8 +684,7 @@ const styles = StyleSheet.create({
   exerciseNumberContainer: {
     width: 28,
     height: 28,
-    borderRadius: 8,
-    backgroundColor: Colors.light.primary + '15',
+    borderRadius: 16,
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 12,
@@ -752,31 +692,26 @@ const styles = StyleSheet.create({
   exerciseNumber: {
     fontSize: 13,
     fontWeight: '700',
-    color: Colors.light.primary,
   },
   exerciseName: {
     fontSize: 16,
     fontWeight: '600',
-    color: Colors.light.text,
     flex: 1,
     lineHeight: 20,
   },
   removeButton: {
     width: 28,
     height: 28,
-    backgroundColor: Colors.light.borderLight,
-    borderRadius: 8,
+    borderRadius: 16,
     justifyContent: 'center',
     alignItems: 'center',
   },
   removeButtonText: {
     fontSize: 16,
-    color: Colors.light.secondaryText,
     lineHeight: 16,
   },
   exerciseDivider: {
     height: 1,
-    backgroundColor: Colors.light.borderLight,
     marginHorizontal: 20,
     marginBottom: 16,
   },
@@ -792,31 +727,24 @@ const styles = StyleSheet.create({
   inputLabel: {
     fontSize: 11,
     fontWeight: '700',
-    color: Colors.light.text,
     marginBottom: 6,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
   },
   input: {
-    backgroundColor: Colors.light.background,
     borderWidth: 1,
-    borderColor: Colors.light.border,
-    borderRadius: 8,
+    borderRadius: 16,
     paddingHorizontal: 8,
     paddingVertical: 10,
     fontSize: 14,
-    color: Colors.light.text,
     textAlign: 'center',
     fontWeight: '500',
   },
   emptyExercises: {
     alignItems: 'center',
     paddingVertical: 48,
-    backgroundColor: Colors.light.cardBackground,
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: Colors.light.borderLight,
-    shadowColor: Colors.light.shadow,
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.04,
     shadowRadius: 4,
@@ -824,7 +752,6 @@ const styles = StyleSheet.create({
   },
   emptyExercisesText: {
     fontSize: 15,
-    color: Colors.light.secondaryText,
     textAlign: 'center',
     lineHeight: 21,
     paddingHorizontal: 20,
