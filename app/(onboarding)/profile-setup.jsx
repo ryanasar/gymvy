@@ -74,11 +74,6 @@ export default function ProfileSetup() {
     width: `${progressWidth.value}%`,
   }));
 
-  const checkUsernameAvailabilityHandler = async (username) => {
-    if (!username.trim()) return false;
-    return await checkUsernameAvailability(username);
-  };
-
   const handleNext = async () => {
     if (!formData.name.trim() || !formData.username.trim()) {
       Alert.alert('Error', 'Please fill in all required fields');
@@ -87,9 +82,16 @@ export default function ProfileSetup() {
 
     setLoading(true);
 
-    const isUsernameAvailable = await checkUsernameAvailabilityHandler(formData.username);
-    if (!isUsernameAvailable) {
-      Alert.alert('Error', 'Username is already taken. Please choose another one.');
+    try {
+      const isUsernameAvailable = await checkUsernameAvailability(formData.username, user?.id);
+      if (!isUsernameAvailable) {
+        Alert.alert('Error', 'Username is already taken. Please choose another one.');
+        setLoading(false);
+        return;
+      }
+    } catch (error) {
+      console.error('Error checking username:', error);
+      Alert.alert('Error', 'Failed to check username availability. Please try again.');
       setLoading(false);
       return;
     }
@@ -101,7 +103,7 @@ export default function ProfileSetup() {
       });
 
       setUser(updatedUser);
-      router.push('/(onboarding)/complete');
+      router.push('/(onboarding)/find-friends');
     } catch (error) {
       console.error('Error updating profile:', error);
       Alert.alert('Error', 'Failed to update profile. Please try again.');
@@ -110,7 +112,7 @@ export default function ProfileSetup() {
     }
   };
 
-  const steps = [1, 2, 3];
+  const steps = [1, 2, 3, 4];
 
   const getInputStyle = (inputName) => {
     const isFocused = focusedInput === inputName;

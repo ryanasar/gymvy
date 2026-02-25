@@ -6,60 +6,62 @@ import { WebView } from 'react-native-webview';
 const themes = {
   dark: {
     background: '#0A0A0F',
-    cardBg: 'rgba(18, 18, 26, 0.8)',
-    cardBgHighlight: 'linear-gradient(135deg, rgba(129, 140, 248, 0.2) 0%, rgba(52, 211, 153, 0.1) 100%)',
-    text: '#F8FAFC',
-    textSecondary: '#B4C0CE',
-    textMuted: '#64748B',
-    primary: '#818CF8',
-    primaryLight: '#A5B4FC',
-    accent: '#34D399',
-    warning: '#FBBF24',
-    border: 'rgba(129, 140, 248, 0.2)',
-    borderHighlight: 'rgba(129, 140, 248, 0.4)',
-    gradientBg: `
-      radial-gradient(ellipse 80% 50% at 20% 10%, rgba(129, 140, 248, 0.25) 0%, transparent 50%),
-      radial-gradient(ellipse 60% 40% at 80% 90%, rgba(52, 211, 153, 0.2) 0%, transparent 50%),
-      radial-gradient(ellipse 50% 30% at 50% 50%, rgba(129, 140, 248, 0.1) 0%, transparent 50%)
-    `,
-    heroGradient: 'linear-gradient(180deg, #F8FAFC 0%, #818CF8 100%)',
-    decorOpacity: 0.15,
+    cardBg: 'rgba(255,255,255,0.06)',
+    cardInsetHighlight: 'inset 0 1px 0 rgba(255,255,255,0.08)',
+    cardShadow: '0 8px 32px rgba(0,0,0,0.3)',
+    streakGlow: '0 0 0 1px rgba(251,191,36,0.2)',
+    text: 'rgba(255,255,255,0.95)',
+    textSecondary: 'rgba(255,255,255,0.5)',
+    primary: '#A78BFA',
+    accent: '#FBBF24',
+    heroGlow: '0 0 60px rgba(167,139,250,0.15)',
+    divider: 'rgba(255,255,255,0.15)',
+    runnerUpBg: 'rgba(255,255,255,0.03)',
+    subtleBg: `radial-gradient(ellipse 80% 60% at 50% 40%, rgba(139,92,246,0.04) 0%, transparent 70%)`,
   },
   light: {
-    background: '#F1F5F9',
-    cardBg: 'rgba(255, 255, 255, 0.9)',
-    cardBgHighlight: 'linear-gradient(135deg, rgba(99, 102, 241, 0.15) 0%, rgba(16, 185, 129, 0.1) 100%)',
-    text: '#0F172A',
-    textSecondary: '#64748B',
-    textMuted: '#94A3B8',
-    primary: '#6366F1',
-    primaryLight: '#818CF8',
-    accent: '#10B981',
-    warning: '#F59E0B',
-    border: 'rgba(99, 102, 241, 0.2)',
-    borderHighlight: 'rgba(99, 102, 241, 0.4)',
-    gradientBg: `
-      radial-gradient(ellipse 80% 50% at 20% 10%, rgba(99, 102, 241, 0.2) 0%, transparent 50%),
-      radial-gradient(ellipse 60% 40% at 80% 90%, rgba(16, 185, 129, 0.15) 0%, transparent 50%),
-      radial-gradient(ellipse 50% 30% at 50% 50%, rgba(99, 102, 241, 0.08) 0%, transparent 50%)
-    `,
-    heroGradient: 'linear-gradient(180deg, #0F172A 0%, #6366F1 100%)',
-    decorOpacity: 0.1,
+    background: '#F8F9FA',
+    cardBg: '#FFFFFF',
+    cardInsetHighlight: 'none',
+    cardShadow: '0 4px 20px rgba(0,0,0,0.04)',
+    streakGlow: '0 0 0 1px rgba(245,158,11,0.2)',
+    text: 'rgba(0,0,0,0.9)',
+    textSecondary: 'rgba(0,0,0,0.5)',
+    primary: '#7C3AED',
+    accent: '#F59E0B',
+    heroGlow: '0 0 60px rgba(124,58,237,0.1)',
+    divider: 'rgba(0,0,0,0.1)',
+    runnerUpBg: 'rgba(0,0,0,0.03)',
+    subtleBg: `radial-gradient(ellipse 80% 60% at 50% 40%, rgba(124,58,237,0.03) 0%, transparent 70%)`,
   },
 };
+
+// Contextual motivational messages based on workout count
+function getContextMessage(count) {
+  if (count >= 25) return 'An unstoppable month';
+  if (count >= 20) return 'Your strongest month yet';
+  if (count >= 15) return 'Consistency at its finest';
+  if (count >= 10) return 'Solid work this month';
+  if (count >= 5) return 'Building momentum';
+  return 'Every rep counts';
+}
 
 // Generate the HTML template with data interpolation
 const generateRecapHTML = (data, theme = 'dark') => {
   const t = themes[theme] || themes.dark;
+  const contextMessage = getContextMessage(data.totalWorkouts || 0);
+
+  // Build runner-ups from topExercises (index 1 and 2)
+  const runnerUps = (data.topExercises || []).slice(1, 3);
 
   return `
 <!DOCTYPE html>
 <html>
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=1080, height=1920, initial-scale=1.0">
+  <meta name="viewport" content="width=1080, initial-scale=0.3333, maximum-scale=0.3333">
   <style>
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
 
     * {
       margin: 0;
@@ -77,344 +79,287 @@ const generateRecapHTML = (data, theme = 'dark') => {
       position: relative;
     }
 
-    /* Animated gradient background */
+    /* Subtle radial gradient background */
     .bg-gradient {
       position: absolute;
       top: 0;
       left: 0;
       right: 0;
       bottom: 0;
-      background: ${t.gradientBg};
+      background: ${t.subtleBg};
+    }
+
+    /* Noise texture overlay */
+    .noise {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      opacity: 0.03;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+      background-repeat: repeat;
+      background-size: 256px 256px;
     }
 
     .container {
       position: relative;
       z-index: 1;
-      padding: 80px 60px;
+      padding: 72px 64px;
       height: 100%;
       display: flex;
       flex-direction: column;
     }
 
-    /* Header */
-    .header {
-      text-align: center;
-      margin-bottom: 40px;
-    }
-
-    .month-label {
-      font-size: 28px;
-      font-weight: 500;
-      color: ${t.textSecondary};
+    /* Month badge — top-left */
+    .month-badge {
+      font-size: 13px;
+      font-weight: 600;
       text-transform: uppercase;
-      letter-spacing: 6px;
-      margin-bottom: 16px;
+      letter-spacing: 1.5px;
+      opacity: 0.4;
+      margin-bottom: 0;
+      text-align: left;
     }
 
-    .recap-title {
-      font-size: 72px;
-      font-weight: 900;
-      background: linear-gradient(135deg, ${t.primary} 0%, ${t.primaryLight} 50%, ${t.accent} 100%);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-      letter-spacing: -2px;
-    }
-
-    /* Hero stat */
+    /* Hero section */
     .hero-section {
       text-align: center;
-      margin: 60px 0;
+      margin-top: 80px;
+      margin-bottom: 60px;
     }
 
     .hero-number {
-      font-size: 200px;
-      font-weight: 900;
-      line-height: 0.9;
-      background: ${t.heroGradient};
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
+      font-size: 148px;
+      font-weight: 800;
+      line-height: 1;
+      letter-spacing: -2px;
+      opacity: 0.95;
+      text-shadow: ${t.heroGlow};
     }
 
     .hero-label {
-      font-size: 36px;
-      font-weight: 600;
-      color: ${t.textSecondary};
-      margin-top: 8px;
+      font-size: 12px;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      opacity: 0.5;
+      margin-top: 16px;
     }
 
-    .hero-subtitle {
-      font-size: 24px;
-      color: ${t.textMuted};
-      margin-top: 12px;
+    .hero-context {
+      font-size: 17px;
+      font-weight: 400;
+      opacity: 0.7;
+      margin-top: 20px;
     }
 
-    /* Stats grid */
-    .stats-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
+    /* Stats — asymmetric 3-card layout */
+    .stats-row {
+      display: flex;
       gap: 24px;
-      margin: 40px 0;
+      margin-bottom: 24px;
     }
 
     .stat-card {
+      flex: 1;
       background: ${t.cardBg};
-      border: 1px solid ${t.border};
-      border-radius: 24px;
-      padding: 32px;
-      text-align: center;
+      border-radius: 20px;
+      padding: 24px;
+      box-shadow: ${t.cardShadow}, ${t.cardInsetHighlight};
     }
 
-    .stat-card.highlight {
-      background: ${t.cardBgHighlight};
-      border-color: ${t.borderHighlight};
+    .stat-card.stagger-up {
+      transform: translateY(-10px);
+    }
+
+    .stat-card.stagger-down {
+      transform: translateY(10px);
+    }
+
+    .stat-card.streak {
+      box-shadow: ${t.cardShadow}, ${t.cardInsetHighlight}, ${t.streakGlow};
+    }
+
+    .stat-card.full-width {
+      width: 100%;
     }
 
     .stat-value {
-      font-size: 56px;
-      font-weight: 800;
-      color: ${t.text};
+      font-size: 52px;
+      font-weight: 700;
       line-height: 1;
-    }
-
-    .stat-value.accent {
-      color: ${t.accent};
-    }
-
-    .stat-value.primary {
-      color: ${t.primary};
-    }
-
-    .stat-value.warning {
-      color: ${t.warning};
+      letter-spacing: -1px;
     }
 
     .stat-label {
-      font-size: 20px;
-      color: ${t.textSecondary};
-      margin-top: 8px;
-      font-weight: 500;
-    }
-
-    .stat-unit {
-      font-size: 28px;
+      font-size: 11px;
       font-weight: 600;
-      color: ${t.textMuted};
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      opacity: 0.5;
+      margin-top: 10px;
     }
 
-    /* Highlight section */
-    .highlight-section {
-      background: ${theme === 'dark'
-        ? 'linear-gradient(135deg, rgba(129, 140, 248, 0.15) 0%, rgba(18, 18, 26, 0.9) 100%)'
-        : 'linear-gradient(135deg, rgba(99, 102, 241, 0.12) 0%, rgba(255, 255, 255, 0.95) 100%)'
-      };
-      border: 1px solid ${t.borderHighlight};
-      border-radius: 32px;
-      padding: 40px;
-      margin: 40px 0;
+    /* Signature move section */
+    .signature-section {
+      margin-top: 56px;
       text-align: center;
     }
 
-    .highlight-emoji {
-      font-size: 64px;
-      margin-bottom: 16px;
+    .signature-divider {
+      width: 60%;
+      height: 1px;
+      background: ${t.divider};
+      margin: 0 auto 40px auto;
     }
 
-    .highlight-title {
-      font-size: 24px;
-      color: ${t.textSecondary};
-      font-weight: 500;
-      margin-bottom: 8px;
-    }
-
-    .highlight-value {
-      font-size: 44px;
-      font-weight: 800;
-      color: ${t.text};
-    }
-
-    .highlight-value span {
-      color: ${t.primary};
-    }
-
-    /* Top exercises */
-    .top-exercises {
-      margin: 40px 0;
-    }
-
-    .section-title {
-      font-size: 28px;
-      font-weight: 700;
-      color: ${t.text};
+    .signature-title {
+      font-size: 14px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      opacity: 0.6;
       margin-bottom: 24px;
+    }
+
+    .signature-main {
       display: flex;
       align-items: center;
-      gap: 12px;
-    }
-
-    .section-title::before {
-      content: '';
-      width: 4px;
-      height: 28px;
-      background: linear-gradient(180deg, ${t.primary} 0%, ${t.accent} 100%);
-      border-radius: 2px;
-    }
-
-    .exercise-list {
-      display: flex;
-      flex-direction: column;
+      justify-content: center;
       gap: 16px;
     }
 
-    .exercise-item {
-      display: flex;
-      align-items: center;
-      gap: 20px;
-      background: ${theme === 'dark' ? 'rgba(18, 18, 26, 0.6)' : 'rgba(255, 255, 255, 0.8)'};
-      border-radius: 16px;
-      padding: 20px 24px;
+    .signature-trophy {
+      font-size: 36px;
+      filter: drop-shadow(0 4px 8px rgba(251,191,36,0.3));
     }
 
-    .exercise-rank {
-      font-size: 32px;
-      font-weight: 800;
-      color: ${t.primary};
-      width: 50px;
-    }
-
-    .exercise-name {
-      flex: 1;
-      font-size: 26px;
-      font-weight: 600;
-      color: ${t.text};
-    }
-
-    .exercise-stat {
+    .signature-name {
       font-size: 22px;
-      color: ${t.accent};
+      font-weight: 600;
+      letter-spacing: 0;
+    }
+
+    .signature-sets {
+      font-size: 14px;
+      opacity: 0.6;
+      margin-top: 8px;
+    }
+
+    /* Runner-ups */
+    .runner-ups {
+      background: ${t.runnerUpBg};
+      border-radius: 16px;
+      padding: 20px 28px;
+      margin-top: 28px;
+      display: inline-block;
+    }
+
+    .runner-ups-label {
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      opacity: 0.4;
+      margin-bottom: 12px;
+    }
+
+    .runner-up-item {
+      font-size: 15px;
+      opacity: 0.8;
+      line-height: 1.8;
+    }
+
+    .runner-up-rank {
+      opacity: 0.5;
       font-weight: 600;
     }
 
     /* Footer */
     .footer {
-      margin-top: auto;
+      margin-top: 72px;
       text-align: center;
-      padding-top: 40px;
+      margin-top: auto;
+      padding-top: 72px;
     }
 
-    .branding {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 12px;
+    .footer-brand {
+      font-size: 18px;
+      font-weight: 500;
+      letter-spacing: 0.3px;
     }
 
-    .logo-text {
-      font-size: 36px;
-      font-weight: 800;
-      background: linear-gradient(135deg, ${t.primary} 0%, ${t.accent} 100%);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-    }
-
-    .tagline {
-      font-size: 20px;
-      color: ${t.textMuted};
+    .footer-tagline {
+      font-size: 11px;
+      font-weight: 400;
+      letter-spacing: 1px;
+      opacity: 0.5;
       margin-top: 8px;
-    }
-
-    /* Decorative elements */
-    .decoration {
-      position: absolute;
-      border-radius: 50%;
-      filter: blur(80px);
-    }
-
-    .decoration-1 {
-      width: 400px;
-      height: 400px;
-      background: ${t.primary};
-      top: -100px;
-      right: -100px;
-      opacity: ${t.decorOpacity};
-    }
-
-    .decoration-2 {
-      width: 300px;
-      height: 300px;
-      background: ${t.accent};
-      bottom: 200px;
-      left: -100px;
-      opacity: ${t.decorOpacity * 0.7};
     }
   </style>
 </head>
 <body>
   <div class="bg-gradient"></div>
-  <div class="decoration decoration-1"></div>
-  <div class="decoration decoration-2"></div>
+  <div class="noise"></div>
 
   <div class="container">
-    <div class="header">
-      <div class="month-label">${data.month || 'January 2026'}</div>
-      <div class="recap-title">Your Recap</div>
-    </div>
+    <!-- Month badge top-left -->
+    <div class="month-badge">${data.month || 'January 2026'}</div>
 
+    <!-- Hero -->
     <div class="hero-section">
       <div class="hero-number">${data.totalWorkouts || 0}</div>
-      <div class="hero-label">workouts completed</div>
-      <div class="hero-subtitle">You showed up ${data.totalWorkouts || 0} times this month</div>
+      <div class="hero-label">Workouts Completed</div>
+      <div class="hero-context">${contextMessage}</div>
     </div>
 
-    <div class="stats-grid">
-      <div class="stat-card highlight">
-        <div class="stat-value primary">${data.currentStreak || 0}</div>
+    <!-- Stats — 2 col top + 1 full width bottom -->
+    <div class="stats-row">
+      <div class="stat-card streak stagger-up">
+        <div class="stat-value" style="color: ${t.accent};">${data.currentStreak || 0}</div>
         <div class="stat-label">Day Streak</div>
       </div>
-      <div class="stat-card">
+      <div class="stat-card stagger-down">
         <div class="stat-value">${formatNumber(data.totalVolume)}</div>
-        <div class="stat-label">lbs lifted</div>
+        <div class="stat-label">lbs Lifted</div>
       </div>
-      <div class="stat-card">
-        <div class="stat-value accent">${formatDuration(data.totalDuration)}</div>
-        <div class="stat-label">total time</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-value warning">${data.totalSets || 0}</div>
-        <div class="stat-label">sets crushed</div>
+    </div>
+    <div class="stats-row">
+      <div class="stat-card full-width">
+        <div class="stat-value" style="color: ${t.primary};">${formatDuration(data.totalDuration)}</div>
+        <div class="stat-label">Total Time Trained</div>
       </div>
     </div>
 
+    <!-- Signature Move -->
     ${data.topExercise ? `
-    <div class="highlight-section">
-      <div class="highlight-emoji">\u{1F3C6}</div>
-      <div class="highlight-title">Your #1 Exercise</div>
-      <div class="highlight-value">${data.topExercise.name}</div>
-    </div>
-    ` : ''}
+    <div class="signature-section">
+      <div class="signature-divider"></div>
+      <div class="signature-title">Your Signature Move</div>
+      <div class="signature-main">
+        <span class="signature-trophy">\u{1F3C6}</span>
+        <span class="signature-name">${data.topExercise.name}</span>
+      </div>
+      ${data.topExercise.sets ? `<div class="signature-sets">${data.topExercise.sets} sets</div>` : ''}
 
-    ${data.topExercises && data.topExercises.length > 0 ? `
-    <div class="top-exercises">
-      <div class="section-title">Top Exercises</div>
-      <div class="exercise-list">
-        ${data.topExercises.slice(0, 3).map((ex, i) => `
-          <div class="exercise-item">
-            <div class="exercise-rank">${i + 1}</div>
-            <div class="exercise-name">${ex.name}</div>
-            <div class="exercise-stat">${ex.sets} sets</div>
+      ${runnerUps.length > 0 ? `
+      <div class="runner-ups">
+        <div class="runner-ups-label">Also crushed</div>
+        ${runnerUps.map((ex, i) => `
+          <div class="runner-up-item">
+            <span class="runner-up-rank">#${i + 2}</span> ${ex.name} &bull; ${ex.sets} sets
           </div>
         `).join('')}
       </div>
+      ` : ''}
     </div>
     ` : ''}
 
+    <!-- Footer -->
     <div class="footer">
-      <div class="branding">
-        <span class="logo-text">gymvy</span>
-      </div>
-      <div class="tagline">Track. Share. Grow.</div>
+      <div class="footer-brand">gymvy</div>
+      <div class="footer-tagline">Track. Share. Grow.</div>
     </div>
   </div>
 </body>

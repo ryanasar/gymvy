@@ -45,19 +45,42 @@ export function RecapPreviewScreen({ data, onClose }) {
     }
   };
 
-  const toggleTheme = () => {
-    setRecapTheme((prev) => (prev === 'dark' ? 'light' : 'dark'));
-  };
-
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+    <SafeAreaView edges={['top', 'bottom']} style={[styles.container, { backgroundColor: colors.background }]}>
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={onClose} style={styles.closeButton}>
           <Ionicons name="close" size={28} color={colors.text} />
         </TouchableOpacity>
         <Text style={[styles.headerTitle, { color: colors.text }]}>Monthly Recap</Text>
-        <View style={styles.headerSpacer} />
+        <View style={styles.headerRight}>
+          <TouchableOpacity
+            style={[
+              styles.themeIconButton,
+              recapTheme === 'dark' && { backgroundColor: colors.primary + '20' },
+            ]}
+            onPress={() => setRecapTheme('dark')}
+          >
+            <Ionicons
+              name="moon"
+              size={18}
+              color={recapTheme === 'dark' ? colors.primary : colors.secondaryText}
+            />
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[
+              styles.themeIconButton,
+              recapTheme === 'light' && { backgroundColor: colors.primary + '20' },
+            ]}
+            onPress={() => setRecapTheme('light')}
+          >
+            <Ionicons
+              name="sunny"
+              size={18}
+              color={recapTheme === 'light' ? colors.primary : colors.secondaryText}
+            />
+          </TouchableOpacity>
+        </View>
       </View>
 
       {/* Preview */}
@@ -65,61 +88,8 @@ export function RecapPreviewScreen({ data, onClose }) {
         contentContainerStyle={styles.previewContainer}
         showsVerticalScrollIndicator={false}
       >
-        <View style={styles.recapWrapper}>
+        <View style={[styles.recapWrapper, { borderColor: colors.text + '1A' }]}>
           <MonthlyRecapTemplate ref={recapRef} data={data} theme={recapTheme} />
-        </View>
-
-        {/* Theme Toggle */}
-        <View style={styles.themeToggleContainer}>
-          <Text style={[styles.themeLabel, { color: colors.secondaryText }]}>
-            Style
-          </Text>
-          <View style={[styles.themeToggle, { backgroundColor: colors.cardBackground }]}>
-            <TouchableOpacity
-              style={[
-                styles.themeOption,
-                recapTheme === 'dark' && styles.themeOptionActive,
-                recapTheme === 'dark' && { backgroundColor: colors.primary },
-              ]}
-              onPress={() => setRecapTheme('dark')}
-            >
-              <Ionicons
-                name="moon"
-                size={18}
-                color={recapTheme === 'dark' ? '#fff' : colors.secondaryText}
-              />
-              <Text
-                style={[
-                  styles.themeOptionText,
-                  { color: recapTheme === 'dark' ? '#fff' : colors.secondaryText },
-                ]}
-              >
-                Dark
-              </Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[
-                styles.themeOption,
-                recapTheme === 'light' && styles.themeOptionActive,
-                recapTheme === 'light' && { backgroundColor: colors.primary },
-              ]}
-              onPress={() => setRecapTheme('light')}
-            >
-              <Ionicons
-                name="sunny"
-                size={18}
-                color={recapTheme === 'light' ? '#fff' : colors.secondaryText}
-              />
-              <Text
-                style={[
-                  styles.themeOptionText,
-                  { color: recapTheme === 'light' ? '#fff' : colors.secondaryText },
-                ]}
-              >
-                Light
-              </Text>
-            </TouchableOpacity>
-          </View>
         </View>
       </ScrollView>
 
@@ -184,8 +154,16 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: '600',
   },
-  headerSpacer: {
-    width: 40,
+  headerRight: {
+    flexDirection: 'row',
+    gap: 6,
+  },
+  themeIconButton: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   previewContainer: {
     alignItems: 'center',
@@ -198,35 +176,9 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.3,
     shadowRadius: 16,
     elevation: 8,
-  },
-  themeToggleContainer: {
-    marginTop: 24,
-    alignItems: 'center',
-  },
-  themeLabel: {
-    fontSize: 14,
-    fontWeight: '500',
-    marginBottom: 12,
-  },
-  themeToggle: {
-    flexDirection: 'row',
-    borderRadius: 12,
-    padding: 4,
-  },
-  themeOption: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 10,
-    paddingHorizontal: 20,
-    borderRadius: 8,
-    gap: 8,
-  },
-  themeOptionActive: {
-    // backgroundColor set dynamically
-  },
-  themeOptionText: {
-    fontSize: 14,
-    fontWeight: '600',
+    borderRadius: 20,
+    borderWidth: 1,
+    overflow: 'hidden',
   },
   actionsContainer: {
     flexDirection: 'row',
@@ -241,7 +193,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: 14,
-    borderRadius: 12,
+    borderRadius: 14,
     gap: 8,
   },
   primaryButton: {

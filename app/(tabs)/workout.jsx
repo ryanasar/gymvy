@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import React, { useEffect, useMemo, useRef, useState, useCallback } from 'react';
+import React, { useEffect, useMemo, useRef, useState, useCallback, createRef } from 'react';
 // Navigation guard ref for double-click prevention
 import { ActivityIndicator, Alert, Modal, ScrollView, StyleSheet, Text, TouchableOpacity, View, RefreshControl } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
@@ -29,6 +29,7 @@ import { useWorkoutCompletion } from '@/hooks/workout/useWorkoutCompletion';
 import { calculateWorkoutCardCollapse } from '@/utils/workout/workoutCalculations';
 import { handleDaySelection } from '@/utils/workout/splitManagement';
 import { buildBadges } from '@/constants/badges';
+import WorkoutTour from '@/components/onboarding/WorkoutTour';
 
 const WORKOUT_TABS = [
   { key: 'split', label: 'My Split' },
@@ -76,6 +77,19 @@ const WorkoutScreen = () => {
   // Modal state
   const [showChangeDayModal, setShowChangeDayModal] = useState(false);
   const [isDaySelecting, setIsDaySelecting] = useState(false);
+
+  // Tour state and refs
+  const [showTour, setShowTour] = useState(false);
+  const createSplitRef = useRef(null);
+  const individualTabRef = useRef(null);
+  const freestyleCardRef = useRef(null);
+  const savedWorkoutsRef = useRef(null);
+  const tourTargetRefs = {
+    createSplit: createSplitRef,
+    individualTab: individualTabRef,
+    freestyleCard: freestyleCardRef,
+    savedWorkouts: savedWorkoutsRef,
+  };
 
   // Navigation guard to prevent double-click issues
   const isNavigatingRef = useRef(false);
@@ -160,6 +174,34 @@ const WorkoutScreen = () => {
       }
     };
     loadWorkoutMode();
+  }, []);
+
+  // Check if workout tour should be shown
+  useEffect(() => {
+    const checkTour = async () => {
+      try {
+        const hasSeen = await AsyncStorage.getItem('hasSeenWorkoutTour');
+        if (!hasSeen) {
+          // Start tour on the split tab so first target is visible
+          setWorkoutMode('split');
+          setTimeout(() => setShowTour(true), 600);
+        }
+      } catch (error) {
+        // Silently fail
+      }
+    };
+    if (isInitialized && !activeSplit) {
+      checkTour();
+    }
+  }, [isInitialized, activeSplit]);
+
+  const handleTourComplete = useCallback(async () => {
+    setShowTour(false);
+    try {
+      await AsyncStorage.setItem('hasSeenWorkoutTour', 'true');
+    } catch (error) {
+      // Silently fail
+    }
   }, []);
 
   // Handle workout mode change (save to AsyncStorage)
@@ -500,6 +542,7 @@ const WorkoutScreen = () => {
           style={{ backgroundColor: colors.cardBackground }}
           completed={individualWorkoutCompleted}
           lockedTab={individualWorkoutCompleted ? 'individual' : null}
+          tabRefs={{ individual: individualTabRef }}
         />
 
         <ScrollView
@@ -597,6 +640,7 @@ const WorkoutScreen = () => {
               <>
                 {/* Freestyle Workout Option */}
                 <TouchableOpacity
+                  ref={freestyleCardRef}
                   style={[styles.freestyleCard, { backgroundColor: colors.cardBackground, shadowColor: colors.shadow }]}
                   onPress={() => handleNavigation('/workout/session', { source: 'freestyle' })}
                   activeOpacity={0.8}
@@ -616,7 +660,7 @@ const WorkoutScreen = () => {
 
                 {/* Saved Workouts Section */}
                 {savedWorkouts.length > 0 ? (
-                  <View style={styles.savedWorkoutsSection}>
+                  <View ref={savedWorkoutsRef} style={styles.savedWorkoutsSection}>
                     <Text style={[styles.savedWorkoutsSectionTitle, { color: colors.text }]}>
                       Saved Workouts
                     </Text>
@@ -626,7 +670,7 @@ const WorkoutScreen = () => {
                     />
                   </View>
                 ) : (
-                  <View style={styles.createSplitSection}>
+                  <View ref={savedWorkoutsRef} style={styles.createSplitSection}>
                     <View style={[styles.noSplitCard, { backgroundColor: colors.cardBackground, shadowColor: colors.shadow }]}>
                       <Ionicons name="barbell-outline" size={48} color={colors.secondaryText} style={{ marginBottom: 16 }} />
                       <Text style={[styles.noSplitTitle, { color: colors.text }]}>No Saved Workouts</Text>
@@ -656,6 +700,7 @@ const WorkoutScreen = () => {
                   Create a workout split to follow a structured weekly plan
                 </Text>
                 <TouchableOpacity
+                  ref={createSplitRef}
                   style={[styles.createSplitButtonPrimary, { backgroundColor: colors.primary }]}
                   onPress={() => handleNavigation('/program')}
                   disabled={isNavigatingRef.current}
@@ -674,6 +719,17 @@ const WorkoutScreen = () => {
             onAnimationComplete={() => {
               setShowCelebration(false);
             }}
+          />
+        )}
+
+        {/* Post-onboarding tooltip tour */}
+        {showTour && (
+          <WorkoutTour
+            visible={showTour}
+            onComplete={handleTourComplete}
+            onSkip={handleTourComplete}
+            targetRefs={tourTargetRefs}
+            onSwitchTab={handleWorkoutModeChange}
           />
         )}
       </View>

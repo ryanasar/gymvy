@@ -120,7 +120,13 @@ const ProfileScreen = () => {
   };
 
   const handleDeleteAccount = async () => {
-    await deleteProfile(user.id);
+    try {
+      await deleteProfile(user.id);
+    } catch (error) {
+      if (error.response?.status !== 401) {
+        throw error;
+      }
+    }
     await signOut();
   };
 

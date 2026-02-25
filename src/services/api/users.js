@@ -24,15 +24,14 @@ export const getUserByUsername = async (username) => {
   }
 };
 
-export const checkUsernameAvailability = async (username) => {
+export const checkUsernameAvailability = async (username, excludeUserId) => {
   if (!username.trim()) return false;
 
-  try {
-    const response = await apiClient.get(`/users/check-username/${username}`);
-    return response.data.available;
-  } catch (error) {
-    return false;
-  }
+  const params = {};
+  if (excludeUserId) params.excludeUserId = excludeUserId;
+
+  const response = await apiClient.get(`/users/check-username/${username}`, { params });
+  return response.data.available;
 };
 
 export const updateUserProfile = async (supabaseId, userData) => {

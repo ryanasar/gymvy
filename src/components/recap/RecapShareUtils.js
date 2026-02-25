@@ -1,17 +1,34 @@
-import { captureRef } from 'react-native-view-shot';
-import * as Sharing from 'expo-sharing';
-import * as FileSystem from 'expo-file-system';
-import * as MediaLibrary from 'expo-media-library';
-import { Alert, Platform } from 'react-native';
+import { Alert } from 'react-native';
+
+const REBUILD_MESSAGE =
+  'Sharing requires a development build with native modules. Please rebuild your dev client.';
+
+// Attempt to load native modules at import time — null if missing from binary
+let viewShot = null;
+try { viewShot = require('react-native-view-shot'); } catch (e) {}
+
+let Sharing = null;
+try { Sharing = require('expo-sharing'); } catch (e) {}
+
+let MediaLibrary = null;
+try { MediaLibrary = require('expo-media-library'); } catch (e) {}
+
+let FileSystem = null;
+try { FileSystem = require('expo-file-system'); } catch (e) {}
 
 /**
  * Capture the recap view as an image
  * @param {React.RefObject} viewRef - Ref to the recap view
- * @returns {Promise<string>} - URI of the captured image
+ * @returns {Promise<string|null>} - URI of the captured image
  */
 export async function captureRecapImage(viewRef) {
+  if (!viewShot) {
+    Alert.alert('Feature Unavailable', REBUILD_MESSAGE);
+    return null;
+  }
+
   try {
-    const uri = await captureRef(viewRef, {
+    const uri = await viewShot.captureRef(viewRef, {
       format: 'png',
       quality: 1,
       width: 1080,
@@ -29,8 +46,14 @@ export async function captureRecapImage(viewRef) {
  * @param {React.RefObject} viewRef - Ref to the recap view
  */
 export async function shareRecap(viewRef) {
+  if (!Sharing) {
+    Alert.alert('Feature Unavailable', REBUILD_MESSAGE);
+    return false;
+  }
+
   try {
     const uri = await captureRecapImage(viewRef);
+    if (!uri) return false;
 
     const isAvailable = await Sharing.isAvailableAsync();
     if (!isAvailable) {
@@ -56,8 +79,12 @@ export async function shareRecap(viewRef) {
  * @param {React.RefObject} viewRef - Ref to the recap view
  */
 export async function saveRecapToGallery(viewRef) {
+  if (!MediaLibrary) {
+    Alert.alert('Feature Unavailable', REBUILD_MESSAGE);
+    return false;
+  }
+
   try {
-    // Request permissions
     const { status } = await MediaLibrary.requestPermissionsAsync();
     if (status !== 'granted') {
       Alert.alert(
@@ -69,11 +96,10 @@ export async function saveRecapToGallery(viewRef) {
     }
 
     const uri = await captureRecapImage(viewRef);
+    if (!uri) return false;
 
-    // Save to media library
     const asset = await MediaLibrary.createAssetAsync(uri);
 
-    // Optionally create an album for the app
     const album = await MediaLibrary.getAlbumAsync('Gymvy');
     if (album) {
       await MediaLibrary.addAssetsToAlbumAsync([asset], album, false);
@@ -95,14 +121,18 @@ export async function saveRecapToGallery(viewRef) {
  * @param {React.RefObject} viewRef - Ref to the recap view
  */
 export async function shareToInstagramStories(viewRef) {
+  if (!FileSystem || !Sharing) {
+    Alert.alert('Feature Unavailable', REBUILD_MESSAGE);
+    return false;
+  }
+
   try {
     const uri = await captureRecapImage(viewRef);
+    if (!uri) return false;
 
-    // Copy to a shareable location with proper extension
     const filename = `${FileSystem.cacheDirectory}gymvy_recap_${Date.now()}.png`;
     await FileSystem.copyAsync({ from: uri, to: filename });
 
-    // Use the share sheet which includes Instagram Stories on iOS
     const isAvailable = await Sharing.isAvailableAsync();
     if (isAvailable) {
       await Sharing.shareAsync(filename, {

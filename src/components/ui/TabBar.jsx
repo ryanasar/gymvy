@@ -3,7 +3,7 @@ import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { useThemeColors } from '@/hooks/useThemeColors';
 import { Spacing, FontSize, FontWeight } from '@/constants/theme';
 
-const TabBar = ({ tabs, activeTab, onTabPress, style, completed, lockedTab }) => {
+const TabBar = ({ tabs, activeTab, onTabPress, style, completed, lockedTab, tabRefs }) => {
   const colors = useThemeColors();
 
   // Green color for completed state background
@@ -25,6 +25,7 @@ const TabBar = ({ tabs, activeTab, onTabPress, style, completed, lockedTab }) =>
         return (
           <TouchableOpacity
             key={tab.key}
+            ref={tabRefs?.[tab.key]}
             style={[styles.tab]}
             onPress={() => !isDisabled && onTabPress(tab.key)}
             activeOpacity={isDisabled ? 1 : 0.7}

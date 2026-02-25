@@ -10,6 +10,7 @@ export default function OnboardingLayout() {
     >
       <Stack.Screen name="index" />
       <Stack.Screen name="profile-setup" />
+      <Stack.Screen name="find-friends" />
       <Stack.Screen name="complete" />
     </Stack>
   );

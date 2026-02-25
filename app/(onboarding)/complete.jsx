@@ -6,13 +6,14 @@ import {
   TouchableOpacity,
   SafeAreaView,
   Alert,
-  Dimensions,
+  ScrollView,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useAuth } from '@/lib/auth';
 import { useThemeColors } from '@/hooks/useThemeColors';
 import { completeUserOnboarding } from '@/services/api/users';
 import { Ionicons } from '@expo/vector-icons';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -22,103 +23,87 @@ import Animated, {
   withSequence,
   withRepeat,
   Easing,
-  interpolate,
-  runOnJS,
 } from 'react-native-reanimated';
-
-const { width } = Dimensions.get('window');
 
 const AnimatedTouchableOpacity = Animated.createAnimatedComponent(TouchableOpacity);
 
-// Confetti particle component
-const ConfettiParticle = ({ delay, colors, startX }) => {
-  const translateY = useSharedValue(-50);
-  const translateX = useSharedValue(startX);
-  const rotate = useSharedValue(0);
-  const opacity = useSharedValue(0);
-  const scale = useSharedValue(0);
-
-  useEffect(() => {
-    opacity.value = withDelay(delay, withTiming(1, { duration: 200 }));
-    scale.value = withDelay(delay, withSpring(1, { damping: 8 }));
-    translateY.value = withDelay(
-      delay,
-      withTiming(400, { duration: 3000, easing: Easing.out(Easing.quad) })
-    );
-    translateX.value = withDelay(
-      delay,
-      withTiming(startX + (Math.random() - 0.5) * 100, { duration: 3000 })
-    );
-    rotate.value = withDelay(
-      delay,
-      withRepeat(withTiming(360, { duration: 1000 }), -1, false)
-    );
-  }, []);
-
-  const animatedStyle = useAnimatedStyle(() => ({
-    transform: [
-      { translateY: translateY.value },
-      { translateX: translateX.value },
-      { rotate: `${rotate.value}deg` },
-      { scale: scale.value },
-    ],
-    opacity: interpolate(translateY.value, [0, 300, 400], [1, 0.5, 0]),
-  }));
-
-  const particleColors = [colors.primary, colors.accent, colors.warning, colors.primaryLight];
-  const color = particleColors[Math.floor(Math.random() * particleColors.length)];
-  const size = 8 + Math.random() * 8;
-
-  return (
-    <Animated.View
-      style={[
-        styles.confettiParticle,
-        { backgroundColor: color, width: size, height: size, borderRadius: size / 4 },
-        animatedStyle,
-      ]}
-    />
-  );
-};
+const CARDS = [
+  {
+    icon: 'calendar-outline',
+    iconBgKey: 'primary',
+    title: 'Workout Splits',
+    description: 'Plan a structured multi-day routine. Best for consistent training schedules.',
+    badge: 'Recommended',
+    badgeColorKey: 'primary',
+    type: 'splits',
+  },
+  {
+    icon: 'barbell-outline',
+    iconBgKey: 'accent',
+    title: 'Saved Workouts',
+    description: 'Build and save reusable workout templates with your favorite exercises.',
+    badge: null,
+    badgeColorKey: null,
+    type: 'saved',
+  },
+  {
+    icon: 'flash-outline',
+    iconBgKey: 'warning',
+    title: 'Freestyle',
+    description: 'Jump right in and add exercises on the fly. No planning needed.',
+    badge: 'Quick Start',
+    badgeColorKey: 'warning',
+    type: 'freestyle',
+  },
+];
 
 export default function OnboardingComplete() {
   const router = useRouter();
   const { user, setUser } = useAuth();
   const colors = useThemeColors();
   const [loading, setLoading] = useState(false);
-  const [showConfetti, setShowConfetti] = useState(true);
 
-  // Animation values
+  // Animation shared values
   const checkScale = useSharedValue(0);
   const checkRotate = useSharedValue(-180);
   const ringScale = useSharedValue(0);
   const ringOpacity = useSharedValue(1);
   const titleOpacity = useSharedValue(0);
   const titleTranslate = useSharedValue(30);
-  const contentOpacity = useSharedValue(0);
-  const contentTranslate = useSharedValue(40);
-  const buttonScale = useSharedValue(0);
+  const card1Opacity = useSharedValue(0);
+  const card1Translate = useSharedValue(30);
+  const card2Opacity = useSharedValue(0);
+  const card2Translate = useSharedValue(30);
+  const card3Opacity = useSharedValue(0);
+  const card3Translate = useSharedValue(30);
+  const footerScale = useSharedValue(0);
   const pulseAnim = useSharedValue(1);
 
   useEffect(() => {
-    // Staggered entrance animations
-    checkScale.value = withDelay(300, withSpring(1, { damping: 10, stiffness: 80 }));
-    checkRotate.value = withDelay(300, withSpring(0, { damping: 12, stiffness: 80 }));
+    // 1. Checkmark + ring (200ms)
+    checkScale.value = withDelay(200, withSpring(1, { damping: 10, stiffness: 80 }));
+    checkRotate.value = withDelay(200, withSpring(0, { damping: 12, stiffness: 80 }));
+    ringScale.value = withDelay(300, withTiming(2, { duration: 600, easing: Easing.out(Easing.cubic) }));
+    ringOpacity.value = withDelay(300, withTiming(0, { duration: 600 }));
 
-    // Expanding ring effect
-    ringScale.value = withDelay(500, withTiming(2, { duration: 600, easing: Easing.out(Easing.cubic) }));
-    ringOpacity.value = withDelay(500, withTiming(0, { duration: 600 }));
+    // 2. Title + subtitle (500ms)
+    titleOpacity.value = withDelay(500, withTiming(1, { duration: 400 }));
+    titleTranslate.value = withDelay(500, withSpring(0, { damping: 15 }));
 
-    titleOpacity.value = withDelay(600, withTiming(1, { duration: 500 }));
-    titleTranslate.value = withDelay(600, withSpring(0, { damping: 15 }));
+    // 3. Cards staggered at 700 / 850 / 1000ms
+    card1Opacity.value = withDelay(700, withTiming(1, { duration: 400 }));
+    card1Translate.value = withDelay(700, withSpring(0, { damping: 15 }));
+    card2Opacity.value = withDelay(850, withTiming(1, { duration: 400 }));
+    card2Translate.value = withDelay(850, withSpring(0, { damping: 15 }));
+    card3Opacity.value = withDelay(1000, withTiming(1, { duration: 400 }));
+    card3Translate.value = withDelay(1000, withSpring(0, { damping: 15 }));
 
-    contentOpacity.value = withDelay(800, withTiming(1, { duration: 500 }));
-    contentTranslate.value = withDelay(800, withSpring(0, { damping: 15 }));
+    // 4. Footer (1200ms)
+    footerScale.value = withDelay(1200, withSpring(1, { damping: 12 }));
 
-    buttonScale.value = withDelay(1000, withSpring(1, { damping: 12 }));
-
-    // Subtle pulse animation on checkmark
+    // Subtle pulse on checkmark
     pulseAnim.value = withDelay(
-      1200,
+      1400,
       withRepeat(
         withSequence(
           withTiming(1.05, { duration: 1500, easing: Easing.inOut(Easing.ease) }),
@@ -128,10 +113,6 @@ export default function OnboardingComplete() {
         false
       )
     );
-
-    // Hide confetti after animation
-    const timer = setTimeout(() => setShowConfetti(false), 3500);
-    return () => clearTimeout(timer);
   }, []);
 
   const checkAnimatedStyle = useAnimatedStyle(() => ({
@@ -151,88 +132,75 @@ export default function OnboardingComplete() {
     transform: [{ translateY: titleTranslate.value }],
   }));
 
-  const contentAnimatedStyle = useAnimatedStyle(() => ({
-    opacity: contentOpacity.value,
-    transform: [{ translateY: contentTranslate.value }],
+  const cardAnimatedStyles = [
+    useAnimatedStyle(() => ({ opacity: card1Opacity.value, transform: [{ translateY: card1Translate.value }] })),
+    useAnimatedStyle(() => ({ opacity: card2Opacity.value, transform: [{ translateY: card2Translate.value }] })),
+    useAnimatedStyle(() => ({ opacity: card3Opacity.value, transform: [{ translateY: card3Translate.value }] })),
+  ];
+
+  const footerAnimatedStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: footerScale.value }],
   }));
 
-  const buttonAnimatedStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: buttonScale.value }],
-  }));
-
-  const completeOnboarding = async () => {
+  const handleStart = async () => {
+    if (loading) return;
     setLoading(true);
-
     try {
+      // Reset tour flag so it shows after onboarding
+      await AsyncStorage.removeItem('hasSeenWorkoutTour');
       const updatedUser = await completeUserOnboarding(user.supabaseId);
       setUser(updatedUser);
       router.replace('/(tabs)/workout');
     } catch (error) {
       console.error('Error completing onboarding:', error);
       Alert.alert('Error', 'Failed to complete setup. Please try again.');
-    } finally {
       setLoading(false);
     }
   };
 
-  const steps = [1, 2, 3];
-
-  const features = [
-    { icon: 'barbell', title: 'Track Workouts', description: 'Log exercises, sets, and reps with ease' },
-    { icon: 'trending-up', title: 'Monitor Progress', description: 'Visualize your fitness journey over time' },
-    { icon: 'people', title: 'Stay Connected', description: 'Share achievements with the community' },
-  ];
-
-  // Generate confetti particles
-  const confettiParticles = showConfetti
-    ? Array.from({ length: 20 }, (_, i) => ({
-        id: i,
-        startX: (i / 20) * width - width / 2 + Math.random() * 40,
-        delay: i * 50,
-      }))
-    : [];
+  const firstName = user?.name?.split(' ')[0] || 'Champion';
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
-      {/* Confetti */}
-      <View style={styles.confettiContainer} pointerEvents="none">
-        {confettiParticles.map((particle) => (
-          <ConfettiParticle
-            key={particle.id}
-            delay={particle.delay}
-            startX={particle.startX}
-            colors={colors}
-          />
-        ))}
-      </View>
-
-      <View style={styles.content}>
-        {/* Success animation */}
-        <View style={styles.successSection}>
+      <ScrollView
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+        bounces={false}
+      >
+        {/* Header: Checkmark + Title */}
+        <View style={styles.headerSection}>
           <View style={styles.checkmarkWrapper}>
-            <Animated.View style={[styles.expandingRing, { borderColor: colors.accent }, ringAnimatedStyle]} />
+            <Animated.View
+              style={[
+                styles.expandingRing,
+                { borderColor: colors.accent },
+                ringAnimatedStyle,
+              ]}
+            />
             <Animated.View
               style={[
                 styles.checkmarkContainer,
-                { backgroundColor: colors.accent },
+                { backgroundColor: colors.accent, shadowColor: colors.accent },
                 checkAnimatedStyle,
               ]}
             >
-              <Ionicons name="checkmark" size={50} color="#FFFFFF" />
+              <Ionicons name="checkmark" size={36} color="#FFFFFF" />
             </Animated.View>
           </View>
 
           <Animated.View style={titleAnimatedStyle}>
-            <Text style={[styles.title, { color: colors.text }]}>You're all set!</Text>
-            <Text style={[styles.welcomeText, { color: colors.primary }]}>
-              Welcome, {user?.name?.split(' ')[0] || 'Champion'}!
+            <Text style={[styles.title, { color: colors.text }]}>
+              You're all set, {firstName}!
+            </Text>
+            <Text style={[styles.subtitle, { color: colors.text }]}>
+              Here's how you can work out
             </Text>
           </Animated.View>
         </View>
 
-        {/* Step indicators - all complete */}
+        {/* Step indicators */}
         <View style={styles.stepsContainer}>
-          {steps.map((step, index) => (
+          {[1, 2, 3, 4].map((step, index) => (
             <View key={step} style={styles.stepWrapper}>
               <View
                 style={[
@@ -242,44 +210,76 @@ export default function OnboardingComplete() {
               >
                 <Ionicons name="checkmark" size={10} color="#FFFFFF" />
               </View>
-              {index < steps.length - 1 && (
+              {index < 3 && (
                 <View style={[styles.stepLine, { backgroundColor: colors.accent }]} />
               )}
             </View>
           ))}
         </View>
 
-        {/* Features */}
-        <Animated.View style={[styles.featuresContainer, contentAnimatedStyle]}>
-          <Text style={[styles.featuresTitle, { color: colors.secondaryText }]}>
-            Here's what you can do:
-          </Text>
-          <View style={[styles.featuresList, { backgroundColor: colors.cardBackground, borderColor: colors.borderLight }]}>
-            {features.map((feature, index) => (
-              <View key={index} style={styles.featureItem}>
-                <View style={[styles.featureIconContainer, { backgroundColor: colors.primary + '12' }]}>
-                  <Ionicons name={feature.icon} size={24} color={colors.primary} />
-                </View>
-                <View style={styles.featureTextContainer}>
-                  <Text style={[styles.featureTitle, { color: colors.text }]}>{feature.title}</Text>
-                  <Text style={[styles.featureDescription, { color: colors.secondaryText }]}>
-                    {feature.description}
-                  </Text>
-                </View>
+        {/* Educational Cards */}
+        <View style={styles.cardsSection}>
+          {CARDS.map((card, index) => (
+            <Animated.View
+              key={card.title}
+              style={[
+                styles.card,
+                {
+                  backgroundColor: colors.cardBackground,
+                  shadowColor: colors.shadow,
+                },
+                cardAnimatedStyles[index],
+              ]}
+            >
+              <View
+                style={[
+                  styles.cardIconContainer,
+                  { backgroundColor: colors[card.iconBgKey] + '15' },
+                ]}
+              >
+                <Ionicons name={card.icon} size={26} color={colors[card.iconBgKey]} />
               </View>
-            ))}
-          </View>
-        </Animated.View>
+              <View style={styles.cardTextContainer}>
+                <View style={styles.cardTitleRow}>
+                  <Text style={[styles.cardTitle, { color: colors.text }]}>
+                    {card.title}
+                  </Text>
+                  {card.badge && (
+                    <View
+                      style={[
+                        styles.badge,
+                        { backgroundColor: colors[card.badgeColorKey] + '15' },
+                      ]}
+                    >
+                      <Text
+                        style={[
+                          styles.badgeText,
+                          { color: colors[card.badgeColorKey] },
+                        ]}
+                      >
+                        {card.badge}
+                      </Text>
+                    </View>
+                  )}
+                </View>
+                <Text style={[styles.cardDescription, { color: colors.text }]}>
+                  {card.description}
+                </Text>
+              </View>
+            </Animated.View>
+          ))}
+        </View>
+      </ScrollView>
 
-        {/* Button */}
-        <AnimatedTouchableOpacity
+      {/* Footer pinned below ScrollView */}
+      <Animated.View style={[styles.footer, footerAnimatedStyle]}>
+        <TouchableOpacity
           style={[
             styles.primaryButton,
-            { backgroundColor: colors.primary },
-            buttonAnimatedStyle,
+            { backgroundColor: colors.primary, shadowColor: colors.primary },
             loading && styles.disabledButton,
           ]}
-          onPress={completeOnboarding}
+          onPress={handleStart}
           disabled={loading}
           activeOpacity={0.8}
         >
@@ -287,10 +287,15 @@ export default function OnboardingComplete() {
             {loading ? 'Setting up...' : 'Start Your Journey'}
           </Text>
           {!loading && (
-            <Ionicons name="arrow-forward" size={20} color={colors.onPrimary} style={styles.buttonIcon} />
+            <Ionicons
+              name="arrow-forward"
+              size={20}
+              color={colors.onPrimary}
+              style={styles.buttonIcon}
+            />
           )}
-        </AnimatedTouchableOpacity>
-      </View>
+        </TouchableOpacity>
+      </Animated.View>
     </SafeAreaView>
   );
 }
@@ -299,62 +304,54 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  confettiContainer: {
-    ...StyleSheet.absoluteFillObject,
+  scrollContent: {
+    paddingHorizontal: 24,
+    paddingBottom: 140,
+  },
+  // Header
+  headerSection: {
     alignItems: 'center',
-    overflow: 'hidden',
-  },
-  confettiParticle: {
-    position: 'absolute',
-    top: 0,
-  },
-  content: {
-    flex: 1,
-    padding: 24,
-    justifyContent: 'space-between',
-  },
-  successSection: {
-    alignItems: 'center',
-    marginTop: 40,
+    marginTop: 32,
   },
   checkmarkWrapper: {
-    width: 120,
-    height: 120,
+    width: 90,
+    height: 90,
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 24,
+    marginBottom: 20,
   },
   expandingRing: {
     position: 'absolute',
-    width: 100,
-    height: 100,
-    borderRadius: 50,
+    width: 70,
+    height: 70,
+    borderRadius: 35,
     borderWidth: 3,
   },
   checkmarkContainer: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
+    width: 70,
+    height: 70,
+    borderRadius: 35,
     justifyContent: 'center',
     alignItems: 'center',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.3,
-    shadowRadius: 16,
-    elevation: 8,
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.25,
+    shadowRadius: 12,
+    elevation: 6,
   },
   title: {
-    fontSize: 32,
+    fontSize: 28,
     fontWeight: '800',
-    marginBottom: 8,
     textAlign: 'center',
     letterSpacing: -0.5,
+    marginBottom: 6,
   },
-  welcomeText: {
-    fontSize: 20,
-    fontWeight: '600',
+  subtitle: {
+    fontSize: 16,
+    fontWeight: '500',
     textAlign: 'center',
-    letterSpacing: 0.2,
+    opacity: 0.7,
   },
+  // Steps
   stepsContainer: {
     flexDirection: 'row',
     justifyContent: 'center',
@@ -378,48 +375,71 @@ const styles = StyleSheet.create({
     height: 2,
     marginHorizontal: 4,
   },
-  featuresContainer: {
-    flex: 1,
-    justifyContent: 'center',
+  // Cards
+  cardsSection: {
+    gap: 14,
   },
-  featuresTitle: {
-    fontSize: 15,
-    fontWeight: '600',
-    textAlign: 'center',
-    marginBottom: 16,
-    textTransform: 'uppercase',
-    letterSpacing: 1,
-  },
-  featuresList: {
-    borderRadius: 20,
-    padding: 20,
-    borderWidth: 1,
-    gap: 20,
-  },
-  featureItem: {
+  card: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 16,
+    padding: 18,
+    borderRadius: 20,
+    borderWidth: 0,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 16,
+    elevation: 3,
   },
-  featureIconContainer: {
+  cardIconContainer: {
     width: 52,
     height: 52,
     borderRadius: 16,
     justifyContent: 'center',
     alignItems: 'center',
+    marginRight: 14,
   },
-  featureTextContainer: {
+  cardTextContainer: {
     flex: 1,
   },
-  featureTitle: {
+  cardTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 4,
+  },
+  cardTitle: {
     fontSize: 17,
     fontWeight: '700',
-    marginBottom: 2,
     letterSpacing: -0.2,
   },
-  featureDescription: {
+  cardDescription: {
     fontSize: 14,
     lineHeight: 20,
+    opacity: 0.7,
+  },
+  badge: {
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 8,
+  },
+  badgeText: {
+    fontSize: 11,
+    fontWeight: '600',
+    letterSpacing: 0.2,
+  },
+  // Footer
+  footer: {
+    paddingHorizontal: 24,
+    paddingBottom: 20,
+  },
+  skipButton: {
+    alignItems: 'center',
+    paddingVertical: 12,
+  },
+  skipText: {
+    fontSize: 15,
+    fontWeight: '600',
+    opacity: 0.6,
   },
   primaryButton: {
     flexDirection: 'row',
@@ -427,7 +447,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 18,
     borderRadius: 20,
-    marginBottom: 20,
     shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.25,
     shadowRadius: 16,

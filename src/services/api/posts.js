@@ -38,8 +38,6 @@ export const createPost = async (postData) => {
     return response.data;
   } catch (error) {
     console.error('Failed to create post:', error);
-    console.error('Post data sent:', JSON.stringify(postData, null, 2));
-    console.error('Error response:', error.response?.data);
     throw error;
   }
 };

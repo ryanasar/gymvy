@@ -1,6 +1,7 @@
 import React, { useState, useCallback, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, RefreshControl } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, RefreshControl, TouchableOpacity } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
+import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '@/lib/auth';
 import { useWorkout } from '@/contexts/WorkoutContext';
 import { usePreload } from '@/contexts/PreloadContext';
@@ -33,7 +34,6 @@ export default function ProgressScreen() {
   const [selectedExerciseData, setSelectedExerciseData] = useState(null);
   const [refreshing, setRefreshing] = useState(false);
   const [hasProcessedData, setHasProcessedData] = useState(false);
-
   // Helper to find exercise ID by name (case-insensitive)
   const findExerciseIdByName = useCallback((name) => {
     const nameLower = name.toLowerCase();
@@ -308,6 +308,7 @@ export default function ProgressScreen() {
           Record weight and reps during workouts to track your estimated 1RM progress.
         </Text>
       </ScrollView>
+
     </View>
   );
 }
@@ -337,6 +338,35 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
     paddingTop: 8,
     paddingBottom: 32,
+  },
+  recapBanner: {
+    backgroundColor: '#A78BFA',
+    borderRadius: 16,
+    paddingVertical: 16,
+    paddingHorizontal: 20,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 12,
+    shadowColor: '#A78BFA',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.25,
+    shadowRadius: 12,
+    elevation: 4,
+  },
+  recapBannerContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    flex: 1,
+  },
+  recapBannerEmoji: {
+    fontSize: 22,
+  },
+  recapBannerText: {
+    color: '#FFFFFF',
+    fontSize: 15,
+    fontWeight: '600',
   },
   sectionTitle: {
     fontSize: 20,

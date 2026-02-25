@@ -115,7 +115,7 @@ export default function OnboardingWelcome() {
     width: `${progressWidth.value}%`,
   }));
 
-  const steps = [1, 2, 3];
+  const steps = [1, 2, 3, 4];
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
@@ -184,7 +184,6 @@ export default function OnboardingWelcome() {
             {[
               { icon: 'barbell-outline', text: 'Log workouts' },
               { icon: 'analytics-outline', text: 'Track progress' },
-              { icon: 'people-outline', text: 'Connect' },
             ].map((feature, index) => (
               <View
                 key={index}

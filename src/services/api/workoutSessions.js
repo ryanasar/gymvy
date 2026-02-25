@@ -61,12 +61,6 @@ export const createWorkoutSession = async (sessionData) => {
     return response.data;
   } catch (error) {
     console.error('Failed to create workout session:', error);
-    console.error('Session data:', JSON.stringify(sessionData, null, 2));
-    console.error('Error details:', {
-      status: error.response?.status,
-      data: error.response?.data,
-      message: error.message
-    });
     throw error;
   }
 };
