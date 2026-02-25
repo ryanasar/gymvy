@@ -123,7 +123,10 @@ const ProfileScreen = () => {
     try {
       await deleteProfile(user.id);
     } catch (error) {
-      if (error.response?.status !== 401) {
+      // Only re-throw if we got an actual error response that isn't 401.
+      // Network errors (no response) mean the deletion likely succeeded
+      // but the connection dropped after the session was invalidated.
+      if (error.response && error.response.status !== 401) {
         throw error;
       }
     }

@@ -14,7 +14,7 @@ import {
 import { useRouter } from 'expo-router';
 import { useAuth } from '@/lib/auth';
 import { useThemeColors } from '@/hooks/useThemeColors';
-import { searchUsers, followUser, unfollowUser } from '@/services/api/users';
+import { searchUsers, getSuggestedUsers, followUser, unfollowUser } from '@/services/api/users';
 import { Ionicons } from '@expo/vector-icons';
 import Avatar from '@/components/ui/Avatar';
 import Animated, {
@@ -35,6 +35,8 @@ export default function FindFriends() {
   const [searchResults, setSearchResults] = useState([]);
   const [isSearching, setIsSearching] = useState(false);
   const [followStates, setFollowStates] = useState({});
+  const [suggestedUsers, setSuggestedUsers] = useState([]);
+  const [isLoadingSuggested, setIsLoadingSuggested] = useState(true);
 
   // Animation values
   const headerOpacity = useSharedValue(0);
@@ -58,6 +60,21 @@ export default function FindFriends() {
     opacity: contentOpacity.value,
     transform: [{ translateY: contentTranslate.value }],
   }));
+
+  // Fetch suggested users on mount
+  useEffect(() => {
+    if (!user?.id) return;
+    (async () => {
+      try {
+        const results = await getSuggestedUsers(user.id);
+        setSuggestedUsers(results || []);
+      } catch (error) {
+        console.error('Error fetching suggested users:', error);
+      } finally {
+        setIsLoadingSuggested(false);
+      }
+    })();
+  }, [user?.id]);
 
   // Debounced search
   useEffect(() => {
@@ -130,14 +147,19 @@ export default function FindFriends() {
     return (
       <View style={[styles.userItem, { borderBottomColor: colors.borderLight }]}>
         <Avatar
-          uri={item.profilePicUrl}
+          uri={item.profile?.avatarUrl}
           name={item.name}
           size={44}
         />
         <View style={styles.userInfo}>
-          <Text style={[styles.userName, { color: colors.text }]} numberOfLines={1}>
-            {item.name}
-          </Text>
+          <View style={styles.nameRow}>
+            <Text style={[styles.userName, { color: colors.text }]} numberOfLines={1}>
+              {item.name}
+            </Text>
+            {item.profile?.isVerified && (
+              <Ionicons name="checkmark-circle" size={16} color={colors.primary} />
+            )}
+          </View>
           <Text style={[styles.userUsername, { color: colors.secondaryText }]} numberOfLines={1}>
             @{item.username}
           </Text>
@@ -165,6 +187,34 @@ export default function FindFriends() {
     );
   };
 
+  const renderSuggestedHeader = () => {
+    if (searchQuery.trim()) return null;
+
+    return (
+      <View style={styles.suggestedSection}>
+        <Text style={[styles.suggestedTitle, { color: colors.text }]}>Suggested</Text>
+        <Text style={[styles.suggestedSubtitle, { color: colors.secondaryText }]}>
+          Popular members you might want to follow
+        </Text>
+        {isLoadingSuggested ? (
+          <ActivityIndicator size="large" color={colors.primary} style={{ marginTop: 24 }} />
+        ) : suggestedUsers.length > 0 ? (
+          suggestedUsers.map((item) => (
+            <React.Fragment key={item.id}>
+              {renderUserItem({ item })}
+            </React.Fragment>
+          ))
+        ) : (
+          <View style={styles.suggestedEmpty}>
+            <Text style={[styles.emptySubtitle, { color: colors.secondaryText }]}>
+              No suggestions available right now
+            </Text>
+          </View>
+        )}
+      </View>
+    );
+  };
+
   const renderEmptyState = () => {
     if (isSearching) {
       return (
@@ -184,15 +234,7 @@ export default function FindFriends() {
         </View>
       );
     }
-    return (
-      <View style={styles.emptyContainer}>
-        <Ionicons name="people-outline" size={48} color={colors.secondaryText} style={{ opacity: 0.5 }} />
-        <Text style={[styles.emptyTitle, { color: colors.text }]}>Search for friends</Text>
-        <Text style={[styles.emptySubtitle, { color: colors.secondaryText }]}>
-          Find friends by name or username
-        </Text>
-      </View>
-    );
+    return null;
   };
 
   return (
@@ -268,7 +310,8 @@ export default function FindFriends() {
           renderItem={renderUserItem}
           keyExtractor={(item) => item.id.toString()}
           style={styles.resultsList}
-          contentContainerStyle={searchResults.length === 0 ? styles.emptyListContent : styles.listContent}
+          contentContainerStyle={searchResults.length === 0 && searchQuery.trim() ? styles.emptyListContent : styles.listContent}
+          ListHeaderComponent={renderSuggestedHeader}
           ListEmptyComponent={renderEmptyState}
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
@@ -387,7 +430,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
   },
   emptyListContent: {
-    flex: 1,
     paddingHorizontal: 24,
   },
   userItem: {
@@ -399,6 +441,11 @@ const styles = StyleSheet.create({
   },
   userInfo: {
     flex: 1,
+  },
+  nameRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
   },
   userName: {
     fontSize: 16,
@@ -425,10 +472,28 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '600',
   },
-  emptyContainer: {
-    flex: 1,
+  suggestedSection: {
+    paddingTop: 8,
+    paddingBottom: 4,
+  },
+  suggestedTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    marginBottom: 4,
+  },
+  suggestedSubtitle: {
+    fontSize: 14,
+    fontWeight: '500',
+    opacity: 0.7,
+    marginBottom: 4,
+  },
+  suggestedEmpty: {
+    paddingVertical: 24,
     alignItems: 'center',
-    justifyContent: 'center',
+  },
+  emptyContainer: {
+    alignItems: 'center',
+    paddingTop: 60,
     paddingHorizontal: 32,
     gap: 10,
   },

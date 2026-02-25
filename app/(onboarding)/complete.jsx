@@ -146,8 +146,9 @@ export default function OnboardingComplete() {
     if (loading) return;
     setLoading(true);
     try {
-      // Reset tour flag so it shows after onboarding
+      // Reset tour flags so they show after onboarding
       await AsyncStorage.removeItem('hasSeenWorkoutTour');
+      await AsyncStorage.removeItem('hasSeenHomeTour');
       const updatedUser = await completeUserOnboarding(user.supabaseId);
       setUser(updatedUser);
       router.replace('/(tabs)/workout');

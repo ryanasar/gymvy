@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, FlatList, ActivityIndicator, RefreshControl, To
 import { useFocusEffect, useScrollToTop } from '@react-navigation/native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useAuth } from '@/lib/auth';
 import { useSync } from '@/contexts/SyncContext';
 import { useNotifications } from '@/contexts/NotificationContext';
@@ -12,6 +13,7 @@ import EmptyState from '@/components/common/EmptyState';
 import { useThemeColors } from '@/hooks/useThemeColors';
 import { useResponsiveLayout } from '@/hooks/useResponsiveLayout';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
+import HomeTour from '@/components/onboarding/HomeTour';
 
 export default function HomeScreen() {
   const colors = useThemeColors();
@@ -29,9 +31,15 @@ export default function HomeScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [nextCursor, setNextCursor] = useState(null);
   const [hasMore, setHasMore] = useState(true);
+  const [showHomeTour, setShowHomeTour] = useState(false);
 
   // Ref for FlatList to enable scroll to top
   const flatListRef = useRef(null);
+
+  // Refs for tour targets
+  const homeHeaderRef = useRef(null);
+  const searchButtonRef = useRef(null);
+  const notificationsButtonRef = useRef(null);
 
   // Track last refresh time for cooldown
   const lastRefreshRef = useRef(0);
@@ -76,6 +84,43 @@ export default function HomeScreen() {
       }
     }, [user?.id])
   );
+
+  // Track screen focus state
+  const [screenFocused, setScreenFocused] = useState(false);
+
+  useFocusEffect(
+    React.useCallback(() => {
+      setScreenFocused(true);
+      return () => setScreenFocused(false);
+    }, [])
+  );
+
+  // Check if we should show the home tour
+  useEffect(() => {
+    if (!screenFocused || isLoading || showHomeTour) return;
+    let cancelled = false;
+    const checkTour = async () => {
+      const hasSeenHome = await AsyncStorage.getItem('hasSeenHomeTour');
+      const hasSeenWorkout = await AsyncStorage.getItem('hasSeenWorkoutTour');
+      if (!hasSeenHome && hasSeenWorkout && !cancelled) {
+        setTimeout(() => {
+          if (!cancelled) setShowHomeTour(true);
+        }, 600);
+      }
+    };
+    checkTour();
+    return () => { cancelled = true; };
+  }, [screenFocused, isLoading]);
+
+  const handleHomeTourComplete = async () => {
+    setShowHomeTour(false);
+    await AsyncStorage.setItem('hasSeenHomeTour', 'true');
+  };
+
+  const handleHomeTourSkip = async () => {
+    setShowHomeTour(false);
+    await AsyncStorage.setItem('hasSeenHomeTour', 'true');
+  };
 
   const loadPosts = async (refresh = false, silent = false) => {
     if (!user?.id) return;
@@ -188,11 +233,12 @@ export default function HomeScreen() {
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       {/* Header */}
       <View style={[styles.headerContainer, { backgroundColor: colors.cardBackground }]}>
-        <TouchableOpacity onPress={scrollToTop} activeOpacity={0.7}>
+        <TouchableOpacity ref={homeHeaderRef} collapsable={false} onPress={scrollToTop} activeOpacity={0.7}>
           <Text style={[styles.title, { color: colors.text }]}>Home</Text>
         </TouchableOpacity>
         <View style={styles.headerIcons}>
           <TouchableOpacity
+            ref={searchButtonRef}
             onPress={() => handleNavigation('/search')}
             style={styles.notificationButton}
             disabled={isNavigatingRef.current}
@@ -200,6 +246,7 @@ export default function HomeScreen() {
             <Ionicons name="search-outline" size={24} color={colors.text} />
           </TouchableOpacity>
           <TouchableOpacity
+            ref={notificationsButtonRef}
             onPress={() => handleNavigation('/notifications')}
             style={styles.notificationButton}
             disabled={isNavigatingRef.current}
@@ -216,6 +263,7 @@ export default function HomeScreen() {
         </View>
       </View>
 
+      <View style={{ flex: 1 }}>
       <FlatList
         ref={flatListRef}
         data={posts}
@@ -240,6 +288,14 @@ export default function HomeScreen() {
         initialNumToRender={10}
         windowSize={10}
         maxToRenderPerBatch={10}
+      />
+      </View>
+
+      <HomeTour
+        visible={showHomeTour}
+        onComplete={handleHomeTourComplete}
+        onSkip={handleHomeTourSkip}
+        targetRefs={{ homeHeader: homeHeaderRef, searchButton: searchButtonRef, notificationsButton: notificationsButtonRef }}
       />
     </View>
   );

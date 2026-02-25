@@ -83,6 +83,21 @@ export const getUserPosts = async (userId) => {
 };
 
 /**
+ * Get suggested users for onboarding
+ */
+export const getSuggestedUsers = async (currentUserId) => {
+  try {
+    const response = await apiClient.get(`/users/suggested`, {
+      params: { currentUserId },
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching suggested users:', error);
+    return [];
+  }
+};
+
+/**
  * Search users by username or name
  */
 export const searchUsers = async (query, currentUserId) => {

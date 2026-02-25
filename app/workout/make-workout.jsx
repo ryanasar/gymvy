@@ -270,7 +270,10 @@ const MakeWorkoutScreen = () => {
         <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
           <Text style={[styles.backButtonText, { color: colors.primary }]}>← Back</Text>
         </TouchableOpacity>
-        <Text style={[styles.title, { color: colors.text }]}>Create Workout</Text>
+        <Text style={[styles.title, { color: colors.text, flex: 1, textAlign: 'center' }]}>Create Workout</Text>
+        <View style={styles.backButton} pointerEvents="none">
+          <Text style={[styles.backButtonText, { opacity: 0 }]}>← Back</Text>
+        </View>
       </View>
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
