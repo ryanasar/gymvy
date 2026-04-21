@@ -4,6 +4,12 @@ A social-first lifting app I've been building for the last ~6 months. Live on th
 
 This repo is the client, an Expo / React Native app. The backend is a separate Express.js service I also wrote.
 
+<p align="center">
+  <img src="assets/images/food-post.png" alt="A food post pic" width="300" />
+</p>
+
+I usually attach a picture of whatever I cooked that day to my post, which started as just me showing off dinner after a workout. It turned into a thing. Everyone else started doing it too, and now half the feed is lifts on one side and food on the other. It's probably my favorite thing about the app.
+
 ## Why I built it
 
 I started Gymvy last summer during my internship, when I was living in a new city away from all my friends. The gym was the one part of my routine that carried over, except now I was lifting alone, no one to send a PR to, no one to give me shit for skipping legs. I wanted a way to stay connected to my friends through the thing we'd always done together.
