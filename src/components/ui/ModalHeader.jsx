@@ -43,11 +43,12 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   title: {
-    flex: 1,
+    position: 'absolute',
+    left: 60,
+    right: 60,
     textAlign: 'center',
     fontSize: FontSize.lg,
     fontWeight: FontWeight.bold,
-    marginHorizontal: Spacing.md,
   },
   rightSlot: {
     minWidth: 32,

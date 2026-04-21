@@ -15,6 +15,7 @@ import EditProfileModal from '@/components/profile/EditProfileModal';
 import BlockedUsersModal from '@/components/profile/BlockedUsersModal';
 import { useThemeColors } from '@/hooks/useThemeColors';
 import { useResponsiveLayout } from '@/hooks/useResponsiveLayout';
+import { useWeightUnit } from '@/hooks/useWeightUnit';
 import { deleteProfile } from '@/services/api/profile';
 import TabBar from '@/components/ui/TabBar';
 
@@ -33,8 +34,9 @@ const ProfileScreen = () => {
   const [progressKey, setProgressKey] = useState(0);
   const { user, profile, posts, signOut, refreshPosts, refreshProfile } = useAuth();
   const { lastWorkoutCompleted } = useWorkout();
-  const { refreshCalendar, refreshSplits } = usePreload();
+  const { refreshCalendar, refreshSplits, refreshCommunities, communities } = usePreload();
   const { manualSync } = useSync();
+  const { weightUnit, setWeightUnit } = useWeightUnit();
   const [refreshing, setRefreshing] = useState(false);
 
   // Force ProgressTab to refresh when workout completion changes
@@ -62,13 +64,14 @@ const ProfileScreen = () => {
         refreshCalendar(),
         refreshSplits(),
         manualSync(),
+        refreshCommunities(),
       ]);
     } catch (e) {
       // ignore
     } finally {
       setRefreshing(false);
     }
-  }, [refreshProfile, refreshPosts, refreshCalendar, refreshSplits, manualSync]);
+  }, [refreshProfile, refreshPosts, refreshCalendar, refreshSplits, manualSync, refreshCommunities]);
 
   if (!user) {
     return (
@@ -163,9 +166,12 @@ const ProfileScreen = () => {
           onSignOut={signOut}
           onDeleteAccount={handleDeleteAccount}
           onBlockedUsersPress={() => setBlockedUsersModalVisible(true)}
+          weightUnit={weightUnit}
+          onWeightUnitChange={setWeightUnit}
           onFollowersPress={handleOpenFollowersModal}
           onFollowingPress={handleOpenFollowingModal}
           onEditPress={handleOpenEditModal}
+          communities={communities}
         />
 
         <TabBar
@@ -229,7 +235,7 @@ const styles = StyleSheet.create({
   headerContainer: {
     paddingHorizontal: 20,
     paddingTop: 56,
-    paddingBottom: 12,
+    paddingBottom: 16,
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.05,
     shadowRadius: 2,

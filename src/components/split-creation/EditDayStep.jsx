@@ -292,12 +292,17 @@ const EditDayStep = ({
     // This allows adding the same exercise multiple times
     const uniqueKey = `${exercise.id || exercise.name}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
 
+    const isCardio = exercise.exerciseType === 'cardio';
+
     const newExercise = {
       ...exercise,
       uniqueKey, // Add unique identifier for this specific instance
-      sets: config?.sets?.toString() || '',
-      reps: config?.reps?.toString() || '',
-      weight: config?.weight || '',
+      sets: isCardio ? '' : (config?.sets?.toString() || ''),
+      reps: isCardio ? '' : (config?.reps?.toString() || ''),
+      weight: isCardio ? '' : (config?.weight || ''),
+      duration: isCardio ? (config?.duration?.toString() || '') : '',
+      incline: isCardio ? (config?.incline?.toString() || '') : '',
+      speed: isCardio ? (config?.speed?.toString() || '') : '',
       restSeconds: '',
       notes: ''
     };
@@ -550,49 +555,118 @@ const EditDayStep = ({
 
           <View style={[styles.exerciseDivider, { backgroundColor: colors.borderLight }]} />
 
-          <View style={styles.exerciseInputs}>
-            <View style={styles.inputGroup}>
-              <Text style={[styles.inputGroupLabel, { color: colors.text }]}>Sets</Text>
-              <TextInput
-                style={[styles.smallInput, { backgroundColor: colors.background, borderColor: colors.border, color: colors.text }]}
-                placeholder="3"
-                value={exercise.sets}
-                onChangeText={(value) => updateExercise(index, 'sets', value.replace(/[^0-9]/g, ''))}
-                keyboardType="number-pad"
-                maxLength={2}
-                contextMenuHidden={true}
-                placeholderTextColor={colors.placeholder}
-              />
-            </View>
+          {exercise.exerciseType === 'cardio' ? (
+            <View style={styles.exerciseInputs}>
+              <View style={styles.inputGroup}>
+                <Text style={[styles.inputGroupLabel, { color: colors.text }]}>Duration</Text>
+                <TextInput
+                  style={[styles.smallInput, { backgroundColor: colors.background, borderColor: colors.border, color: colors.text }]}
+                  placeholder="20"
+                  value={exercise.duration}
+                  onChangeText={(value) => updateExercise(index, 'duration', value.replace(/[^0-9]/g, ''))}
+                  keyboardType="number-pad"
+                  maxLength={3}
+                  contextMenuHidden={true}
+                  placeholderTextColor={colors.placeholder}
+                />
+                <Text style={[styles.inputUnitLabel, { color: colors.secondaryText }]}>min</Text>
+              </View>
 
-            <View style={styles.inputGroup}>
-              <Text style={[styles.inputGroupLabel, { color: colors.text }]}>Reps</Text>
-              <TextInput
-                style={[styles.smallInput, { backgroundColor: colors.background, borderColor: colors.border, color: colors.text }]}
-                placeholder="8-12"
-                value={exercise.reps}
-                onChangeText={(value) => updateExercise(index, 'reps', value.replace(/[^0-9\-]/g, ''))}
-                keyboardType="numbers-and-punctuation"
-                maxLength={7}
-                contextMenuHidden={true}
-                placeholderTextColor={colors.placeholder}
-              />
-            </View>
+              {exercise.cardioFields?.includes('incline') && (
+                <View style={styles.inputGroup}>
+                  <Text style={[styles.inputGroupLabel, { color: colors.text }]}>Incline</Text>
+                  <TextInput
+                    style={[styles.smallInput, { backgroundColor: colors.background, borderColor: colors.border, color: colors.text }]}
+                    placeholder="0"
+                    value={exercise.incline}
+                    onChangeText={(value) => updateExercise(index, 'incline', value.replace(/[^0-9]/g, ''))}
+                    keyboardType="number-pad"
+                    maxLength={2}
+                    contextMenuHidden={true}
+                    placeholderTextColor={colors.placeholder}
+                  />
+                  <Text style={[styles.inputUnitLabel, { color: colors.secondaryText }]}>%</Text>
+                </View>
+              )}
 
-            <View style={styles.inputGroup}>
-              <Text style={[styles.inputGroupLabel, { color: colors.text }]}>Weight</Text>
-              <TextInput
-                style={[styles.smallInput, { backgroundColor: colors.background, borderColor: colors.border, color: colors.text }]}
-                placeholder="135"
-                value={exercise.weight}
-                onChangeText={(value) => updateExercise(index, 'weight', value.replace(/[^0-9.]/g, ''))}
-                keyboardType="decimal-pad"
-                maxLength={6}
-                contextMenuHidden={true}
-                placeholderTextColor={colors.placeholder}
-              />
+              {exercise.cardioFields?.includes('speed') && (
+                <View style={styles.inputGroup}>
+                  <Text style={[styles.inputGroupLabel, { color: colors.text }]}>Speed</Text>
+                  <TextInput
+                    style={[styles.smallInput, { backgroundColor: colors.background, borderColor: colors.border, color: colors.text }]}
+                    placeholder="5"
+                    value={exercise.speed}
+                    onChangeText={(value) => updateExercise(index, 'speed', value.replace(/[^0-9.]/g, ''))}
+                    keyboardType="decimal-pad"
+                    maxLength={4}
+                    contextMenuHidden={true}
+                    placeholderTextColor={colors.placeholder}
+                  />
+                  <Text style={[styles.inputUnitLabel, { color: colors.secondaryText }]}>mph</Text>
+                </View>
+              )}
+
+              {exercise.cardioFields?.includes('resistance') && (
+                <View style={styles.inputGroup}>
+                  <Text style={[styles.inputGroupLabel, { color: colors.text }]}>Resistance</Text>
+                  <TextInput
+                    style={[styles.smallInput, { backgroundColor: colors.background, borderColor: colors.border, color: colors.text }]}
+                    placeholder="5"
+                    value={exercise.incline}
+                    onChangeText={(value) => updateExercise(index, 'incline', value.replace(/[^0-9]/g, ''))}
+                    keyboardType="number-pad"
+                    maxLength={2}
+                    contextMenuHidden={true}
+                    placeholderTextColor={colors.placeholder}
+                  />
+                </View>
+              )}
             </View>
-          </View>
+          ) : (
+            <View style={styles.exerciseInputs}>
+              <View style={styles.inputGroup}>
+                <Text style={[styles.inputGroupLabel, { color: colors.text }]}>Sets</Text>
+                <TextInput
+                  style={[styles.smallInput, { backgroundColor: colors.background, borderColor: colors.border, color: colors.text }]}
+                  placeholder="3"
+                  value={exercise.sets}
+                  onChangeText={(value) => updateExercise(index, 'sets', value.replace(/[^0-9]/g, ''))}
+                  keyboardType="number-pad"
+                  maxLength={2}
+                  contextMenuHidden={true}
+                  placeholderTextColor={colors.placeholder}
+                />
+              </View>
+
+              <View style={styles.inputGroup}>
+                <Text style={[styles.inputGroupLabel, { color: colors.text }]}>Reps</Text>
+                <TextInput
+                  style={[styles.smallInput, { backgroundColor: colors.background, borderColor: colors.border, color: colors.text }]}
+                  placeholder="8-12"
+                  value={exercise.reps}
+                  onChangeText={(value) => updateExercise(index, 'reps', value.replace(/[^0-9\-]/g, ''))}
+                  keyboardType="numbers-and-punctuation"
+                  maxLength={7}
+                  contextMenuHidden={true}
+                  placeholderTextColor={colors.placeholder}
+                />
+              </View>
+
+              <View style={styles.inputGroup}>
+                <Text style={[styles.inputGroupLabel, { color: colors.text }]}>Weight</Text>
+                <TextInput
+                  style={[styles.smallInput, { backgroundColor: colors.background, borderColor: colors.border, color: colors.text }]}
+                  placeholder="135"
+                  value={exercise.weight}
+                  onChangeText={(value) => updateExercise(index, 'weight', value.replace(/[^0-9.]/g, ''))}
+                  keyboardType="decimal-pad"
+                  maxLength={6}
+                  contextMenuHidden={true}
+                  placeholderTextColor={colors.placeholder}
+                />
+              </View>
+            </View>
+          )}
 
           {/* Rest Timer Section - Collapsible */}
           <TouchableOpacity
@@ -1049,6 +1123,11 @@ const styles = StyleSheet.create({
     fontSize: 14,
     textAlign: 'center',
     fontWeight: '500',
+  },
+  inputUnitLabel: {
+    fontSize: 11,
+    marginTop: 2,
+    textAlign: 'center',
   },
   emptyState: {
     alignItems: 'center',

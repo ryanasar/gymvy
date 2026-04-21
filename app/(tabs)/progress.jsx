@@ -7,6 +7,7 @@ import { useWorkout } from '@/contexts/WorkoutContext';
 import { usePreload } from '@/contexts/PreloadContext';
 import { useThemeColors } from '@/hooks/useThemeColors';
 import { useResponsiveLayout } from '@/hooks/useResponsiveLayout';
+import { useWeightUnit } from '@/hooks/useWeightUnit';
 import { storage } from '@/services/storage';
 import { addBodyWeightEntry } from '@/services/storage/bodyWeightStorage';
 import { createBodyWeightEntry } from '@/services/api/bodyWeight';
@@ -25,6 +26,7 @@ export default function ProgressScreen() {
     : undefined;
   const { user } = useAuth();
   const { exerciseDatabase } = useWorkout();
+  const { weightUnit } = useWeightUnit();
   const { bodyWeightData: preloadedBodyWeight, workoutSessions: preloadedSessions, progressLoading, refreshProgress } = usePreload();
 
   const [bodyWeightData, setBodyWeightData] = useState([]);
@@ -265,7 +267,7 @@ export default function ProgressScreen() {
         }
       >
         {/* Body Weight Card */}
-        <BodyWeightCard data={bodyWeightData} onLogWeight={handleLogWeight} />
+        <BodyWeightCard data={bodyWeightData} onLogWeight={handleLogWeight} weightUnit={weightUnit} />
 
         {/* Primary Lifts Section - only show exercises with data */}
         {bigThreeData.some(ex => ex.data && ex.data.length > 0) && (
@@ -278,6 +280,7 @@ export default function ProgressScreen() {
                   key={exercise.exerciseName}
                   exerciseName={exercise.exerciseName}
                   data={exercise.data}
+                  weightUnit={weightUnit}
                 />
               ))}
           </>
@@ -297,6 +300,7 @@ export default function ProgressScreen() {
                 <ExerciseOneRMCard
                   exerciseName={selectedOtherExercise}
                   data={selectedExerciseData}
+                  weightUnit={weightUnit}
                 />
               </View>
             )}

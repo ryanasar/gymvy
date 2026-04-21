@@ -2,7 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
 import * as MediaLibrary from 'expo-media-library';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
   Alert,
   KeyboardAvoidingView,
@@ -24,7 +24,9 @@ import { storage } from '@/services/storage';
 import { preparePostImage } from '@/utils/imageUpload';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import TagUsersModal from '@/components/post/TagUsersModal';
+import CommunityPickerModal from '@/components/community/CommunityPickerModal';
 import { createTagNotification } from '@/services/api/notifications';
+import { getCommunitiesByUserId } from '@/services/api/communities';
 import { trackPostCreated } from '@/lib/analytics';
 
 const CreatePostScreen = () => {
@@ -73,6 +75,10 @@ const CreatePostScreen = () => {
   const [uploadedImagePath, setUploadedImagePath] = useState(null);
   const [taggedUsers, setTaggedUsers] = useState(initialTaggedUsers);
   const [showTagUsersModal, setShowTagUsersModal] = useState(false);
+  const [selectedCommunities, setSelectedCommunities] = useState([]);
+  const [showCommunityPicker, setShowCommunityPicker] = useState(false);
+  const [userCommunities, setUserCommunities] = useState([]);
+  const [followersSelected, setFollowersSelected] = useState(true);
   const [isPosting, setIsPosting] = useState(false);
 
   // Ref-based guard to prevent race conditions between state check and setState
@@ -80,6 +86,16 @@ const CreatePostScreen = () => {
 
   // Background image upload ref — starts uploading on image selection
   const backgroundUploadRef = useRef(null);
+
+  // Fetch user's communities on mount (only for new posts)
+  useEffect(() => {
+    if (!isEditMode && user?.id) {
+      getCommunitiesByUserId(user.id)
+        .then(data => setUserCommunities(data || []))
+        .catch(() => setUserCommunities([]));
+    }
+  }, [user?.id, isEditMode]);
+
 
   const handleImagePick = () => {
     Alert.alert(
@@ -343,11 +359,12 @@ const CreatePostScreen = () => {
           title: workoutData?.dayName || 'Workout Post',
           description: description.trim() || '',
           imageUrl: imageUrl || null,
-          published: true,
+          published: followersSelected,
           workoutSessionId: databaseWorkoutSessionId,
           splitId: splitId ? parseInt(splitId) : null,
           badges: badges || null,
           taggedUserIds: taggedUsers.map(u => u.id),
+          communityIds: selectedCommunities.map(c => c.id),
           activityType: 'workout',
         };
 
@@ -394,7 +411,7 @@ const CreatePostScreen = () => {
   };
 
   const handleCancel = () => {
-    if (description || selectedImage || taggedUsers.length > 0) {
+    if (description || selectedImage || taggedUsers.length > 0 || selectedCommunities.length > 0 || !followersSelected) {
       Alert.alert(
         'Discard Post?',
         'Are you sure you want to discard this post?',
@@ -427,9 +444,13 @@ const CreatePostScreen = () => {
         <TouchableOpacity
           onPress={handlePost}
           style={[styles.headerButton, styles.postButton]}
-          disabled={isPosting}
+          disabled={isPosting || (!followersSelected && selectedCommunities.length === 0)}
         >
-          <Text style={[styles.postText, { color: colors.primary }, isPosting && { color: colors.placeholder }]}>
+          <Text style={[
+            styles.postText,
+            { color: colors.primary },
+            (isPosting || (!followersSelected && selectedCommunities.length === 0)) && { opacity: 0.4 },
+          ]}>
             {isPosting ? (isEditMode ? 'Saving...' : 'Posting...') : (isEditMode ? 'Save' : 'Post')}
           </Text>
         </TouchableOpacity>
@@ -445,34 +466,92 @@ const CreatePostScreen = () => {
           {workoutData && (
             <View style={[styles.workoutCard, { backgroundColor: colors.accent + '15', borderColor: colors.accent }]}>
               <View style={styles.workoutCardHeader}>
-                <Text style={[styles.workoutCardTitle, { color: colors.accent }]}>Workout Completed</Text>
+                <View>
+                  <Text style={[styles.workoutCardTitle, { color: colors.accent }]}>Workout Completed</Text>
+                  <Text style={[styles.workoutName, { color: colors.text }]}>{workoutData.dayName}</Text>
+                  {workoutData.weekNumber && workoutData.dayNumber && (
+                    <Text style={[styles.workoutDetails, { color: colors.secondaryText }]}>
+                      Cycle {workoutData.weekNumber} • Day {workoutData.dayNumber} • {workoutData.exercises?.length || 0} exercises
+                    </Text>
+                  )}
+                </View>
                 <View style={[styles.completeBadge, { backgroundColor: colors.accent }]}>
                   <Ionicons name="checkmark" size={16} color="#FFFFFF" />
                 </View>
               </View>
+            </View>
+          )}
 
-              <Text style={[styles.workoutName, { color: colors.text }]}>{workoutData.dayName}</Text>
-              {workoutData.weekNumber && workoutData.dayNumber && (
-                <Text style={[styles.workoutDetails, { color: colors.secondaryText }]}>
-                  Week {workoutData.weekNumber} • Day {workoutData.dayNumber}
-                </Text>
-              )}
-
-              <View style={[styles.exercisesSummary, { backgroundColor: colors.cardBackground + '80' }]}>
-                <Text style={[styles.exercisesSummaryTitle, { color: colors.text }]}>
-                  {workoutData.exercises?.length || 0} Exercises
-                </Text>
-                {workoutData.exercises?.slice(0, 3).map((exercise, index) => (
-                  <Text key={index} style={[styles.exercisePreview, { color: colors.secondaryText }]}>
-                    • {exercise.name}
+          {/* Share With Section */}
+          {!isEditMode && (
+            <View style={styles.section}>
+              <Text style={[styles.sectionLabel, { color: colors.text }]}>Share With</Text>
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={styles.shareWithRow}
+              >
+                {/* My Feed chip */}
+                <TouchableOpacity
+                  onPress={() => {
+                    if (followersSelected && selectedCommunities.length === 0) return;
+                    setFollowersSelected(prev => !prev);
+                  }}
+                  style={[
+                    styles.audienceChip,
+                    followersSelected
+                      ? { backgroundColor: colors.primary }
+                      : { backgroundColor: colors.borderLight + '40' },
+                  ]}
+                  activeOpacity={0.7}
+                >
+                  {followersSelected && (
+                    <Ionicons name="checkmark" size={14} color="#fff" style={{ marginRight: 4 }} />
+                  )}
+                  <Text style={[
+                    styles.audienceChipText,
+                    followersSelected
+                      ? { color: '#fff' }
+                      : { color: colors.secondaryText },
+                  ]}>
+                    My Feed
                   </Text>
+                </TouchableOpacity>
+
+                {/* Community chips */}
+                {selectedCommunities.map((community) => (
+                  <TouchableOpacity
+                    key={community.id}
+                    onPress={() => {
+                      if (selectedCommunities.length === 1 && !followersSelected) return;
+                      setSelectedCommunities(prev => prev.filter(c => c.id !== community.id));
+                    }}
+                    style={[styles.audienceChip, { backgroundColor: (community.color || colors.primary) + '20' }]}
+                    activeOpacity={0.7}
+                  >
+                    {community.imageUrl ? (
+                      <Image source={{ uri: community.imageUrl }} style={styles.communityChipImage} contentFit="cover" />
+                    ) : (
+                      <View style={[styles.communityChipImagePlaceholder, { backgroundColor: community.color || colors.primary }]}>
+                        <Ionicons name="people" size={10} color="#fff" />
+                      </View>
+                    )}
+                    <Text style={[styles.audienceChipText, { color: community.color || colors.primary }]}>
+                      {community.name}
+                    </Text>
+                    <Ionicons name="close" size={14} color={community.color || colors.primary} style={{ marginLeft: 2 }} />
+                  </TouchableOpacity>
                 ))}
-                {workoutData.exercises?.length > 3 && (
-                  <Text style={[styles.exerciseMore, { color: colors.primary }]}>
-                    +{workoutData.exercises.length - 3} more
-                  </Text>
-                )}
-              </View>
+
+                {/* Add community button */}
+                <TouchableOpacity
+                  onPress={() => setShowCommunityPicker(true)}
+                  style={[styles.addAudienceButton, { backgroundColor: colors.borderLight + '40' }]}
+                  activeOpacity={0.7}
+                >
+                  <Ionicons name="add" size={20} color={colors.primary} />
+                </TouchableOpacity>
+              </ScrollView>
             </View>
           )}
 
@@ -556,6 +635,15 @@ const CreatePostScreen = () => {
         onUsersSelected={handleTagsUpdated}
         currentUserId={user?.id}
       />
+
+      {/* Community Picker Modal */}
+      <CommunityPickerModal
+        visible={showCommunityPicker}
+        onClose={() => setShowCommunityPicker(false)}
+        selectedCommunities={selectedCommunities}
+        onCommunitiesSelected={setSelectedCommunities}
+        communities={userCommunities}
+      />
     </KeyboardAvoidingView>
   );
 };
@@ -612,7 +700,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 12,
   },
   workoutCardTitle: {
     fontSize: 14,
@@ -633,31 +720,13 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
   workoutName: {
-    fontSize: 22,
+    fontSize: 18,
     fontWeight: '700',
-    marginBottom: 4,
+    marginTop: 4,
   },
   workoutDetails: {
-    fontSize: 14,
-    marginBottom: 16,
-  },
-  exercisesSummary: {
-    borderRadius: 16,
-    padding: 12,
-  },
-  exercisesSummaryTitle: {
-    fontSize: 14,
-    fontWeight: '600',
-    marginBottom: 8,
-  },
-  exercisePreview: {
     fontSize: 13,
-    marginBottom: 4,
-  },
-  exerciseMore: {
-    fontSize: 13,
-    fontWeight: '500',
-    marginTop: 4,
+    marginTop: 2,
   },
 
   // Sections
@@ -699,7 +768,7 @@ const styles = StyleSheet.create({
   // Image Upload
   uploadButton: {
     borderRadius: 16,
-    padding: 32,
+    padding: 24,
     alignItems: 'center',
     borderWidth: 2,
     borderStyle: 'dashed',
@@ -723,7 +792,7 @@ const styles = StyleSheet.create({
   },
   selectedImage: {
     width: '100%',
-    height: 320,
+    height: 240,
     borderRadius: 16,
   },
   removeImageButton: {
@@ -776,5 +845,44 @@ const styles = StyleSheet.create({
   removeTagText: {
     fontSize: 16,
     fontWeight: '600',
+  },
+  // Share With
+  shareWithRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    paddingRight: 4,
+  },
+  audienceChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderRadius: 999,
+    paddingVertical: 8,
+    paddingHorizontal: 14,
+  },
+  audienceChipText: {
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  communityChipImage: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    marginRight: 6,
+  },
+  communityChipImagePlaceholder: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 6,
+  },
+  addAudienceButton: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
 });

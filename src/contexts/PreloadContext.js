@@ -4,6 +4,7 @@ import { getSplitsByUserId } from '@/services/api/splits';
 import { getBodyWeightEntries } from '@/services/api/bodyWeight';
 import { getWorkoutSessionsByUserId } from '@/services/api/workoutSessions';
 import { getCalendarDataForDisplay } from '@/services/storage/calendarStorage';
+import { getCommunitiesByUserId } from '@/services/api/communities';
 
 const PreloadContext = createContext();
 
@@ -23,6 +24,7 @@ export const PreloadProvider = ({ children }) => {
   const [splitsList, setSplitsList] = useState([]);
   const [bodyWeightData, setBodyWeightData] = useState([]);
   const [workoutSessions, setWorkoutSessions] = useState([]);
+  const [communities, setCommunities] = useState([]);
 
   // Loading states
   const [loading, setLoading] = useState(true);
@@ -46,7 +48,7 @@ export const PreloadProvider = ({ children }) => {
 
     try {
       // Fetch all data in parallel
-      const [calendar, splits, bodyWeight, sessions] = await Promise.all([
+      const [calendar, splits, bodyWeight, sessions, userCommunities] = await Promise.all([
         getCalendarDataForDisplay(userId).catch(err => {
           return [];
         }),
@@ -59,6 +61,7 @@ export const PreloadProvider = ({ children }) => {
         getWorkoutSessionsByUserId(userId).catch(err => {
           return [];
         }),
+        getCommunitiesByUserId(userId).catch(() => []),
       ]);
 
       if (isMountedRef.current) {
@@ -66,6 +69,7 @@ export const PreloadProvider = ({ children }) => {
         setSplitsList(splits);
         setBodyWeightData(bodyWeight || []);
         setWorkoutSessions(sessions || []);
+        setCommunities((userCommunities || []).filter(c => c.status === 'ACTIVE'));
         hasPreloaded.current = true;
       }
     } catch (error) {
@@ -138,6 +142,20 @@ export const PreloadProvider = ({ children }) => {
     }
   }, [user?.id, isOffline]);
 
+  // Refresh communities
+  const refreshCommunities = useCallback(async () => {
+    if (!user?.id || isOffline) return;
+
+    try {
+      const data = await getCommunitiesByUserId(user.id);
+      if (isMountedRef.current) {
+        setCommunities((data || []).filter(c => c.status === 'ACTIVE'));
+      }
+    } catch (error) {
+      // Silently ignore communities refresh errors
+    }
+  }, [user?.id, isOffline]);
+
   // Trigger preload when user becomes available
   useEffect(() => {
     isMountedRef.current = true;
@@ -150,6 +168,7 @@ export const PreloadProvider = ({ children }) => {
       setSplitsList([]);
       setBodyWeightData([]);
       setWorkoutSessions([]);
+      setCommunities([]);
       hasPreloaded.current = false;
       setLoading(false);
     }
@@ -165,6 +184,7 @@ export const PreloadProvider = ({ children }) => {
     splitsList,
     bodyWeightData,
     workoutSessions,
+    communities,
 
     // Loading states
     loading,
@@ -176,6 +196,7 @@ export const PreloadProvider = ({ children }) => {
     refreshCalendar,
     refreshSplits,
     refreshProgress,
+    refreshCommunities,
     preloadAll,
 
     // Setters for direct updates (e.g., after mutations)
@@ -183,6 +204,7 @@ export const PreloadProvider = ({ children }) => {
     setSplitsList,
     setBodyWeightData,
     setWorkoutSessions,
+    setCommunities,
   };
 
   return (

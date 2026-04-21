@@ -617,7 +617,7 @@ export const WorkoutProvider = ({ children }) => {
     // Handle rest days
     if (todaysWorkoutDay.isRest) {
       return {
-        title: `Rest Day — Week ${currentWeek} Day ${todaysDayIndex + 1}`,
+        title: `Rest Day — Cycle ${currentWeek} Day ${todaysDayIndex + 1}`,
         dayName: 'Rest Day',
         type: 'rest',
         isRest: true,
@@ -656,7 +656,7 @@ export const WorkoutProvider = ({ children }) => {
     });
 
     return {
-      title: `${workoutName} — Week ${currentWeek} Day ${todaysDayIndex + 1}`,
+      title: `${workoutName} — Cycle ${currentWeek} Day ${todaysDayIndex + 1}`,
       dayName: workoutName,
       type: workoutType,
       exercises,

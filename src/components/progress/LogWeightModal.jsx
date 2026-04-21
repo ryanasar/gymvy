@@ -12,15 +12,17 @@ import {
   Keyboard,
 } from 'react-native';
 import { useThemeColors } from '@/hooks/useThemeColors';
+import { toLbs, getUnitLabel } from '@/utils/weightUnits';
 
-const LogWeightModal = ({ visible, onClose, onSave }) => {
+const LogWeightModal = ({ visible, onClose, onSave, weightUnit = 'lbs' }) => {
   const colors = useThemeColors();
   const [weight, setWeight] = useState('');
 
   const handleSave = () => {
     const parsed = parseFloat(weight);
     if (!parsed || parsed <= 0) return;
-    onSave(parsed);
+    // Convert to lbs for storage
+    onSave(toLbs(parsed, weightUnit));
     setWeight('');
     onClose();
   };
@@ -57,7 +59,7 @@ const LogWeightModal = ({ visible, onClose, onSave }) => {
                     keyboardType="decimal-pad"
                     autoFocus
                   />
-                  <Text style={[styles.unit, { color: colors.secondaryText }]}>lbs</Text>
+                  <Text style={[styles.unit, { color: colors.secondaryText }]}>{getUnitLabel(weightUnit)}</Text>
                 </View>
 
                 <View style={styles.buttonRow}>

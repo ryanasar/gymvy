@@ -3,9 +3,11 @@ import { View, Text, TextInput, StyleSheet, ScrollView, TouchableOpacity, Alert 
 import { useThemeColors } from '@/hooks/useThemeColors';
 import { exercises } from '@/data/exercises/exerciseDatabase';
 import ExercisePickerScreen from '@/components/exercises/ExercisePickerScreen';
+import { useWeightUnit } from '@/hooks/useWeightUnit';
 
 const DayBuilder = ({ splitData, updateSplitData }) => {
   const colors = useThemeColors();
+  const { weightUnit } = useWeightUnit();
   const [currentDayIndex, setCurrentDayIndex] = useState(0);
   const [exercisePickerVisible, setExercisePickerVisible] = useState(false);
 
@@ -326,7 +328,7 @@ const DayBuilder = ({ splitData, updateSplitData }) => {
                           <Text style={[styles.inputLabel, { color: colors.text }]}>Weight</Text>
                           <TextInput
                             style={[styles.input, { backgroundColor: colors.background, borderColor: colors.border, color: colors.text }]}
-                            placeholder="135 lbs"
+                            placeholder={weightUnit === 'kg' ? '60 kg' : '135 lbs'}
                             value={exercise.weight}
                             onChangeText={(value) => updateExercise(exerciseIndex, 'weight', value)}
                             placeholderTextColor={colors.secondaryText}

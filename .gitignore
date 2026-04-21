@@ -47,6 +47,5 @@ eas.json
 
 generate_apple_jwt.js
 
-*.md
 
 *.sh

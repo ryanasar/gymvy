@@ -175,7 +175,7 @@ const ProgramScreen = () => {
   const handleSelectNewSplit = async (selectedSplit) => {
     Alert.alert(
       'Switch to This Split?',
-      `You're about to switch from "${currentActiveSplit?.name}" to "${selectedSplit.name}".\n\nThis will:\n• Start "${selectedSplit.name}" at Week 1, Day 1\n• Make "${selectedSplit.name}" your active split\n\nYour previous workouts are saved and won't be deleted.`,
+      `You're about to switch from "${currentActiveSplit?.name}" to "${selectedSplit.name}".\n\nThis will:\n• Start "${selectedSplit.name}" at Cycle 1, Day 1\n• Make "${selectedSplit.name}" your active split\n\nYour previous workouts are saved and won't be deleted.`,
       [
         {
           text: 'Cancel',
@@ -206,7 +206,7 @@ const ProgramScreen = () => {
               // Show success message
               Alert.alert(
                 'Split Changed!',
-                `You're now on "${selectedSplit.name}" starting at Week 1, Day 1. Your previous workouts are still saved in your history.`,
+                `You're now on "${selectedSplit.name}" starting at Cycle 1, Day 1. Your previous workouts are still saved in your history.`,
                 [{ text: 'Got it' }]
               );
             } catch (error) {
@@ -340,7 +340,7 @@ const ProgramScreen = () => {
                       Today's Workout: {todaysWorkout?.dayName || 'Rest Day'}
                     </Text>
                     <Text style={[styles.activeProgramSubDescription, { color: colors.secondaryText }]}>
-                      {currentActiveSplit.totalDays} days • Week {currentWeek} Day {currentDayIndex + 1}
+                      {currentActiveSplit.totalDays} days • Cycle {currentWeek} Day {currentDayIndex + 1}
                     </Text>
                   </View>
                 </View>

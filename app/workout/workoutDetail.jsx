@@ -8,6 +8,8 @@ import { muscleGroups } from '@/data/exercises/muscleGroups';
 import { createSavedWorkout, getSavedWorkouts, deleteSavedWorkout } from '@/services/api/savedWorkouts';
 import { getSplitById } from '@/services/api/splits';
 import { useAuth } from '@/lib/auth';
+import { useWeightUnit } from '@/hooks/useWeightUnit';
+import { formatWeight, getUnitLabel } from '@/utils/weightUnits';
 
 /**
  * Check if an exercise is a cardio exercise
@@ -32,6 +34,7 @@ const WorkoutDetailScreen = () => {
   const params = useLocalSearchParams();
   const colors = useThemeColors();
   const { user } = useAuth();
+  const { weightUnit } = useWeightUnit();
   const [saving, setSaving] = useState(false);
   const [savedWorkoutId, setSavedWorkoutId] = useState(null);
   const [loadingSplit, setLoadingSplit] = useState(false);
@@ -326,13 +329,13 @@ const WorkoutDetailScreen = () => {
           )
         )}
 
-        {/* Week and Day */}
+        {/* Cycle and Day */}
         {workoutData.weekNumber && workoutData.dayNumber && (
           <View style={styles.metadataSection}>
             <View style={styles.metadataItem}>
               <Ionicons name="calendar-outline" size={18} color={colors.secondaryText} />
               <Text style={[styles.metadataText, { color: colors.secondaryText }]}>
-                Week {workoutData.weekNumber}
+                Cycle {workoutData.weekNumber}
               </Text>
             </View>
             <View style={styles.metadataItem}>
@@ -420,7 +423,7 @@ const WorkoutDetailScreen = () => {
                           <View key={setIndex} style={[styles.setRow, { backgroundColor: colors.borderLight + '30' }]}>
                             <Text style={[styles.setLabel, { color: colors.text }]}>Set {set.setNumber}</Text>
                             <Text style={[styles.setDetails, { color: colors.secondaryText }]}>
-                              {set.weight ? `${set.weight} lbs` : '-'} × {set.reps || '-'} reps
+                              {set.weight ? `${formatWeight(set.weight, weightUnit)} ${getUnitLabel(weightUnit)}` : '-'} × {set.reps || '-'} reps
                             </Text>
                           </View>
                         ))}

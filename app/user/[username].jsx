@@ -48,6 +48,7 @@ export default function UserProfileScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [isBlocked, setIsBlocked] = useState(false);
   const [isBlockedBy, setIsBlockedBy] = useState(false);
+  const [communities, setCommunities] = useState([]);
 
   const isOwnProfile = currentUser?.username === username;
 
@@ -63,6 +64,9 @@ export default function UserProfileScreen() {
       }
       const userData = await getUserByUsername(username);
       setUser(userData);
+
+      // Extract communities from bundled response
+      setCommunities((userData?.communities || []).filter(c => c.status === 'ACTIVE'));
 
       // Set block status
       setIsBlocked(userData?.isBlocked || false);
@@ -393,6 +397,7 @@ export default function UserProfileScreen() {
           onFollowingPress={handleOpenFollowingModal}
           onNudgePress={handleOpenNudgeModal}
           canNudge={canNudge}
+          communities={communities}
         />
 
         <TabBar

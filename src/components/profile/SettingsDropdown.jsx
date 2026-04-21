@@ -14,7 +14,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useThemeColors } from '@/hooks/useThemeColors';
 import { Radius, Spacing, FontSize, FontWeight, Shadows } from '@/constants/theme';
 
-const SettingsDropdown = ({ onSignOut, onDeleteAccount, onBlockedUsersPress }) => {
+const SettingsDropdown = ({ onSignOut, onDeleteAccount, onBlockedUsersPress, weightUnit, onWeightUnitChange }) => {
   const colors = useThemeColors();
   const [isVisible, setIsVisible] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -116,6 +116,21 @@ const SettingsDropdown = ({ onSignOut, onDeleteAccount, onBlockedUsersPress }) =
             >
               <Ionicons name="ban-outline" size={20} color={colors.text} />
               <Text style={[styles.dropdownText, { color: colors.text }]}>Blocked Users</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[styles.dropdownItem, { borderBottomWidth: 1, borderBottomColor: colors.borderLight }]}
+              onPress={() => {
+                const newUnit = weightUnit === 'lbs' ? 'kg' : 'lbs';
+                onWeightUnitChange?.(newUnit);
+              }}
+              activeOpacity={0.7}
+            >
+              <Ionicons name="barbell-outline" size={20} color={colors.text} />
+              <Text style={[styles.dropdownText, { color: colors.text }]}>Weight Unit</Text>
+              <Text style={[styles.dropdownText, { color: colors.secondaryText, marginLeft: 'auto' }]}>
+                {weightUnit === 'kg' ? 'kg' : 'lbs'}
+              </Text>
             </TouchableOpacity>
 
             <TouchableOpacity

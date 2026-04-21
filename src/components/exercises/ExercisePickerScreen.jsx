@@ -16,6 +16,8 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useThemeColors } from '@/hooks/useThemeColors';
+import { useWeightUnit } from '@/hooks/useWeightUnit';
+import { getUnitLabel } from '@/utils/weightUnits';
 import ExerciseCard from '@/components/exercises/ExerciseCard';
 
 /**
@@ -51,6 +53,7 @@ const ExercisePickerScreen = ({
 }) => {
   const colors = useThemeColors();
   const insets = useSafeAreaInsets();
+  const { weightUnit } = useWeightUnit();
 
   // Animation for config panel slide-up
   const configPanelAnim = useRef(new Animated.Value(0)).current;
@@ -343,7 +346,7 @@ const ExercisePickerScreen = ({
             <Text style={[styles.configPanelSummary, { color: colors.secondaryText }]}>
               {isCardio
                 ? `${duration || '—'} min${cardioFields.includes('incline') ? ` · ${incline || '—'}%` : ''}${cardioFields.includes('speed') ? ` · ${speed || '—'} mph` : ''}`
-                : `${sets || '—'} sets × ${reps || '—'} reps${weight ? ` @ ${weight} lbs` : ''}`
+                : `${sets || '—'} sets × ${reps || '—'} reps${weight ? ` @ ${weight} ${getUnitLabel(weightUnit)}` : ''}`
               }
             </Text>
           </View>
@@ -442,7 +445,7 @@ const ExercisePickerScreen = ({
                 placeholder="—"
                 placeholderTextColor={colors.placeholder}
               />
-              <Text style={[styles.configUnit, { color: colors.secondaryText }]}>lbs</Text>
+              <Text style={[styles.configUnit, { color: colors.secondaryText }]}>{getUnitLabel(weightUnit)}</Text>
             </View>
           </View>
         )}

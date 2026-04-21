@@ -48,6 +48,8 @@ const MUSCLE_DISPLAY_MAP = {
   abs: 'Core',
   obliques: 'Core',
   hip_flexors: 'Core',
+  // Cardio
+  cardio: 'Cardio',
 };
 
 const Activity = ({ post, currentUserId, onPostUpdated, onPostDeleted, initialOpenComments = false }) => {
@@ -559,7 +561,7 @@ export default Activity;
 const styles = StyleSheet.create({
   card: {
     borderRadius: 20,
-    marginBottom: 20,
+    marginBottom: 10,
     borderWidth: 0,
     overflow: 'hidden',
     shadowOffset: { width: 0, height: 2 },

@@ -171,6 +171,12 @@ const NotificationsScreen = () => {
         return 'accepted your follow request';
       case 'nudge':
         return 'sent you a nudge';
+      case 'community_join':
+        return `joined ${notification.metadata?.community_name || 'your community'}`;
+      case 'community_role_changed':
+        return `made you ${notification.metadata?.new_role?.toLowerCase() || 'a new role'} in ${notification.metadata?.community_name || 'a community'}`;
+      case 'community_removed':
+        return `removed you from ${notification.metadata?.community_name || 'a community'}`;
       case 'streak_lost':
         return null; // Handled separately in render
       default:
@@ -204,6 +210,12 @@ const NotificationsScreen = () => {
         return { name: 'checkmark-circle', color: colors.success || '#10B981' };
       case 'nudge':
         return { name: 'barbell-outline', color: colors.accent };
+      case 'community_join':
+        return { name: 'people', color: colors.success || '#10B981' };
+      case 'community_role_changed':
+        return { name: 'shield', color: '#5856D6' };
+      case 'community_removed':
+        return { name: 'person-remove', color: colors.error };
       case 'streak_lost':
         return { name: 'flame-outline', color: colors.warning || '#F59E0B' };
       default:
@@ -243,6 +255,15 @@ const NotificationsScreen = () => {
   const handleNotificationPress = (notification) => {
     // For streak_lost, do nothing on row press
     if (notification.type === 'streak_lost') return;
+
+    // For community notifications, navigate appropriately
+    if (notification.type === 'community_join' || notification.type === 'community_role_changed') {
+      if (notification.metadata?.community_id) {
+        handleNavigation(`/community/${notification.metadata.community_id}`);
+      }
+      return;
+    }
+    if (notification.type === 'community_removed') return;
 
     // For follow, follow request, and nudge notifications, go to profile
     if (notification.type === 'follow' || notification.type === 'follow_request' || notification.type === 'follow_request_accepted' || notification.type === 'nudge') {

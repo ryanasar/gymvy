@@ -33,7 +33,6 @@ export default function HomeScreen() {
   const [hasMore, setHasMore] = useState(true);
   const [showHomeTour, setShowHomeTour] = useState(false);
 
-  // Ref for FlatList to enable scroll to top
   const flatListRef = useRef(null);
 
   // Refs for tour targets
@@ -231,7 +230,7 @@ export default function HomeScreen() {
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
-      {/* Header */}
+      {/* Fixed Header */}
       <View style={[styles.headerContainer, { backgroundColor: colors.cardBackground }]}>
         <TouchableOpacity ref={homeHeaderRef} collapsable={false} onPress={scrollToTop} activeOpacity={0.7}>
           <Text style={[styles.title, { color: colors.text }]}>Home</Text>
@@ -263,7 +262,6 @@ export default function HomeScreen() {
         </View>
       </View>
 
-      <View style={{ flex: 1 }}>
       <FlatList
         ref={flatListRef}
         data={posts}
@@ -278,18 +276,25 @@ export default function HomeScreen() {
         keyExtractor={(item) => item.id.toString()}
         showsVerticalScrollIndicator={false}
         refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} tintColor={colors.primary} />
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={handleRefresh}
+            tintColor={colors.primary}
+          />
         }
         ListEmptyComponent={renderEmptyComponent}
         ListFooterComponent={renderFooter}
         onEndReached={loadMorePosts}
         onEndReachedThreshold={0.5}
-        contentContainerStyle={[posts.length === 0 ? styles.emptyListContainer : styles.listContainer, responsiveStyle]}
+        contentContainerStyle={[
+          posts.length === 0 ? styles.emptyListContainer : styles.listContainer,
+          responsiveStyle,
+        ]}
         initialNumToRender={10}
         windowSize={10}
         maxToRenderPerBatch={10}
+        style={{ flex: 1 }}
       />
-      </View>
 
       <HomeTour
         visible={showHomeTour}
@@ -311,11 +316,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 20,
     paddingTop: 60,
-    paddingBottom: 20,
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.03,
-    shadowRadius: 2,
-    elevation: 0,
+    paddingBottom: 16,
   },
   title: {
     fontSize: 34,
@@ -351,7 +352,7 @@ const styles = StyleSheet.create({
   },
   listContainer: {
     paddingHorizontal: 6,
-    paddingTop: 6,
+    paddingTop: 0,
     paddingBottom: 24,
   },
   emptyListContainer: {

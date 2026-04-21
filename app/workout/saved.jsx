@@ -5,8 +5,6 @@ import {
   TextInput,
   TouchableOpacity,
   StyleSheet,
-  ScrollView,
-  Modal,
   Alert,
   KeyboardAvoidingView,
   Platform
@@ -19,7 +17,7 @@ import { useThemeColors } from '@/hooks/useThemeColors';
 import { useAuth } from '@/lib/auth';
 import { createSavedWorkout, updateSavedWorkout } from '@/services/api/savedWorkouts';
 import { exercises } from '@/data/exercises/exerciseDatabase';
-import ExerciseCard from '@/components/exercises/ExerciseCard';
+import ExercisePickerScreen from '@/components/exercises/ExercisePickerScreen';
 import EmptyState from '@/components/common/EmptyState';
 
 const CreateSavedWorkoutScreen = () => {
@@ -38,8 +36,6 @@ const CreateSavedWorkoutScreen = () => {
   const [workoutEmoji, setWorkoutEmoji] = useState('💪');
   const [selectedExercises, setSelectedExercises] = useState([]);
   const [exercisePickerVisible, setExercisePickerVisible] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [selectedMuscleFilter, setSelectedMuscleFilter] = useState('all');
   const [saving, setSaving] = useState(false);
 
   // Initialize state from workout data in edit mode
@@ -68,17 +64,6 @@ const CreateSavedWorkoutScreen = () => {
       }
     }
   }, []);
-
-  const muscleGroups = [
-    { id: 'all', name: 'All' },
-    { id: 'chest', name: 'Chest' },
-    { id: 'lats', name: 'Back' },
-    { id: 'front_delts', name: 'Shoulders' },
-    { id: 'biceps', name: 'Biceps' },
-    { id: 'triceps', name: 'Triceps' },
-    { id: 'quadriceps', name: 'Legs' },
-    { id: 'core', name: 'Core' },
-  ];
 
   const handleSave = async () => {
     if (!workoutName.trim()) {
@@ -115,17 +100,22 @@ const CreateSavedWorkoutScreen = () => {
     }
   };
 
-  const addExercise = (exercise) => {
+  const addExercise = (exercise, config) => {
     if (selectedExercises.length >= 20) {
       Alert.alert('Limit Reached', 'Maximum 20 exercises per workout');
       return;
     }
 
+    const isCardio = exercise.exerciseType === 'cardio';
+
     const newExercise = {
       ...exercise,
-      sets: '',
-      reps: '',
-      weight: '',
+      sets: isCardio ? '' : (config?.sets?.toString() || ''),
+      reps: isCardio ? '' : (config?.reps?.toString() || ''),
+      weight: isCardio ? '' : (config?.weight || ''),
+      duration: isCardio ? (config?.duration?.toString() || '') : '',
+      incline: isCardio ? (config?.incline?.toString() || '') : '',
+      speed: isCardio ? (config?.speed?.toString() || '') : '',
       restSeconds: '',
       notes: ''
     };
@@ -149,27 +139,6 @@ const CreateSavedWorkoutScreen = () => {
   const handleReorderExercises = useCallback(({ data }) => {
     setSelectedExercises(data);
   }, []);
-
-  const getFilteredExercises = () => {
-    let filtered = [...exercises];
-
-    if (selectedMuscleFilter !== 'all') {
-      filtered = filtered.filter(ex =>
-        ex.primaryMuscles?.includes(selectedMuscleFilter)
-      );
-    }
-
-    if (searchQuery.trim()) {
-      const q = searchQuery.toLowerCase();
-      filtered = filtered.filter(ex =>
-        ex.name.toLowerCase().includes(q) ||
-        ex.primaryMuscles?.some(m => m.toLowerCase().includes(q)) ||
-        ex.equipment?.toLowerCase().includes(q)
-      );
-    }
-
-    return filtered;
-  };
 
   const renderExerciseItem = useCallback(({ item, drag, isActive, getIndex }) => {
     const index = getIndex();
@@ -201,44 +170,106 @@ const CreateSavedWorkoutScreen = () => {
 
         <View style={[styles.divider, { backgroundColor: colors.borderLight }]} />
 
-        <View style={styles.exerciseInputs}>
-          <View style={styles.inputGroup}>
-            <Text style={[styles.inputLabel, { color: colors.text }]}>Sets</Text>
-            <TextInput
-              style={[styles.smallInput, { backgroundColor: colors.background, borderColor: colors.border, color: colors.text }]}
-              placeholder="3"
-              placeholderTextColor={colors.placeholder}
-              value={item.sets}
-              onChangeText={(v) => updateExercise(index, 'sets', v.replace(/[^0-9]/g, ''))}
-              keyboardType="number-pad"
-              maxLength={2}
-            />
+        {item.exerciseType === 'cardio' ? (
+          <View style={styles.exerciseInputs}>
+            <View style={styles.inputGroup}>
+              <Text style={[styles.inputLabel, { color: colors.text }]}>Duration</Text>
+              <TextInput
+                style={[styles.smallInput, { backgroundColor: colors.background, borderColor: colors.border, color: colors.text }]}
+                placeholder="20"
+                placeholderTextColor={colors.placeholder}
+                value={item.duration}
+                onChangeText={(v) => updateExercise(index, 'duration', v.replace(/[^0-9]/g, ''))}
+                keyboardType="number-pad"
+                maxLength={3}
+              />
+              <Text style={[styles.unitLabel, { color: colors.secondaryText }]}>min</Text>
+            </View>
+            {item.cardioFields?.includes('incline') && (
+              <View style={styles.inputGroup}>
+                <Text style={[styles.inputLabel, { color: colors.text }]}>Incline</Text>
+                <TextInput
+                  style={[styles.smallInput, { backgroundColor: colors.background, borderColor: colors.border, color: colors.text }]}
+                  placeholder="0"
+                  placeholderTextColor={colors.placeholder}
+                  value={item.incline}
+                  onChangeText={(v) => updateExercise(index, 'incline', v.replace(/[^0-9]/g, ''))}
+                  keyboardType="number-pad"
+                  maxLength={2}
+                />
+                <Text style={[styles.unitLabel, { color: colors.secondaryText }]}>%</Text>
+              </View>
+            )}
+            {item.cardioFields?.includes('speed') && (
+              <View style={styles.inputGroup}>
+                <Text style={[styles.inputLabel, { color: colors.text }]}>Speed</Text>
+                <TextInput
+                  style={[styles.smallInput, { backgroundColor: colors.background, borderColor: colors.border, color: colors.text }]}
+                  placeholder="5"
+                  placeholderTextColor={colors.placeholder}
+                  value={item.speed}
+                  onChangeText={(v) => updateExercise(index, 'speed', v.replace(/[^0-9.]/g, ''))}
+                  keyboardType="decimal-pad"
+                  maxLength={4}
+                />
+                <Text style={[styles.unitLabel, { color: colors.secondaryText }]}>mph</Text>
+              </View>
+            )}
+            {item.cardioFields?.includes('resistance') && (
+              <View style={styles.inputGroup}>
+                <Text style={[styles.inputLabel, { color: colors.text }]}>Resistance</Text>
+                <TextInput
+                  style={[styles.smallInput, { backgroundColor: colors.background, borderColor: colors.border, color: colors.text }]}
+                  placeholder="5"
+                  placeholderTextColor={colors.placeholder}
+                  value={item.incline}
+                  onChangeText={(v) => updateExercise(index, 'incline', v.replace(/[^0-9]/g, ''))}
+                  keyboardType="number-pad"
+                  maxLength={2}
+                />
+              </View>
+            )}
           </View>
-          <View style={styles.inputGroup}>
-            <Text style={[styles.inputLabel, { color: colors.text }]}>Reps</Text>
-            <TextInput
-              style={[styles.smallInput, { backgroundColor: colors.background, borderColor: colors.border, color: colors.text }]}
-              placeholder="8-12"
-              placeholderTextColor={colors.placeholder}
-              value={item.reps}
-              onChangeText={(v) => updateExercise(index, 'reps', v.replace(/[^0-9\-]/g, ''))}
-              keyboardType="numbers-and-punctuation"
-              maxLength={7}
-            />
+        ) : (
+          <View style={styles.exerciseInputs}>
+            <View style={styles.inputGroup}>
+              <Text style={[styles.inputLabel, { color: colors.text }]}>Sets</Text>
+              <TextInput
+                style={[styles.smallInput, { backgroundColor: colors.background, borderColor: colors.border, color: colors.text }]}
+                placeholder="3"
+                placeholderTextColor={colors.placeholder}
+                value={item.sets}
+                onChangeText={(v) => updateExercise(index, 'sets', v.replace(/[^0-9]/g, ''))}
+                keyboardType="number-pad"
+                maxLength={2}
+              />
+            </View>
+            <View style={styles.inputGroup}>
+              <Text style={[styles.inputLabel, { color: colors.text }]}>Reps</Text>
+              <TextInput
+                style={[styles.smallInput, { backgroundColor: colors.background, borderColor: colors.border, color: colors.text }]}
+                placeholder="8-12"
+                placeholderTextColor={colors.placeholder}
+                value={item.reps}
+                onChangeText={(v) => updateExercise(index, 'reps', v.replace(/[^0-9\-]/g, ''))}
+                keyboardType="numbers-and-punctuation"
+                maxLength={7}
+              />
+            </View>
+            <View style={styles.inputGroup}>
+              <Text style={[styles.inputLabel, { color: colors.text }]}>Weight</Text>
+              <TextInput
+                style={[styles.smallInput, { backgroundColor: colors.background, borderColor: colors.border, color: colors.text }]}
+                placeholder="135"
+                placeholderTextColor={colors.placeholder}
+                value={item.weight}
+                onChangeText={(v) => updateExercise(index, 'weight', v.replace(/[^0-9.]/g, ''))}
+                keyboardType="decimal-pad"
+                maxLength={6}
+              />
+            </View>
           </View>
-          <View style={styles.inputGroup}>
-            <Text style={[styles.inputLabel, { color: colors.text }]}>Weight</Text>
-            <TextInput
-              style={[styles.smallInput, { backgroundColor: colors.background, borderColor: colors.border, color: colors.text }]}
-              placeholder="135"
-              placeholderTextColor={colors.placeholder}
-              value={item.weight}
-              onChangeText={(v) => updateExercise(index, 'weight', v.replace(/[^0-9.]/g, ''))}
-              keyboardType="decimal-pad"
-              maxLength={6}
-            />
-          </View>
-        </View>
+        )}
       </TouchableOpacity>
     );
   }, [selectedExercises, colors]);
@@ -358,68 +389,13 @@ const CreateSavedWorkoutScreen = () => {
       </KeyboardAvoidingView>
 
       {/* Exercise Picker Modal */}
-      <Modal visible={exercisePickerVisible} animationType="slide" presentationStyle="pageSheet">
-        <View style={[styles.modal, { backgroundColor: colors.background }]}>
-          <View style={[styles.modalHeader, { backgroundColor: colors.cardBackground, borderBottomColor: colors.borderLight }]}>
-            <TouchableOpacity onPress={() => setExercisePickerVisible(false)}>
-              <Text style={[styles.modalCancel, { color: colors.primary }]}>Cancel</Text>
-            </TouchableOpacity>
-            <Text style={[styles.modalTitle, { color: colors.text }]}>Add Exercise</Text>
-            <View style={styles.modalPlaceholder} />
-          </View>
-
-          {/* Search */}
-          <View style={styles.searchSection}>
-            <View style={[styles.searchBar, { backgroundColor: colors.cardBackground, borderColor: colors.border }]}>
-              <Ionicons name="search" size={18} color={colors.secondaryText} />
-              <TextInput
-                style={[styles.searchInput, { color: colors.text }]}
-                placeholder="Search exercises..."
-                placeholderTextColor={colors.placeholder}
-                value={searchQuery}
-                onChangeText={setSearchQuery}
-              />
-            </View>
-          </View>
-
-          {/* Filters */}
-          <View style={styles.filterSection}>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filterScroll}>
-              {muscleGroups.map((muscle) => (
-                <TouchableOpacity
-                  key={muscle.id}
-                  style={[
-                    styles.filterPill,
-                    { backgroundColor: colors.borderLight },
-                    selectedMuscleFilter === muscle.id && { backgroundColor: colors.primary }
-                  ]}
-                  onPress={() => setSelectedMuscleFilter(muscle.id)}
-                >
-                  <Text style={[
-                    styles.filterText,
-                    { color: colors.text },
-                    selectedMuscleFilter === muscle.id && { color: colors.onPrimary }
-                  ]}>
-                    {muscle.name}
-                  </Text>
-                </TouchableOpacity>
-              ))}
-            </ScrollView>
-          </View>
-
-          {/* Exercise List */}
-          <ScrollView style={styles.exercisePickerList} contentContainerStyle={styles.exercisePickerContent}>
-            {getFilteredExercises().map((exercise) => (
-              <ExerciseCard
-                key={exercise.id}
-                exercise={exercise}
-                onPress={() => addExercise(exercise)}
-                compact={true}
-              />
-            ))}
-          </ScrollView>
-        </View>
-      </Modal>
+      <ExercisePickerScreen
+        visible={exercisePickerVisible}
+        onClose={() => setExercisePickerVisible(false)}
+        onAddExercise={addExercise}
+        exercises={exercises}
+        existingExerciseIds={selectedExercises.map(ex => ex.id)}
+      />
     </SafeAreaView>
   );
 };
@@ -566,76 +542,16 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     fontWeight: '500',
   },
+  unitLabel: {
+    fontSize: 11,
+    marginTop: 2,
+    textAlign: 'center',
+  },
   dragHint: {
     fontSize: 12,
     textAlign: 'center',
     marginTop: 8,
     fontStyle: 'italic',
-  },
-  // Modal styles
-  modal: {
-    flex: 1,
-  },
-  modalHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 24,
-    paddingTop: 60,
-    paddingBottom: 20,
-    borderBottomWidth: 1,
-  },
-  modalCancel: {
-    fontSize: 16,
-    fontWeight: '500',
-  },
-  modalTitle: {
-    fontSize: 18,
-    fontWeight: '700',
-  },
-  modalPlaceholder: {
-    width: 60,
-  },
-  searchSection: {
-    paddingHorizontal: 24,
-    paddingTop: 20,
-    paddingBottom: 16,
-  },
-  searchBar: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    borderWidth: 1,
-    borderRadius: 20,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    gap: 12,
-  },
-  searchInput: {
-    flex: 1,
-    fontSize: 16,
-  },
-  filterSection: {
-    paddingBottom: 20,
-  },
-  filterScroll: {
-    paddingHorizontal: 24,
-    gap: 12,
-  },
-  filterPill: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 20,
-  },
-  filterText: {
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  exercisePickerList: {
-    flex: 1,
-    paddingHorizontal: 24,
-  },
-  exercisePickerContent: {
-    paddingBottom: 32,
   },
 });
 

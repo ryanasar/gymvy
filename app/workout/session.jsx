@@ -17,6 +17,8 @@ import { createSavedWorkout } from '@/services/api/savedWorkouts';
 import LiveActivity from '@/lib/modules/LiveActivity';
 import { getCustomExercises } from '@/services/api/customExercises';
 import { trackWorkoutCompleted } from '@/lib/analytics';
+import { useWeightUnit } from '@/hooks/useWeightUnit';
+import { toLbs, getUnitLabel } from '@/utils/weightUnits';
 
 const WorkoutSessionScreen = () => {
   const colors = useThemeColors();
@@ -25,6 +27,7 @@ const WorkoutSessionScreen = () => {
   const { user } = useAuth();
   const { markWorkoutCompleted } = useWorkout();
   const { updatePendingCount, manualSync } = useSync();
+  const { weightUnit } = useWeightUnit();
 
   // Safely parse workout data from params with try-catch to prevent crashes
   let workoutData = null;
@@ -652,7 +655,7 @@ const WorkoutSessionScreen = () => {
       } else {
         // Strength fields
         updateData.reps = parseInt(setData.reps) || 0;
-        updateData.weight = parseFloat(setData.weight) || 0;
+        updateData.weight = toLbs(parseFloat(setData.weight) || 0, weightUnit);
       }
 
       await updateWorkoutSet(
@@ -1193,6 +1196,18 @@ const WorkoutSessionScreen = () => {
     if (isAnimatingRef.current) return;
     isAnimatingRef.current = true;
 
+    // Clear rest timer if active (don't execute pending navigation — user is going back)
+    if (showRestTimer) {
+      if (restTimerRef.current) {
+        clearInterval(restTimerRef.current);
+      }
+      restEndTimeRef.current = null;
+      setShowRestTimer(false);
+      setRestTimeRemaining(0);
+      pendingNavigationRef.current = null;
+      LiveActivity.endRest();
+    }
+
     // Stop any in-progress animations first
     slideXAnim.stopAnimation();
     slideYAnim.stopAnimation();
@@ -1373,7 +1388,15 @@ const WorkoutSessionScreen = () => {
     if (user?.id) {
       try {
         const prStore = await getLocalPRStore(user.id);
-        const prResult = detectPRs(exercises, prStore);
+        // Convert session weights to lbs for PR comparison (stored PRs are in lbs)
+        const exercisesForPR = exercises.map(ex => ({
+          ...ex,
+          sessionSets: ex.sessionSets?.map(set => ({
+            ...set,
+            weight: String(toLbs(parseFloat(set.weight) || 0, weightUnit))
+          }))
+        }));
+        const prResult = detectPRs(exercisesForPR, prStore);
         if (prResult.newPRs.length > 0 || Object.keys(prResult.updatedStore).length > Object.keys(prStore).length) {
           await saveLocalPRStore(user.id, prResult.updatedStore);
         }
@@ -1904,7 +1927,7 @@ const WorkoutSessionScreen = () => {
               /* STRENGTH: weight/reps inputs */
               <View style={styles.setInputs}>
                 <View style={styles.inputGroup}>
-                  <Text style={[styles.inputLabel, { color: colors.secondaryText }]}>WEIGHT (LBS)</Text>
+                  <Text style={[styles.inputLabel, { color: colors.secondaryText }]}>WEIGHT ({getUnitLabel(weightUnit).toUpperCase()})</Text>
                   <View style={[styles.inputWrapper, { shadowColor: colors.shadow }]}>
                     <TextInput
                       ref={weightInputRef}
@@ -2045,9 +2068,9 @@ const WorkoutSessionScreen = () => {
                   const hasReps = set.reps && set.reps !== '' && set.reps !== '0';
 
                   if (hasWeight && hasReps) {
-                    details = `${set.weight} lbs × ${set.reps} reps`;
+                    details = `${set.weight} ${getUnitLabel(weightUnit)} × ${set.reps} reps`;
                   } else if (hasWeight) {
-                    details = `${set.weight} lbs`;
+                    details = `${set.weight} ${getUnitLabel(weightUnit)}`;
                   } else if (hasReps) {
                     details = `${set.reps} reps`;
                   } else {

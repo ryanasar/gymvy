@@ -6,6 +6,7 @@ import { useThemeColors } from '@/hooks/useThemeColors';
 import SettingsDropdown from './SettingsDropdown';
 import Avatar from '@/components/ui/Avatar';
 import ZoomableImageModal from '@/components/ui/ZoomableImageModal';
+import CommunityBadges from '@/components/community/CommunityBadges';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -33,6 +34,9 @@ const ProfileHeader = ({
   onDeleteAccount,
   onBlockedUsersPress,
   canNudge = false,
+  communities,
+  weightUnit,
+  onWeightUnitChange,
 }) => {
   const colors = useThemeColors();
   const [showExpandedAvatar, setShowExpandedAvatar] = useState(false);
@@ -44,7 +48,7 @@ const ProfileHeader = ({
         {/* Settings Dropdown - Top Right */}
         {isOwnProfile && (
           <View style={styles.settingsContainer}>
-            <SettingsDropdown onSignOut={onSignOut} onDeleteAccount={onDeleteAccount} onBlockedUsersPress={onBlockedUsersPress} />
+            <SettingsDropdown onSignOut={onSignOut} onDeleteAccount={onDeleteAccount} onBlockedUsersPress={onBlockedUsersPress} weightUnit={weightUnit} onWeightUnitChange={onWeightUnitChange} />
           </View>
         )}
 
@@ -152,6 +156,16 @@ const ProfileHeader = ({
           </View>
         </>
       ) : null}
+
+      {/* Community Badges */}
+      {communities && communities.length > 0 && (
+        <>
+          <View style={[styles.divider, { backgroundColor: colors.borderLight }]} />
+          <View style={[styles.bioContainer, { backgroundColor: colors.cardBackground }]}>
+            <CommunityBadges communities={communities} />
+          </View>
+        </>
+      )}
 
       {/* Expanded Avatar Modal */}
       <ZoomableImageModal

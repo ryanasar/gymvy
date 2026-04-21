@@ -1054,7 +1054,7 @@ const styles = StyleSheet.create({
   headerContainer: {
     paddingHorizontal: 20,
     paddingTop: 60,
-    paddingBottom: 20,
+    paddingBottom: 16,
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.03,
     shadowRadius: 2,

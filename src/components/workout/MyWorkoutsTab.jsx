@@ -3,6 +3,8 @@ import { View, Text, ActivityIndicator, FlatList, StyleSheet, TouchableOpacity }
 import { router } from 'expo-router';
 import { useThemeColors } from '@/hooks/useThemeColors';
 import { exercises as exerciseDatabaseSource } from '@/data/exercises/exerciseDatabase';
+import { useWeightUnit } from '@/hooks/useWeightUnit';
+import { getUnitLabel } from '@/utils/weightUnits';
 
 /**
  * Check if an exercise is a cardio exercise
@@ -97,7 +99,7 @@ const WorkoutItem = ({ workout }) => {
                           <Text style={styles.exerciseDetail}>Reps: {exercise.reps}</Text>
                         )}
                         {exercise.weight && (
-                          <Text style={styles.exerciseDetail}>Weight: {exercise.weight}lbs</Text>
+                          <Text style={styles.exerciseDetail}>Weight: {exercise.weight}{getUnitLabel(weightUnit)}</Text>
                         )}
                       </>
                     )}
@@ -135,6 +137,7 @@ const getDifficultyColor = (difficulty) => {
 
 const WorkoutsTab = ({ workouts }) => {
   const colors = useThemeColors();
+  const { weightUnit } = useWeightUnit();
 
   const handleCreateWorkout = () => {
     router.push('/workout/make-workout');

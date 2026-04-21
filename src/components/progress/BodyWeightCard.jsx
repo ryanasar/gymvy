@@ -7,16 +7,19 @@ import LogWeightModal from './LogWeightModal';
 import TimeRangeToggle from './TimeRangeToggle';
 import { filterDataByRange, calculateChange, formatLastLogged } from '@/utils/timeRangeUtils';
 import StatCard from '@/components/ui/StatCard';
+import { fromLbs, formatWeight, getUnitLabel } from '@/utils/weightUnits';
 
-const BodyWeightCard = ({ data, onLogWeight }) => {
+const BodyWeightCard = ({ data, onLogWeight, weightUnit = 'lbs' }) => {
   const colors = useThemeColors();
   const [modalVisible, setModalVisible] = useState(false);
   const [selectedRange, setSelectedRange] = useState('All');
 
-  // Convert data to chart format and filter by range
+  const unitLabel = getUnitLabel(weightUnit);
+
+  // Convert data to chart format (convert from stored lbs to display unit) and filter by range
   const allChartData = useMemo(() => {
-    return data ? data.map(e => ({ value: e.weight, date: e.date })) : [];
-  }, [data]);
+    return data ? data.map(e => ({ value: fromLbs(e.weight, weightUnit), date: e.date })) : [];
+  }, [data, weightUnit]);
 
   const filteredData = useMemo(() => {
     return filterDataByRange(allChartData, selectedRange);
@@ -63,8 +66,8 @@ const BodyWeightCard = ({ data, onLogWeight }) => {
           <TimeRangeToggle selectedRange={selectedRange} onRangeChange={setSelectedRange} />
         }
         label="Current"
-        value={latestWeight !== null ? `${latestWeight} lbs` : null}
-        change={change !== null ? `${change >= 0 ? '+' : ''}${change} lbs` : null}
+        value={latestWeight !== null ? `${latestWeight} ${unitLabel}` : null}
+        change={change !== null ? `${change >= 0 ? '+' : ''}${change} ${unitLabel}` : null}
         changeColor={colors.accent}
         lastLogged={lastLoggedDate ? `Last logged: ${formatLastLogged(lastLoggedDate)}` : null}
         emptyMessage="No entries yet"
@@ -76,6 +79,7 @@ const BodyWeightCard = ({ data, onLogWeight }) => {
         visible={modalVisible}
         onClose={() => setModalVisible(false)}
         onSave={handleSave}
+        weightUnit={weightUnit}
       />
     </>
   );

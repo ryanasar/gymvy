@@ -2,6 +2,8 @@ import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { Colors } from '@/constants/colors';
 import { exercises as exerciseDatabaseSource } from '@/data/exercises/exerciseDatabase';
+import { useWeightUnit } from '@/hooks/useWeightUnit';
+import { getUnitLabel } from '@/utils/weightUnits';
 
 /**
  * Check if an exercise is a cardio exercise
@@ -34,7 +36,7 @@ const formatExerciseDetails = (exercise) => {
   }
 
   // Strength exercise - show sets, reps, weight
-  return `Sets: ${exercise.sets || '-'} | Reps: ${exercise.reps || '-'} | Weight: ${exercise.weight || '-'} lbs`;
+  return `Sets: ${exercise.sets || '-'} | Reps: ${exercise.reps || '-'} | Weight: ${exercise.weight || '-'}`;
 };
 
 const WorkoutPlan = ({ plan }) => {

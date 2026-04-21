@@ -31,6 +31,7 @@ export default function RootLayout() {
                   <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.background } }}>
                     <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
                     <Stack.Screen name="user/[username]" options={{ headerShown: false, presentation: 'modal' }} />
+                    <Stack.Screen name="community/[id]" options={{ headerShown: false, presentation: 'modal' }} />
                     <Stack.Screen name="search" options={{ headerShown: false }} />
                     <Stack.Screen name="notifications" options={{ headerShown: false }} />
                     <Stack.Screen name="(auth)" options={{ headerShown: false }} />

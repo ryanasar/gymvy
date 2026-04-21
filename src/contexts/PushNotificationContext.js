@@ -93,6 +93,17 @@ export const PushNotificationProvider = ({ children }) => {
       case 'follow':
         router.push('/notifications');
         break;
+      case 'community_join':
+      case 'community_role_changed':
+        if (data.communityId) {
+          router.push(`/community/${data.communityId}`);
+        } else {
+          router.push('/notifications');
+        }
+        break;
+      case 'community_removed':
+        router.push('/notifications');
+        break;
       case 'streak_lost':
         router.push('/notifications');
         break;
