@@ -63,11 +63,11 @@ ios/ android/     # Native projects (managed workflow, pre-built for dev clients
 
 ## Notes for anyone reading this as a portfolio piece
 
-A few things I'm glad I took the time to get right:
+Some parts of this project that I'm proud of:
 
-- **End-to-end ownership.** Client, backend, auth, payments, push, analytics, store listing, privacy policy — all of it is mine. There's no piece of this app I can't explain.
+- **End-to-end ownership.** Client, backend, auth, , push, analytics, store listing, all of it is mine. There's no piece of this app I can't explain.
 - **Shipping, not just building.** The app is in the App Store. That forced me to deal with everything the tutorials skip: app review, real push notification infrastructure, subscription edge cases, blocking/reporting, privacy policy hosting, dev vs prod config.
-- **Actual users, actual feedback.** Friends use it daily, which means bugs get found fast and dead features get noticed faster. A lot of the current design has been shaped by "hey this is annoying" texts.
+- **Actual users, actual feedback.** Friends use it daily, which means bugs get found fast and dead features get noticed faster. A lot of the current design has been shaped by texts from friends.
 - **Premium-feeling UI.** Borderless cards, a consistent shadow/typography system, dark mode that isn't an afterthought. The design system lives in `src/components/ui/` and conventions are documented in my notes.
 
 ## Status
